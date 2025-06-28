@@ -27,6 +27,8 @@ export interface PricingTier {
 export interface WizardState {
   step: number;
   selectedTemplate: string | null;
+  selectedMessage: string;
+  customMessage: string;
   logo: File | null;
   signature: File | null;
   mailingWindow: string | null;
@@ -58,6 +60,8 @@ const pricingTiers: PricingTier[] = [
 const initialState: WizardState = {
   step: 1,
   selectedTemplate: null,
+  selectedMessage: '',
+  customMessage: '',
   logo: null,
   signature: null,
   mailingWindow: null,
@@ -66,7 +70,7 @@ const initialState: WizardState = {
   selectedTier: null,
   clientList: [],
   csvFile: null,
-  earlyBirdActive: true, // Hardcoded as requested
+  earlyBirdActive: true,
   promoCode: '',
 };
 
@@ -80,7 +84,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const nextStep = () => {
-    setState(prev => ({ ...prev, step: Math.min(prev.step + 1, 6) }));
+    setState(prev => ({ ...prev, step: Math.min(prev.step + 1, 7) }));
   };
 
   const prevStep = () => {

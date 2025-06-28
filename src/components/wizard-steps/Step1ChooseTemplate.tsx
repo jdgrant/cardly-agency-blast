@@ -14,8 +14,8 @@ const occasions = [
   { id: 'holidays', label: 'General Holidays', color: 'bg-orange-100 text-orange-800' }
 ];
 
-// Expanded template data with all images including new ones
-const mockTemplates = [
+// Export the template data so other steps can use it
+export const mockTemplates = [
   {
     id: 'template-1',
     name: 'Classic Christmas',

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useWizard } from './WizardContext';
 import { Card, CardContent } from './ui/card';
@@ -8,6 +9,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Import all step components
 import Step1ChooseTemplate from './wizard-steps/Step1ChooseTemplate';
+import Step2SelectMessage from './wizard-steps/Step2SelectMessage';
 import Step2UploadAssets from './wizard-steps/Step2UploadAssets';
 import Step3MailingWindow from './wizard-steps/Step3MailingWindow';
 import Step4PostageOption from './wizard-steps/Step4PostageOption';
@@ -16,6 +18,7 @@ import Step6UploadSubmit from './wizard-steps/Step6UploadSubmit';
 
 const stepTitles = [
   'Choose Template',
+  'Select Message',
   'Upload Assets',
   'Mailing Window',
   'Postage Option',
@@ -31,14 +34,16 @@ const WizardContent = () => {
       case 1:
         return <Step1ChooseTemplate />;
       case 2:
-        return <Step2UploadAssets />;
+        return <Step2SelectMessage />;
       case 3:
-        return <Step3MailingWindow />;
+        return <Step2UploadAssets />;
       case 4:
-        return <Step4PostageOption />;
+        return <Step3MailingWindow />;
       case 5:
-        return <Step5SelectPackage />;
+        return <Step4PostageOption />;
       case 6:
+        return <Step5SelectPackage />;
+      case 7:
         return <Step6UploadSubmit />;
       default:
         return <Step1ChooseTemplate />;
@@ -60,7 +65,7 @@ const WizardContent = () => {
             </div>
           </Link>
           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-            Step {state.step} of 6: {stepTitles[state.step - 1]}
+            Step {state.step} of 7: {stepTitles[state.step - 1]}
           </Badge>
         </div>
       </header>
@@ -80,7 +85,7 @@ const WizardContent = () => {
           
           <Button
             onClick={nextStep}
-            disabled={state.step === 6}
+            disabled={state.step === 7}
             className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
           >
             <span>Next</span>
