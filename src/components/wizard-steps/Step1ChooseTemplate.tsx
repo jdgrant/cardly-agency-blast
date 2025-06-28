@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-// Expanded template data with all 40 uploaded images
+// Expanded template data with all 42 uploaded images
 const mockTemplates = [
   {
     id: 'template-1',
@@ -245,6 +245,18 @@ const mockTemplates = [
     name: 'Wishing You Joy',
     description: 'Elegant green design with holly berries and festive script',
     preview_url: '/lovable-uploads/763fd7b1-12ad-48c4-88f4-fc21d684a8b9.png'
+  },
+  {
+    id: 'template-41',
+    name: 'New Year Gifts',
+    description: 'Sophisticated navy design with elegant gift boxes and "Happy New Year" message',
+    preview_url: '/lovable-uploads/4e3150fa-089d-43ef-b4ea-a6105bbbef65.png'
+  },
+  {
+    id: 'template-42',
+    name: 'New Year Celebration',
+    description: 'Festive navy design with golden snowflakes and stars for New Year',
+    preview_url: '/lovable-uploads/38553b11-9c4a-40d5-a2dd-709e10741e75.png'
   }
 ];
 
