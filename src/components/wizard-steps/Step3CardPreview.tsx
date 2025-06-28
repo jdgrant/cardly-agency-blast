@@ -4,7 +4,7 @@ import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { mockTemplates } from './Step1ChooseTemplate';
 
-const Step3UploadAssets = () => {
+const Step3CardPreview = () => {
   const { state, nextStep, prevStep } = useWizard();
 
   // Get selected template and message for preview
@@ -96,4 +96,4 @@ const Step3UploadAssets = () => {
   );
 };
 
-export default Step3UploadAssets;
+export default Step3CardPreview;

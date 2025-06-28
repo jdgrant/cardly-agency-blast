@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useWizard } from './WizardContext';
 import { Card, CardContent } from './ui/card';
@@ -10,7 +9,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 // Import all step components
 import Step1ChooseTemplate from './wizard-steps/Step1ChooseTemplate';
 import Step2SelectMessage from './wizard-steps/Step2SelectMessage';
-import Step2UploadAssets from './wizard-steps/Step2UploadAssets';
+import Step3CardPreview from './wizard-steps/Step3CardPreview';
 import Step3MailingWindow from './wizard-steps/Step3MailingWindow';
 import Step4PostageOption from './wizard-steps/Step4PostageOption';
 import Step5SelectPackage from './wizard-steps/Step5SelectPackage';
@@ -19,7 +18,7 @@ import Step6UploadSubmit from './wizard-steps/Step6UploadSubmit';
 const stepTitles = [
   'Choose Template',
   'Select Message',
-  'Upload Assets',
+  'Card Preview',
   'Mailing Window',
   'Postage Option',
   'Select Package',
@@ -36,7 +35,7 @@ const WizardContent = () => {
       case 2:
         return <Step2SelectMessage />;
       case 3:
-        return <Step2UploadAssets />;
+        return <Step3CardPreview />;
       case 4:
         return <Step3MailingWindow />;
       case 5:
