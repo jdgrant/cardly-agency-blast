@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -102,6 +103,9 @@ const Step2SelectMessage = () => {
     return isCustom ? state.customMessage.trim().length > 0 : state.selectedMessage.length > 0;
   };
 
+  // Get selected template for preview
+  const selectedTemplate = mockTemplates.find(t => t.id === state.selectedTemplate);
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -122,88 +126,119 @@ const Step2SelectMessage = () => {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Message Selection */}
+        {/* Template Preview - Left Side */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <MessageSquare className="w-5 h-5" />
-              <span>Choose a Message</span>
-            </CardTitle>
+            <CardTitle className="text-lg">Selected Template</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {availableOccasions.map(occasion => {
-                const messages = messagesByOccasion[occasion as keyof typeof messagesByOccasion] || [];
-                const info = occasionLabels[occasion as keyof typeof occasionLabels];
-                
-                return (
-                  <div key={occasion} className="space-y-3">
-                    {info && (
-                      <h4 className="font-semibold text-gray-800 flex items-center space-x-2">
-                        <span>{info.emoji}</span>
-                        <span>{info.label}</span>
-                      </h4>
-                    )}
-                    <div className="space-y-2">
-                      {messages.map((message, index) => (
-                        <div
-                          key={`${occasion}-${index}`}
-                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                            state.selectedMessage === message && !isCustom
-                              ? 'border-blue-500 bg-blue-50 text-blue-900'
-                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                          onClick={() => handleMessageSelect(message)}
-                        >
-                          <p className="text-sm leading-relaxed">{message}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {selectedTemplate ? (
+              <div className="space-y-4">
+                <div className="aspect-[3/4] overflow-hidden rounded-lg border bg-gray-50">
+                  <img 
+                    src={selectedTemplate.preview_url} 
+                    alt={selectedTemplate.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">{selectedTemplate.name}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{selectedTemplate.description}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="aspect-[3/4] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">No template selected</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Custom Message Editor */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Edit3 className="w-5 h-5" />
-                <span>Custom Message</span>
+        {/* Message Selection - Right Side */}
+        <div className="space-y-6">
+          {/* Pre-written Messages */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <MessageSquare className="w-5 h-5" />
+                <span>Choose a Message</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-h-64 overflow-y-auto">
+                {availableOccasions.map(occasion => {
+                  const messages = messagesByOccasion[occasion as keyof typeof messagesByOccasion] || [];
+                  const info = occasionLabels[occasion as keyof typeof occasionLabels];
+                  
+                  return (
+                    <div key={occasion} className="space-y-3">
+                      {info && (
+                        <h4 className="font-semibold text-gray-800 flex items-center space-x-2">
+                          <span>{info.emoji}</span>
+                          <span>{info.label}</span>
+                        </h4>
+                      )}
+                      <div className="space-y-2">
+                        {messages.map((message, index) => (
+                          <div
+                            key={`${occasion}-${index}`}
+                            className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                              state.selectedMessage === message && !isCustom
+                                ? 'border-blue-500 bg-blue-50 text-blue-900'
+                                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            }`}
+                            onClick={() => handleMessageSelect(message)}
+                          >
+                            <p className="text-sm leading-relaxed">{message}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              {isCustom && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResetToPreset}
-                  className="flex items-center space-x-1"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span>Reset</span>
-                </Button>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Textarea
-                placeholder="Write your own personal message here..."
-                value={state.customMessage}
-                onChange={(e) => {
-                  handleCustomMessageChange(e.target.value);
-                  setIsCustom(true);
-                }}
-                className="min-h-32 text-sm leading-relaxed"
-              />
-              <div className="text-xs text-gray-500">
-                {state.customMessage.length}/500 characters
+            </CardContent>
+          </Card>
+
+          {/* Custom Message Editor */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Edit3 className="w-5 h-5" />
+                  <span>Custom Message</span>
+                </div>
+                {isCustom && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetToPreset}
+                    className="flex items-center space-x-1"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Reset</span>
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Textarea
+                  placeholder="Write your own personal message here..."
+                  value={state.customMessage}
+                  onChange={(e) => {
+                    handleCustomMessageChange(e.target.value);
+                    setIsCustom(true);
+                  }}
+                  className="min-h-32 text-sm leading-relaxed"
+                />
+                <div className="text-xs text-gray-500">
+                  {state.customMessage.length}/500 characters
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Message Preview */}
