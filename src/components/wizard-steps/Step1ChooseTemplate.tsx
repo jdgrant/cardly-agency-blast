@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-// Mock template data using the uploaded images
+// Expanded template data with all 20 uploaded images
 const mockTemplates = [
   {
     id: 'template-1',
@@ -66,6 +66,66 @@ const mockTemplates = [
     name: 'Merry & Bright',
     description: 'Light background with snowflake border',
     preview_url: '/lovable-uploads/ccbe10cf-f23b-4d46-97d1-880e5cccbc8a.png'
+  },
+  {
+    id: 'template-11',
+    name: 'Merry & Bright Snowflakes',
+    description: 'Elegant beige design with blue snowflakes',
+    preview_url: '/lovable-uploads/449019ff-fa63-4453-b187-dea0a98ce376.png'
+  },
+  {
+    id: 'template-12',
+    name: 'Happy Holidays Snowfall',
+    description: 'Festive pattern with colorful snowflakes',
+    preview_url: '/lovable-uploads/fba644eb-03c7-4308-a943-9e6173a3a619.png'
+  },
+  {
+    id: 'template-13',
+    name: 'Ho Ho Ho',
+    description: 'Playful winter design with snowflake border',
+    preview_url: '/lovable-uploads/7c0d16e0-6f2f-4003-85bf-78acd04feab3.png'
+  },
+  {
+    id: 'template-14',
+    name: 'Christmas Penguin',
+    description: 'Cute penguin with Christmas lights',
+    preview_url: '/lovable-uploads/3fc9d0d1-5cda-41e1-a1c5-edc35642161b.png'
+  },
+  {
+    id: 'template-15',
+    name: 'Holiday Bear',
+    description: 'Adorable bear in festive winter sweater',
+    preview_url: '/lovable-uploads/5f758811-9dad-4b62-a29c-4977b7cf1129.png'
+  },
+  {
+    id: 'template-16',
+    name: 'Santa & Reindeer',
+    description: 'Classic Santa with reindeer in winter scene',
+    preview_url: '/lovable-uploads/6544f16d-4367-4130-ac09-a7304e0da5b4.png'
+  },
+  {
+    id: 'template-17',
+    name: 'Be Merry & Bright',
+    description: 'Cheerful yellow design with festive berries',
+    preview_url: '/lovable-uploads/49b49a47-9cb3-4dea-9681-99c431cdd9d4.png'
+  },
+  {
+    id: 'template-18',
+    name: 'Warm Wishes',
+    description: 'Cozy orange design with holiday foliage',
+    preview_url: '/lovable-uploads/b86b6ae0-bf14-4082-b945-bfc374cf7e74.png'
+  },
+  {
+    id: 'template-19',
+    name: 'Happy Holidays Ornaments',
+    description: 'Elegant design with ornaments and snowflakes',
+    preview_url: '/lovable-uploads/475e2fdc-9459-4806-a636-860b23fa4b5e.png'
+  },
+  {
+    id: 'template-20',
+    name: 'Merry Christmas Classic',
+    description: 'Traditional Christmas greeting with ornaments',
+    preview_url: '/lovable-uploads/0df324f2-fca3-48e1-a7e4-f7654a0cd1e9.png'
   }
 ];
 
