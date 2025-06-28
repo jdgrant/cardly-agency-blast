@@ -14,6 +14,21 @@ const Step3CardPreview = () => {
   const selectedTemplate = mockTemplates.find(t => t.id === state.selectedTemplate);
   const currentMessage = state.customMessage || state.selectedMessage;
 
+  // Business rule for font sizing based on message length
+  const getMessageFontSize = (message: string) => {
+    if (!message) return 'text-sm';
+    
+    const wordCount = message.split(' ').length;
+    
+    if (wordCount > 15) {
+      return 'text-lg';
+    } else if (wordCount > 8) {
+      return 'text-base';
+    } else {
+      return 'text-sm';
+    }
+  };
+
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -65,7 +80,7 @@ const Step3CardPreview = () => {
               <div className="h-1/3 flex items-center justify-center mb-4">
                 <div className="text-center">
                   {currentMessage ? (
-                    <p className="font-playfair text-gray-800 text-sm leading-relaxed">
+                    <p className={`font-playfair text-gray-800 ${getMessageFontSize(currentMessage)} leading-relaxed`}>
                       {currentMessage}
                     </p>
                   ) : (
