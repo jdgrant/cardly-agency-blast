@@ -5,8 +5,7 @@ import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Link } from 'react-router-dom';
-import { Progress } from './ui/progress';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Import all step components
 import Step1ChooseTemplate from './wizard-steps/Step1ChooseTemplate';
@@ -26,7 +25,7 @@ const stepTitles = [
 ];
 
 const WizardContent = () => {
-  const { state } = useWizard();
+  const { state, prevStep, nextStep } = useWizard();
   
   const renderStep = () => {
     switch (state.step) {
@@ -47,8 +46,6 @@ const WizardContent = () => {
     }
   };
 
-  const progressPercent = (state.step / 6) * 100;
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -64,63 +61,40 @@ const WizardContent = () => {
             </div>
           </Link>
           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-            Step {state.step} of 6
+            Step {state.step} of 6: {stepTitles[state.step - 1]}
           </Badge>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Progress Sidebar */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-24 border-0 shadow-lg bg-white">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-4 text-lg">Progress</h3>
-                <Progress value={progressPercent} className="mb-6 h-2" />
-                <div className="space-y-4">
-                  {stepTitles.map((title, index) => {
-                    const stepNumber = index + 1;
-                    const isActive = state.step === stepNumber;
-                    const isCompleted = state.step > stepNumber;
-                    
-                    return (
-                      <div 
-                        key={stepNumber}
-                        className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${
-                          isActive 
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                            : isCompleted 
-                              ? 'bg-green-50 text-green-700'
-                              : 'text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                          isActive 
-                            ? 'bg-emerald-600 text-white shadow-lg' 
-                            : isCompleted 
-                              ? 'bg-green-500 text-white'
-                              : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {isCompleted ? '✓' : stepNumber}
-                        </div>
-                        <span className="font-medium">{title}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            <Card className="border-0 shadow-xl bg-white">
-              <CardContent className="p-8 lg:p-12">
-                {renderStep()}
-              </CardContent>
-            </Card>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Navigation */}
+        <div className="flex justify-between items-center mb-8">
+          <Button
+            variant="outline"
+            onClick={prevStep}
+            disabled={state.step === 1}
+            className="flex items-center space-x-2"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Previous</span>
+          </Button>
+          
+          <Button
+            onClick={nextStep}
+            disabled={state.step === 6}
+            className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+          >
+            <span>Next</span>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </div>
+
+        {/* Main Content */}
+        <Card className="border-0 shadow-xl bg-white">
+          <CardContent className="p-8 lg:p-12">
+            {renderStep()}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
