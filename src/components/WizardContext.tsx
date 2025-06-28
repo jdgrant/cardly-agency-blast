@@ -30,11 +30,13 @@ export interface WizardState {
   logo: File | null;
   signature: File | null;
   mailingWindow: string | null;
+  shippingWindow: string | null;
   postageOption: 'standard' | 'first-class';
   selectedTier: PricingTier | null;
   clientList: ClientRecord[];
   csvFile: File | null;
   earlyBirdActive: boolean;
+  promoCode: string;
 }
 
 interface WizardContextType {
@@ -59,11 +61,13 @@ const initialState: WizardState = {
   logo: null,
   signature: null,
   mailingWindow: null,
+  shippingWindow: null,
   postageOption: 'standard',
   selectedTier: null,
   clientList: [],
   csvFile: null,
   earlyBirdActive: true, // Hardcoded as requested
+  promoCode: '',
 };
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
