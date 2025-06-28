@@ -50,30 +50,34 @@ const WizardContent = () => {
   const progressPercent = (state.step / 6) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-blue-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-2">
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg"></div>
-              <span className="text-xl font-semibold text-gray-800">AgencyHolidayCards.com</span>
+      <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link to="/" className="flex items-center space-x-3 text-gray-600 hover:text-gray-900 transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">A</span>
+              </div>
+              <span className="text-xl font-bold text-gray-900">AgencyHolidayCards</span>
             </div>
           </Link>
-          <Badge variant="outline">Step {state.step} of 6</Badge>
+          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+            Step {state.step} of 6
+          </Badge>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Progress Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <Card className="sticky top-24 border-0 shadow-lg bg-white">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Progress</h3>
-                <Progress value={progressPercent} className="mb-4" />
-                <div className="space-y-3">
+                <h3 className="font-semibold text-gray-900 mb-4 text-lg">Progress</h3>
+                <Progress value={progressPercent} className="mb-6 h-2" />
+                <div className="space-y-4">
                   {stepTitles.map((title, index) => {
                     const stepNumber = index + 1;
                     const isActive = state.step === stepNumber;
@@ -82,24 +86,24 @@ const WizardContent = () => {
                     return (
                       <div 
                         key={stepNumber}
-                        className={`flex items-center space-x-3 p-2 rounded-lg transition-colors ${
+                        className={`flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 ${
                           isActive 
-                            ? 'bg-blue-100 text-blue-700' 
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
                             : isCompleted 
                               ? 'bg-green-50 text-green-700'
-                              : 'text-gray-500'
+                              : 'text-gray-500 hover:bg-gray-50'
                         }`}
                       >
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                           isActive 
-                            ? 'bg-blue-500 text-white' 
+                            ? 'bg-emerald-600 text-white shadow-lg' 
                             : isCompleted 
                               ? 'bg-green-500 text-white'
-                              : 'bg-gray-300 text-gray-600'
+                              : 'bg-gray-200 text-gray-600'
                         }`}>
                           {isCompleted ? '✓' : stepNumber}
                         </div>
-                        <span className="text-sm font-medium">{title}</span>
+                        <span className="font-medium">{title}</span>
                       </div>
                     );
                   })}
@@ -110,8 +114,8 @@ const WizardContent = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm">
-              <CardContent className="p-8">
+            <Card className="border-0 shadow-xl bg-white">
+              <CardContent className="p-8 lg:p-12">
                 {renderStep()}
               </CardContent>
             </Card>
