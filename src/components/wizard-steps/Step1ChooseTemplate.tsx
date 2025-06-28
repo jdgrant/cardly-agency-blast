@@ -1,43 +1,77 @@
 
-import React, { useState, useEffect } from 'react';
-import { useWizard, Template } from '../WizardContext';
+import React, { useState } from 'react';
+import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+
+// Mock template data using the uploaded images
+const mockTemplates = [
+  {
+    id: 'template-1',
+    name: 'Classic Christmas',
+    description: 'Traditional red and white Christmas design',
+    preview_url: '/lovable-uploads/0e09068d-0fb0-4584-b970-36402e4bfbca.png'
+  },
+  {
+    id: 'template-2',
+    name: 'Happy Holidays',
+    description: 'Festive blue and red holiday pattern',
+    preview_url: '/lovable-uploads/8584b492-9272-4478-90fb-dd4c4c855270.png'
+  },
+  {
+    id: 'template-3',
+    name: 'Winter Snowflakes',
+    description: 'Elegant red background with snowflakes',
+    preview_url: '/lovable-uploads/f721400e-9a73-496e-b8f9-e549240a3ffa.png'
+  },
+  {
+    id: 'template-4',
+    name: 'Santa Pattern',
+    description: 'Fun geometric pattern with Santa faces',
+    preview_url: '/lovable-uploads/754635ac-6b1d-4205-8836-d362e9d77ffd.png'
+  },
+  {
+    id: 'template-5',
+    name: 'Modern Trees',
+    description: 'Contemporary Christmas tree design',
+    preview_url: '/lovable-uploads/f268f327-cd21-4cd4-ac86-6f844c77f6ae.png'
+  },
+  {
+    id: 'template-6',
+    name: 'Holly Jolly',
+    description: 'Split design with decorative elements',
+    preview_url: '/lovable-uploads/bfe3ad13-f658-486a-9f72-1c7f74255b7c.png'
+  },
+  {
+    id: 'template-7',
+    name: 'Festive Dots',
+    description: 'Clean holiday design with dotted text',
+    preview_url: '/lovable-uploads/93254d6d-926a-4d11-9572-27ea043566fe.png'
+  },
+  {
+    id: 'template-8',
+    name: 'Winter Story',
+    description: 'Blue winter scene with Christmas tree',
+    preview_url: '/lovable-uploads/ab3b378f-82b6-41fb-ab61-0ccefe9be59e.png'
+  },
+  {
+    id: 'template-9',
+    name: 'Modern Navy',
+    description: 'Sophisticated navy design with abstract elements',
+    preview_url: '/lovable-uploads/359ed24a-2e1b-4f5b-a30a-b18384ab769c.png'
+  },
+  {
+    id: 'template-10',
+    name: 'Merry & Bright',
+    description: 'Light background with snowflake border',
+    preview_url: '/lovable-uploads/ccbe10cf-f23b-4d46-97d1-880e5cccbc8a.png'
+  }
+];
 
 const Step1ChooseTemplate = () => {
   const { state, updateState, nextStep } = useWizard();
-  const [templates, setTemplates] = useState<Template[]>([]);
   const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('templates')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setTemplates(data || []);
-    } catch (error) {
-      console.error('Error fetching templates:', error);
-      toast({
-        title: "Error loading templates",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleTemplateSelect = (templateId: string) => {
     updateState({ selectedTemplate: templateId });
@@ -49,27 +83,8 @@ const Step1ChooseTemplate = () => {
     }
   };
 
-  const selectedTemplate = templates.find(t => t.id === state.selectedTemplate);
-  const previewTemplateData = templates.find(t => t.id === previewTemplate);
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Holiday Card Template</h2>
-          <p className="text-gray-600">Loading templates...</p>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-gray-300 rounded-lg h-48 mb-4"></div>
-              <div className="bg-gray-300 h-4 rounded mb-2"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const selectedTemplate = mockTemplates.find(t => t.id === state.selectedTemplate);
+  const previewTemplateData = mockTemplates.find(t => t.id === previewTemplate);
 
   return (
     <div className="space-y-6">
@@ -79,7 +94,7 @@ const Step1ChooseTemplate = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {templates.map((template) => (
+        {mockTemplates.map((template) => (
           <Card 
             key={template.id}
             className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
