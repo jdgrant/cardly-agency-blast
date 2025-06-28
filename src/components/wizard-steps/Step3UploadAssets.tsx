@@ -4,6 +4,7 @@ import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Image } from 'lucide-react';
+import { mockTemplates } from './Step1ChooseTemplate';
 
 const Step3UploadAssets = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
@@ -30,13 +31,94 @@ const Step3UploadAssets = () => {
     }
   };
 
+  // Get selected template and message for preview
+  const selectedTemplate = mockTemplates.find(t => t.id === state.selectedTemplate);
+  const currentMessage = state.customMessage || state.selectedMessage;
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Add Your Branding</h2>
-        <p className="text-gray-600">Upload your logo and signature to personalize your cards (optional)</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Add Your Branding & Preview</h2>
+        <p className="text-gray-600">Upload your logo and signature, then see your personalized card preview</p>
       </div>
 
+      {/* Card Preview Section - 50/50 Grid */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Card Preview</h3>
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Front of Card */}
+          <Card className="bg-gradient-to-br from-blue-50 to-purple-50">
+            <CardHeader>
+              <CardTitle className="text-center text-sm text-gray-600">Front of Card</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative overflow-hidden">
+                {selectedTemplate ? (
+                  <img 
+                    src={selectedTemplate.preview_url} 
+                    alt="Card front"
+                    className="w-full h-full object-cover rounded"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-red-100 to-green-100 rounded flex items-center justify-center">
+                    <p className="text-gray-500 text-center">Select a template<br />to see preview</p>
+                  </div>
+                )}
+                {/* Logo overlay */}
+                {logoPreview && (
+                  <div className="absolute top-4 right-4 w-16 h-16 bg-white/90 rounded-lg p-2 shadow-sm">
+                    <img 
+                      src={logoPreview} 
+                      alt="Logo" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Inside of Card */}
+          <Card className="bg-gradient-to-br from-green-50 to-blue-50">
+            <CardHeader>
+              <CardTitle className="text-center text-sm text-gray-600">Inside of Card</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-6 relative flex flex-col">
+                {/* Message in top 1/3 */}
+                <div className="flex-1 flex items-start justify-center pt-4">
+                  <div className="text-center max-w-full">
+                    {currentMessage ? (
+                      <p className="font-playfair text-gray-800 text-sm leading-relaxed italic">
+                        "{currentMessage}"
+                      </p>
+                    ) : (
+                      <p className="text-gray-400 text-sm">
+                        Select a message to see preview
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Signature at bottom */}
+                <div className="mt-auto flex justify-end pb-4">
+                  {signaturePreview ? (
+                    <img 
+                      src={signaturePreview} 
+                      alt="Signature" 
+                      className="max-w-24 max-h-12 object-contain"
+                    />
+                  ) : (
+                    <div className="text-gray-400 text-xs">Your signature here</div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Upload Assets Section */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Logo Upload */}
         <Card>
