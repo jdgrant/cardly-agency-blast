@@ -118,20 +118,36 @@ const Step3CardPreview = () => {
                 </div>
               </div>
               
-              {/* Bottom half with logo and signature placeholders */}
+              {/* Bottom half with logo and signature */}
               <div className="flex-1 flex flex-col justify-center space-y-6">
-                {/* Logo placeholder */}
+                {/* Logo - show uploaded logo or placeholder */}
                 <div className="flex justify-center">
-                  <div className="w-20 h-12 bg-black rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-medium">LOGO</span>
-                  </div>
+                  {state.logo ? (
+                    <img 
+                      src={URL.createObjectURL(state.logo)} 
+                      alt="Company logo"
+                      className="w-20 h-12 object-contain"
+                    />
+                  ) : (
+                    <div className="w-20 h-12 bg-black rounded flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">LOGO</span>
+                    </div>
+                  )}
                 </div>
                 
-                {/* Signature placeholder */}
+                {/* Signature - show uploaded signature or placeholder */}
                 <div className="flex justify-center">
-                  <div className="w-24 h-8 border border-gray-300 rounded flex items-center justify-center">
-                    <span className="text-gray-500 text-xs">Signature</span>
-                  </div>
+                  {state.signature ? (
+                    <img 
+                      src={URL.createObjectURL(state.signature)} 
+                      alt="Signature"
+                      className="w-24 h-8 object-contain"
+                    />
+                  ) : (
+                    <div className="w-24 h-8 border border-gray-300 rounded flex items-center justify-center">
+                      <span className="text-gray-500 text-xs">Signature</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
