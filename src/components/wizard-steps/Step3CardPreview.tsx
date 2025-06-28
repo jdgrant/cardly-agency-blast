@@ -14,19 +14,46 @@ const Step3CardPreview = () => {
   const selectedTemplate = mockTemplates.find(t => t.id === state.selectedTemplate);
   const currentMessage = state.customMessage || state.selectedMessage;
 
-  // Business rule for font sizing based on message length
-  const getMessageFontSize = (message: string) => {
-    if (!message) return 'text-sm';
+  // Business rule for splitting message at halfway point by character length
+  const formatMessageWithLineBreak = (message: string) => {
+    if (!message) return '';
     
-    const wordCount = message.split(' ').length;
+    const halfLength = Math.floor(message.length / 2);
+    const words = message.split(' ');
     
-    if (wordCount > 15) {
-      return 'text-lg';
-    } else if (wordCount > 8) {
-      return 'text-base';
-    } else {
-      return 'text-sm';
+    let characterCount = 0;
+    let splitIndex = 0;
+    
+    // Find the word closest to the halfway point
+    for (let i = 0; i < words.length; i++) {
+      const wordLength = words[i].length + (i > 0 ? 1 : 0); // +1 for space
+      
+      if (characterCount + wordLength >= halfLength) {
+        // Decide whether to split before or after this word based on which is closer to halfway
+        const beforeSplit = characterCount;
+        const afterSplit = characterCount + wordLength;
+        
+        splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
+        break;
+      }
+      
+      characterCount += wordLength;
     }
+    
+    // Only split if we have words on both sides and the message is long enough
+    if (splitIndex > 0 && splitIndex < words.length && message.length > 30) {
+      const firstLine = words.slice(0, splitIndex).join(' ');
+      const secondLine = words.slice(splitIndex).join(' ');
+      return (
+        <>
+          {firstLine}
+          <br />
+          {secondLine}
+        </>
+      );
+    }
+    
+    return message;
   };
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,8 +107,8 @@ const Step3CardPreview = () => {
               <div className="h-1/3 flex items-center justify-center mb-4">
                 <div className="text-center">
                   {currentMessage ? (
-                    <p className={`font-playfair text-gray-800 ${getMessageFontSize(currentMessage)} leading-relaxed`}>
-                      {currentMessage}
+                    <p className="font-playfair text-gray-800 text-base leading-relaxed">
+                      {formatMessageWithLineBreak(currentMessage)}
                     </p>
                   ) : (
                     <p className="text-gray-400 text-sm">
