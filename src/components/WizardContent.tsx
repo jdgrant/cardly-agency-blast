@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useWizard } from './WizardContext';
 import { Card, CardContent } from './ui/card';
@@ -47,7 +46,7 @@ const WizardContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white" style={{ backgroundColor: 'white' }}>
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -66,9 +65,9 @@ const WizardContent = () => {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8 bg-white">
         {/* Navigation */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 bg-white">
           <Button
             variant="outline"
             onClick={prevStep}
@@ -91,7 +90,7 @@ const WizardContent = () => {
 
         {/* Main Content */}
         <Card className="border-0 shadow-xl bg-white">
-          <CardContent className="p-8 lg:p-12">
+          <CardContent className="p-8 lg:p-12 bg-white">
             {renderStep()}
           </CardContent>
         </Card>
