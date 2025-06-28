@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,8 +48,9 @@ const Index = () => {
 
       {/* Hero Section */}
       <section 
-        className="relative bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 py-20 overflow-hidden"
+        className="relative py-20 overflow-hidden"
         style={{
+          backgroundColor: '#f8bdbd',
           backgroundImage: `url('/lovable-uploads/e1b821b2-d927-41ae-9eeb-5aeefb41c829.png')`,
           backgroundSize: 'auto 60%',
           backgroundPosition: 'right center',
