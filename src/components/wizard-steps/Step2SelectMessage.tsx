@@ -125,37 +125,39 @@ const Step2SelectMessage = () => {
         })}
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Template Preview - Left Side */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Selected Template</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedTemplate ? (
-              <div className="space-y-4">
-                <div className="aspect-[3/4] overflow-hidden rounded-lg border bg-gray-50">
-                  <img 
-                    src={selectedTemplate.preview_url} 
-                    alt={selectedTemplate.name}
-                    className="w-full h-full object-cover"
-                  />
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Template Preview - Left Side - Much Smaller */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Selected Template</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {selectedTemplate ? (
+                <div className="space-y-3">
+                  <div className="aspect-[3/4] max-w-48 mx-auto overflow-hidden rounded-lg border bg-gray-50">
+                    <img 
+                      src={selectedTemplate.preview_url} 
+                      alt={selectedTemplate.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-semibold text-gray-900 text-sm">{selectedTemplate.name}</h3>
+                    <p className="text-xs text-gray-600 mt-1">{selectedTemplate.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{selectedTemplate.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{selectedTemplate.description}</p>
+              ) : (
+                <div className="aspect-[3/4] max-w-48 mx-auto border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-500 text-sm">No template selected</p>
                 </div>
-              </div>
-            ) : (
-              <div className="aspect-[3/4] border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">No template selected</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-        {/* Message Selection - Right Side */}
-        <div className="space-y-6">
+        {/* Message Selection - Right Side - Takes up more space */}
+        <div className="lg:col-span-2 space-y-6">
           {/* Pre-written Messages */}
           <Card>
             <CardHeader>
