@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Check, Upload, Calendar, File } from "lucide-react";
+import { Check, Upload, Calendar, File, ImageIcon } from "lucide-react";
 
 const Index = () => {
   return (
@@ -74,7 +74,7 @@ const Index = () => {
           <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm hover:shadow-xl transition-shadow duration-200">
             <CardHeader className="text-center pb-4">
               <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Image className="w-6 h-6 text-purple-600" />
+                <ImageIcon className="w-6 h-6 text-purple-600" />
               </div>
               <CardTitle className="text-lg">Add Your Brand</CardTitle>
             </CardHeader>
