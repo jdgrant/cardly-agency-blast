@@ -1,22 +1,43 @@
 
-import React, { useState } from 'react';
-import { useWizard } from '../WizardContext';
+import React, { useState, useEffect } from 'react';
+import { useWizard, Template } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-
-const templates = [
-  { id: 'winter-wonderland', name: 'Winter Wonderland', preview: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300&h=400&fit=crop' },
-  { id: 'festive-gold', name: 'Festive Gold', preview: 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?w=300&h=400&fit=crop' },
-  { id: 'modern-minimal', name: 'Modern Minimal', preview: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=300&h=400&fit=crop' },
-  { id: 'classic-red', name: 'Classic Red', preview: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=300&h=400&fit=crop' },
-  { id: 'snowy-pine', name: 'Snowy Pine', preview: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=400&fit=crop' },
-  { id: 'elegant-navy', name: 'Elegant Navy', preview: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=300&h=400&fit=crop' },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Step1ChooseTemplate = () => {
   const { state, updateState, nextStep } = useWizard();
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [previewTemplate, setPreviewTemplate] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('templates')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      toast({
+        title: "Error loading templates",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTemplateSelect = (templateId: string) => {
     updateState({ selectedTemplate: templateId });
@@ -31,6 +52,25 @@ const Step1ChooseTemplate = () => {
   const selectedTemplate = templates.find(t => t.id === state.selectedTemplate);
   const previewTemplateData = templates.find(t => t.id === previewTemplate);
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Holiday Card Template</h2>
+          <p className="text-gray-600">Loading templates...</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-300 rounded-lg h-48 mb-4"></div>
+              <div className="bg-gray-300 h-4 rounded mb-2"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -38,7 +78,7 @@ const Step1ChooseTemplate = () => {
         <p className="text-gray-600">Select a design that represents your agency perfectly</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {templates.map((template) => (
           <Card 
             key={template.id}
@@ -52,7 +92,7 @@ const Step1ChooseTemplate = () => {
             <CardContent className="p-0">
               <div className="relative">
                 <img 
-                  src={template.preview} 
+                  src={template.preview_url} 
                   alt={template.name}
                   className="w-full h-48 object-cover rounded-t-lg"
                 />
@@ -77,6 +117,7 @@ const Step1ChooseTemplate = () => {
               </div>
               <div className="p-4">
                 <h3 className="font-semibold text-gray-900">{template.name}</h3>
+                <p className="text-sm text-gray-600 mt-1">{template.description}</p>
               </div>
             </CardContent>
           </Card>
@@ -103,7 +144,7 @@ const Step1ChooseTemplate = () => {
           {previewTemplateData && (
             <div className="flex justify-center">
               <img 
-                src={previewTemplateData.preview} 
+                src={previewTemplateData.preview_url} 
                 alt={previewTemplateData.name}
                 className="max-w-full h-auto rounded-lg"
               />

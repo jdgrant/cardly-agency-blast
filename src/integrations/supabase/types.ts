@@ -9,7 +9,134 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      client_records: {
+        Row: {
+          address: string
+          city: string
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          order_id: string | null
+          state: string
+          zip: string
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string
+          first_name: string
+          id?: string
+          last_name: string
+          order_id?: string | null
+          state: string
+          zip: string
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          order_id?: string | null
+          state?: string
+          zip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_records_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          card_quantity: number
+          client_count: number | null
+          created_at: string
+          csv_file_url: string | null
+          early_bird_discount: boolean | null
+          final_price: number
+          id: string
+          logo_url: string | null
+          mailing_window: string
+          postage_cost: number | null
+          postage_option: string
+          regular_price: number
+          signature_url: string | null
+          status: string | null
+          template_id: string
+          tier_name: string
+          updated_at: string
+        }
+        Insert: {
+          card_quantity: number
+          client_count?: number | null
+          created_at?: string
+          csv_file_url?: string | null
+          early_bird_discount?: boolean | null
+          final_price: number
+          id?: string
+          logo_url?: string | null
+          mailing_window: string
+          postage_cost?: number | null
+          postage_option?: string
+          regular_price: number
+          signature_url?: string | null
+          status?: string | null
+          template_id: string
+          tier_name: string
+          updated_at?: string
+        }
+        Update: {
+          card_quantity?: number
+          client_count?: number | null
+          created_at?: string
+          csv_file_url?: string | null
+          early_bird_discount?: boolean | null
+          final_price?: number
+          id?: string
+          logo_url?: string | null
+          mailing_window?: string
+          postage_cost?: number | null
+          postage_option?: string
+          regular_price?: number
+          signature_url?: string | null
+          status?: string | null
+          template_id?: string
+          tier_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          preview_url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id: string
+          name: string
+          preview_url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          preview_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
