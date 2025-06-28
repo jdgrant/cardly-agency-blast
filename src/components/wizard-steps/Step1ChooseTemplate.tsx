@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -273,34 +274,35 @@ const Step1ChooseTemplate = () => {
   const previewTemplateData = mockTemplates.find(t => t.id === previewTemplate);
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
+    <div className="space-y-6 bg-white">
+      <div className="text-center mb-8 bg-white">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Holiday Card Template</h2>
         <p className="text-gray-600">Select a design that represents your agency perfectly</p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-white">
         {mockTemplates.map((template) => (
           <Card 
             key={template.id}
-            className={`cursor-pointer transition-all duration-200 hover:shadow-lg bg-white ${
+            className={`cursor-pointer transition-all duration-200 hover:shadow-lg bg-white border border-gray-200 ${
               state.selectedTemplate === template.id 
                 ? 'ring-2 ring-blue-500 shadow-lg' 
                 : 'hover:shadow-md'
             }`}
             onClick={() => handleTemplateSelect(template.id)}
           >
-            <CardContent className="p-0">
-              <div className="relative">
+            <CardContent className="p-0 bg-white">
+              <div className="relative bg-white">
                 <img 
                   src={template.preview_url} 
                   alt={template.name}
                   className="w-full h-48 object-cover rounded-t-lg bg-white"
+                  style={{ backgroundColor: 'white' }}
                 />
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm"
+                  className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm border border-gray-200"
                   onClick={(e) => {
                     e.stopPropagation();
                     setPreviewTemplate(template.id);
@@ -316,7 +318,7 @@ const Step1ChooseTemplate = () => {
                   </div>
                 )}
               </div>
-              <div className="p-4 bg-white">
+              <div className="p-4 bg-white border-t border-gray-100">
                 <h3 className="font-semibold text-gray-900">{template.name}</h3>
                 <p className="text-sm text-gray-600 mt-1">{template.description}</p>
               </div>
@@ -325,7 +327,7 @@ const Step1ChooseTemplate = () => {
         ))}
       </div>
 
-      <div className="flex justify-between pt-6">
+      <div className="flex justify-between pt-6 bg-white">
         <div></div>
         <Button 
           onClick={handleContinue}
@@ -338,8 +340,8 @@ const Step1ChooseTemplate = () => {
 
       {/* Preview Modal */}
       <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl bg-white">
+          <DialogHeader className="bg-white">
             <DialogTitle>{previewTemplateData?.name}</DialogTitle>
           </DialogHeader>
           {previewTemplateData && (
@@ -347,7 +349,8 @@ const Step1ChooseTemplate = () => {
               <img 
                 src={previewTemplateData.preview_url} 
                 alt={previewTemplateData.name}
-                className="max-w-full h-auto rounded-lg bg-white"
+                className="max-w-full h-auto rounded-lg"
+                style={{ backgroundColor: 'white' }}
               />
             </div>
           )}
@@ -358,3 +361,4 @@ const Step1ChooseTemplate = () => {
 };
 
 export default Step1ChooseTemplate;
+
