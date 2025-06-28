@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -304,7 +303,6 @@ const mockTemplates = [
     preview_url: '/lovable-uploads/38553b11-9c4a-40d5-a2dd-709e10741e75.png',
     occasions: ['new-year']
   },
-  // New templates from uploaded images
   {
     id: 'template-43',
     name: 'Happy Hanukkah Blue',
@@ -360,13 +358,6 @@ const mockTemplates = [
     description: 'Inclusive holiday design celebrating both Christmas and Hanukkah',
     preview_url: '/lovable-uploads/9219f576-11e5-4037-bb12-11e47a367c1f.png',
     occasions: ['christmas', 'hanukkah']
-  },
-  {
-    id: 'template-51',
-    name: 'Happy Hanukkah Classic',
-    description: 'Traditional blue Hanukkah design with menorah and Star of David',
-    preview_url: '/lovable-uploads/7fc0421b-96d4-42ff-8bc8-32046bdf1def.png',
-    occasions: ['hanukkah']
   }
 ];
 
