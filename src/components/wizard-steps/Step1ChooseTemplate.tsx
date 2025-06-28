@@ -275,7 +275,7 @@ const Step1ChooseTemplate = () => {
   return (
     <div className="space-y-6 bg-white">
       <div className="text-center mb-8 bg-white">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Holiday Card Template</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Greeting Card Template</h2>
         <p className="text-gray-600">Select a design that represents your agency perfectly</p>
       </div>
 

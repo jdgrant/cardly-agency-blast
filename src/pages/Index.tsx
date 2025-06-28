@@ -15,7 +15,7 @@ const Index = () => {
     if (urlParams.get('success') === 'true') {
       toast({
         title: "Thank you for your order!",
-        description: "Your holiday card campaign has been submitted successfully. You'll receive a confirmation email within 24 hours.",
+        description: "Your greeting card campaign has been submitted successfully. You'll receive a confirmation email within 24 hours.",
       });
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -31,7 +31,7 @@ const Index = () => {
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-xl flex items-center justify-center">
               <span className="text-white font-bold text-lg">A</span>
             </div>
-            <span className="text-2xl font-bold text-gray-900">AgencyHolidayCards</span>
+            <span className="text-2xl font-bold text-gray-900">Agency Greeting Cards</span>
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/admin">
@@ -53,12 +53,12 @@ const Index = () => {
             <h1 className="text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Send Beautiful<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600">
-                Holiday Cards
+                Greeting Cards
               </span><br />
               to Every Client
             </h1>
             <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Professional holiday card service designed for agencies. Choose stunning designs, 
+              Professional greeting card service designed for agencies. Choose stunning designs, 
               add your branding, and we'll handle printing and mailing to your entire client list.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -99,7 +99,7 @@ const Index = () => {
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Get your holiday cards sent in 4 simple steps
+              Get your greeting cards sent in 4 simple steps
             </p>
           </div>
 
@@ -110,7 +110,7 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-3">1. Choose Template</h3>
               <p className="text-gray-600 leading-relaxed">
-                Select from our collection of professionally designed holiday card templates
+                Select from our collection of professionally designed greeting card templates
               </p>
             </div>
 
@@ -267,7 +267,7 @@ const Index = () => {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold text-white mb-6">Ready to Wow Your Clients?</h2>
           <p className="text-xl text-emerald-100 mb-10 max-w-2xl mx-auto">
-            Join hundreds of agencies who trust us with their holiday card campaigns. 
+            Join hundreds of agencies who trust us with their greeting card campaigns. 
             Get started in minutes with our simple wizard.
           </p>
           <Link to="/wizard">
@@ -287,10 +287,10 @@ const Index = () => {
               <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">A</span>
               </div>
-              <span className="text-xl font-bold">AgencyHolidayCards</span>
+              <span className="text-xl font-bold">Agency Greeting Cards</span>
             </div>
             <div className="text-gray-400 text-sm">
-              © 2024 AgencyHolidayCards.com - Professional Holiday Card Service
+              © 2024 AgencyGreetingCards.com - Professional Greeting Card Service
             </div>
           </div>
         </div>
