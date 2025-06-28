@@ -36,89 +36,84 @@ const Step3UploadAssets = () => {
   const currentMessage = state.customMessage || state.selectedMessage;
 
   return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Add Your Branding & Preview</h2>
-        <p className="text-gray-600">Upload your logo and signature, then see your personalized card preview</p>
-      </div>
-
-      {/* Card Preview Section - Side by Side */}
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Card Preview</h3>
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {/* Front of Card */}
-          <div>
-            <h4 className="text-center text-sm text-gray-600 mb-3 font-medium">Front of Card</h4>
-            <Card className="bg-gradient-to-br from-blue-50 to-purple-50">
-              <CardContent className="p-4">
-                <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative overflow-hidden">
-                  {selectedTemplate ? (
-                    <img 
-                      src={selectedTemplate.preview_url} 
-                      alt="Card front"
-                      className="w-full h-full object-cover rounded"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-red-100 to-green-100 rounded flex items-center justify-center">
-                      <p className="text-gray-500 text-center">Select a template<br />to see preview</p>
-                    </div>
-                  )}
-                  {/* Logo overlay */}
-                  {logoPreview && (
-                    <div className="absolute top-3 right-3 w-14 h-14 bg-white/90 rounded-lg p-2 shadow-sm">
-                      <img 
-                        src={logoPreview} 
-                        alt="Logo" 
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Inside of Card */}
-          <div>
-            <h4 className="text-center text-sm text-gray-600 mb-3 font-medium">Inside of Card</h4>
-            <Card className="bg-gradient-to-br from-green-50 to-blue-50">
-              <CardContent className="p-4">
-                <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative flex flex-col">
-                  {/* Message in top 1/3 */}
-                  <div className="h-1/3 flex items-center justify-center px-2">
-                    <div className="text-center max-w-full">
-                      {currentMessage ? (
-                        <p className="font-playfair text-gray-800 text-sm leading-relaxed italic">
-                          "{currentMessage}"
-                        </p>
-                      ) : (
-                        <p className="text-gray-400 text-sm">
-                          Select a message to see preview
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Empty middle space */}
-                  <div className="flex-1"></div>
-                  
-                  {/* Signature at bottom */}
-                  <div className="flex justify-end">
-                    {signaturePreview ? (
-                      <img 
-                        src={signaturePreview} 
-                        alt="Signature" 
-                        className="max-w-20 max-h-10 object-contain"
-                      />
-                    ) : (
-                      <div className="text-gray-400 text-xs">Your signature here</div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+    <div className="space-y-8">
+      {/* Card Preview Section - Front and Inside Side by Side */}
+      <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+        {/* Front of Card */}
+        <div className="text-center">
+          <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative overflow-hidden border">
+            {selectedTemplate ? (
+              <img 
+                src={selectedTemplate.preview_url} 
+                alt="Card front"
+                className="w-full h-full object-cover rounded"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-red-100 to-green-100 rounded flex items-center justify-center">
+                <p className="text-gray-500 text-center text-sm">Select a template<br />to see preview</p>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Inside of Card */}
+        <div className="text-center">
+          <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative flex flex-col border">
+            {/* Message in top 1/3 */}
+            <div className="h-1/3 flex items-center justify-center px-2">
+              <div className="text-center max-w-full">
+                {currentMessage ? (
+                  <p className="font-playfair text-gray-800 text-sm leading-relaxed">
+                    {currentMessage}
+                  </p>
+                ) : (
+                  <p className="text-gray-400 text-sm">
+                    Warmest wishes for a joyful<br />and restful holiday season.
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            {/* Bottom half with logo and signature */}
+            <div className="flex-1 flex flex-col justify-end space-y-4 pb-2">
+              {/* Logo placeholder/preview */}
+              <div className="flex justify-center">
+                {logoPreview ? (
+                  <img 
+                    src={logoPreview} 
+                    alt="Logo" 
+                    className="max-w-16 max-h-12 object-contain"
+                  />
+                ) : (
+                  <div className="w-16 h-8 bg-black rounded flex items-center justify-center">
+                    <span className="text-white text-xs font-medium">Logo</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Signature placeholder/preview */}
+              <div className="flex justify-center">
+                {signaturePreview ? (
+                  <img 
+                    src={signaturePreview} 
+                    alt="Signature" 
+                    className="max-w-20 max-h-8 object-contain"
+                  />
+                ) : (
+                  <div className="w-20 h-6 border border-gray-300 rounded flex items-center justify-center">
+                    <span className="text-gray-500 text-xs">Signature</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Title and Description */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Logo and Signature</h2>
+        <p className="text-gray-600">Add your agency's branding to personalize your cards</p>
       </div>
 
       {/* Upload Assets Section */}
@@ -224,13 +219,13 @@ const Step3UploadAssets = () => {
 
       <div className="flex justify-between pt-6">
         <Button variant="outline" onClick={prevStep}>
-          Back
+          Previous
         </Button>
         <Button 
           onClick={nextStep}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+          className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
         >
-          Continue
+          Next
         </Button>
       </div>
     </div>
