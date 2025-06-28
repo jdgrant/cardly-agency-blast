@@ -370,12 +370,10 @@ const Step1ChooseTemplate = () => {
 
   const handleTemplateSelect = (templateId: string) => {
     updateState({ selectedTemplate: templateId });
-  };
-
-  const handleContinue = () => {
-    if (state.selectedTemplate) {
+    // Automatically advance to next step when template is selected
+    setTimeout(() => {
       nextStep();
-    }
+    }, 300); // Small delay to show selection feedback
   };
 
   const handleOccasionToggle = (occasionId: string) => {
@@ -484,17 +482,6 @@ const Step1ChooseTemplate = () => {
             </CardContent>
           </Card>
         ))}
-      </div>
-
-      <div className="flex justify-between pt-6 bg-white">
-        <div></div>
-        <Button 
-          onClick={handleContinue}
-          disabled={!state.selectedTemplate}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-        >
-          Continue
-        </Button>
       </div>
 
       {/* Preview Modal */}
