@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-// Expanded template data with all 20 uploaded images
+// Expanded template data with all 30 uploaded images
 const mockTemplates = [
   {
     id: 'template-1',
@@ -126,6 +125,66 @@ const mockTemplates = [
     name: 'Merry Christmas Classic',
     description: 'Traditional Christmas greeting with ornaments',
     preview_url: '/lovable-uploads/0df324f2-fca3-48e1-a7e4-f7654a0cd1e9.png'
+  },
+  {
+    id: 'template-21',
+    name: 'Festive Reindeer',
+    description: 'Elegant coral design with festive reindeer and lights',
+    preview_url: '/lovable-uploads/481f64e4-7c7d-4e01-8768-084a0a232a5e.png'
+  },
+  {
+    id: 'template-22',
+    name: 'Rainbow Christmas Tree',
+    description: 'Modern colorful geometric Christmas tree',
+    preview_url: '/lovable-uploads/16959889-806a-430a-ae8b-6662ce95c578.png'
+  },
+  {
+    id: 'template-23',
+    name: 'Geometric Tree',
+    description: 'Contemporary design with geometric Christmas tree',
+    preview_url: '/lovable-uploads/1000fb99-0e75-4bb8-adb0-a85765f7e6d6.png'
+  },
+  {
+    id: 'template-24',
+    name: 'Happy New Year Pattern',
+    description: 'Modern geometric pattern with holiday elements',
+    preview_url: '/lovable-uploads/8652e290-f200-4789-b27e-d2747903d8f1.png'
+  },
+  {
+    id: 'template-25',
+    name: 'Happy Holidays Snowflakes',
+    description: 'Elegant design with colorful snowflakes and circles',
+    preview_url: '/lovable-uploads/b4db1c44-92b9-4b31-8fec-222edd74055d.png'
+  },
+  {
+    id: 'template-26',
+    name: 'JOY Christmas',
+    description: 'Bold typography design with Christmas tree',
+    preview_url: '/lovable-uploads/a89d69ab-08ec-4590-8ba3-20745fa974db.png'
+  },
+  {
+    id: 'template-27',
+    name: 'Joy Geometric',
+    description: 'Modern geometric pattern with JOY message',
+    preview_url: '/lovable-uploads/9d4b655c-c736-4288-a943-2c47d864214c.png'
+  },
+  {
+    id: 'template-28',
+    name: 'Retro Holiday Tree',
+    description: 'Vintage-style colorful Christmas tree design',
+    preview_url: '/lovable-uploads/8215d3f7-b9fe-496a-a21b-5fd79f848ee1.png'
+  },
+  {
+    id: 'template-29',
+    name: 'Minimalist Christmas',
+    description: 'Clean navy design with white Christmas trees',
+    preview_url: '/lovable-uploads/1f9187dc-651f-4769-a1ae-bca2f0c56afe.png'
+  },
+  {
+    id: 'template-30',
+    name: 'Elegant Christmas',
+    description: 'Sophisticated navy design with botanical elements',
+    preview_url: '/lovable-uploads/23bc8fab-f523-47fa-9ccd-631ca48edc03.png'
   }
 ];
 
