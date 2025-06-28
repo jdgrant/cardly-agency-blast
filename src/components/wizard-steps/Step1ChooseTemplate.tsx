@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -59,12 +60,6 @@ const mockTemplates = [
     name: 'Modern Navy',
     description: 'Sophisticated navy design with abstract elements',
     preview_url: '/lovable-uploads/359ed24a-2e1b-4f5b-a30a-b18384ab769c.png'
-  },
-  {
-    id: 'template-10',
-    name: 'Merry & Bright',
-    description: 'Light background with snowflake border',
-    preview_url: '/lovable-uploads/ccbe10cf-f23b-4d46-97d1-880e5cccbc8a.png'
   },
   {
     id: 'template-11',
@@ -288,7 +283,7 @@ const Step1ChooseTemplate = () => {
         {mockTemplates.map((template) => (
           <Card 
             key={template.id}
-            className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+            className={`cursor-pointer transition-all duration-200 hover:shadow-lg bg-white ${
               state.selectedTemplate === template.id 
                 ? 'ring-2 ring-blue-500 shadow-lg' 
                 : 'hover:shadow-md'
@@ -300,7 +295,7 @@ const Step1ChooseTemplate = () => {
                 <img 
                   src={template.preview_url} 
                   alt={template.name}
-                  className="w-full h-48 object-cover rounded-t-lg"
+                  className="w-full h-48 object-cover rounded-t-lg bg-white"
                 />
                 <Button
                   variant="secondary"
@@ -321,7 +316,7 @@ const Step1ChooseTemplate = () => {
                   </div>
                 )}
               </div>
-              <div className="p-4">
+              <div className="p-4 bg-white">
                 <h3 className="font-semibold text-gray-900">{template.name}</h3>
                 <p className="text-sm text-gray-600 mt-1">{template.description}</p>
               </div>
@@ -348,11 +343,11 @@ const Step1ChooseTemplate = () => {
             <DialogTitle>{previewTemplateData?.name}</DialogTitle>
           </DialogHeader>
           {previewTemplateData && (
-            <div className="flex justify-center">
+            <div className="flex justify-center bg-white p-4 rounded-lg">
               <img 
                 src={previewTemplateData.preview_url} 
                 alt={previewTemplateData.name}
-                className="max-w-full h-auto rounded-lg"
+                className="max-w-full h-auto rounded-lg bg-white"
               />
             </div>
           )}
