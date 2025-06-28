@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
-// Expanded template data with all 30 uploaded images
+// Expanded template data with all 40 uploaded images
 const mockTemplates = [
   {
     id: 'template-1',
@@ -185,6 +185,66 @@ const mockTemplates = [
     name: 'Elegant Christmas',
     description: 'Sophisticated navy design with botanical elements',
     preview_url: '/lovable-uploads/23bc8fab-f523-47fa-9ccd-631ca48edc03.png'
+  },
+  {
+    id: 'template-31',
+    name: 'Ornament Elegance',
+    description: 'Modern teal design with elegant Christmas ornaments',
+    preview_url: '/lovable-uploads/c2c85a6a-4fe3-4b24-83d4-8bef51ef7320.png'
+  },
+  {
+    id: 'template-32',
+    name: 'Geometric Forest',
+    description: 'Contemporary green design with geometric Christmas trees',
+    preview_url: '/lovable-uploads/0012c4e2-7885-452f-ba85-b26ca8bc9ed3.png'
+  },
+  {
+    id: 'template-33',
+    name: 'Holiday Wildlife',
+    description: 'Charming illustration with reindeer and winter gifts',
+    preview_url: '/lovable-uploads/2461302f-36b5-4101-b3c8-7e81b104cea7.png'
+  },
+  {
+    id: 'template-34',
+    name: 'Be Jolly Santa',
+    description: 'Whimsical Santa design with festive ornaments',
+    preview_url: '/lovable-uploads/05ffd764-82f5-4b71-9cb0-adfd17483982.png'
+  },
+  {
+    id: 'template-35',
+    name: 'Holiday Deer Duo',
+    description: 'Elegant design with decorative reindeer silhouettes',
+    preview_url: '/lovable-uploads/57f72615-5a69-4cf7-8b9e-e0ee2e3c38bd.png'
+  },
+  {
+    id: 'template-36',
+    name: 'Festive Pattern',
+    description: 'Vibrant green design with holiday symbols and stars',
+    preview_url: '/lovable-uploads/573b7e1e-d99f-478e-aa39-4625e435cf44.png'
+  },
+  {
+    id: 'template-37',
+    name: 'Colorblock Holidays',
+    description: 'Modern geometric pattern with bold holiday colors',
+    preview_url: '/lovable-uploads/4d86837d-418d-49d0-a84d-c1865edeb7a5.png'
+  },
+  {
+    id: 'template-38',
+    name: 'Merry Typography',
+    description: 'Bold typographic design with festive holly berries',
+    preview_url: '/lovable-uploads/54056ed4-a5a4-4e89-b9e2-418cae36adbc.png'
+  },
+  {
+    id: 'template-39',
+    name: 'Classic Ornaments',
+    description: 'Traditional design with hanging Christmas ornaments',
+    preview_url: '/lovable-uploads/c89f658a-8076-4240-ba9f-c182b4505552.png'
+  },
+  {
+    id: 'template-40',
+    name: 'Wishing You Joy',
+    description: 'Elegant green design with holly berries and festive script',
+    preview_url: '/lovable-uploads/763fd7b1-12ad-48c4-88f4-fc21d684a8b9.png'
   }
 ];
 
