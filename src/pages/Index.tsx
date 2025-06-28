@@ -46,66 +46,56 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 py-20">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left side - Text content */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-                Send Beautiful<br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600">
-                  Greeting Cards
-                </span><br />
-                to Every Client
-              </h1>
-              <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
-                Professional greeting card service designed for agencies. Choose stunning designs, 
-                add your branding, and we'll handle printing and mailing to your entire client list.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center mb-12">
-                <Link to="/wizard">
-                  <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200">
-                    Start Your Campaign
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <span>No setup fees • Fast turnaround</span>
-                </div>
-              </div>
-              
-              {/* Trust Indicators */}
-              <div className="flex items-center justify-center lg:justify-start space-x-8 text-gray-500">
-                <div className="flex items-center space-x-2">
-                  <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                  <span className="text-sm font-medium">4.9/5 Rating</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Users className="w-5 h-5 text-blue-500" />
-                  <span className="text-sm font-medium">500+ Agencies</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5 text-emerald-500" />
-                  <span className="text-sm font-medium">Secure & Private</span>
-                </div>
+      <section 
+        className="relative bg-gradient-to-br from-emerald-50 via-blue-50 to-indigo-50 py-20 overflow-hidden"
+        style={{
+          backgroundImage: `url('/lovable-uploads/e1b821b2-d927-41ae-9eeb-5aeefb41c829.png')`,
+          backgroundSize: 'auto 60%',
+          backgroundPosition: 'right center',
+          backgroundRepeat: 'no-repeat',
+          backgroundBlendMode: 'soft-light'
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-transparent"></div>
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="max-w-3xl">
+            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+              Send Beautiful<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600">
+                Greeting Cards
+              </span><br />
+              to Every Client
+            </h1>
+            <p className="text-xl text-gray-600 mb-10 max-w-2xl leading-relaxed">
+              Professional greeting card service designed for agencies. Choose stunning designs, 
+              add your branding, and we'll handle printing and mailing to your entire client list.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 items-start mb-12">
+              <Link to="/wizard">
+                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200">
+                  Start Your Campaign
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
+                <span>No setup fees • Fast turnaround</span>
               </div>
             </div>
-
-            {/* Right side - Greeting card image */}
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative">
-                <img 
-                  src="/lovable-uploads/e1b821b2-d927-41ae-9eeb-5aeefb41c829.png" 
-                  alt="Professional Holiday Greeting Card Example"
-                  className="max-w-md w-full h-auto rounded-2xl shadow-2xl transform rotate-3 hover:rotate-0 transition-transform duration-300"
-                />
-                <div className="absolute -bottom-4 -left-4 bg-white rounded-lg p-3 shadow-lg">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                    <span className="text-sm font-medium text-gray-700">Premium Quality</span>
-                  </div>
-                </div>
+            
+            {/* Trust Indicators */}
+            <div className="flex items-center space-x-8 text-gray-500">
+              <div className="flex items-center space-x-2">
+                <Star className="w-5 h-5 text-yellow-400 fill-current" />
+                <span className="text-sm font-medium">4.9/5 Rating</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                <span className="text-sm font-medium">500+ Agencies</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Shield className="w-5 h-5 text-emerald-500" />
+                <span className="text-sm font-medium">Secure & Private</span>
               </div>
             </div>
           </div>
