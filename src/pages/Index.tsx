@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,7 +54,6 @@ const Index = () => {
           backgroundSize: 'auto 60%',
           backgroundPosition: 'right center',
           backgroundRepeat: 'no-repeat',
-          backgroundBlendMode: 'soft-light'
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-transparent"></div>
