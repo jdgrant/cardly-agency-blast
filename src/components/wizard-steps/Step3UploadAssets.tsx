@@ -44,74 +44,77 @@ const Step3UploadAssets = () => {
       </div>
 
       {/* Card Preview Section - Front and Inside Side by Side */}
-      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
-        {/* Front of Card */}
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Card Front</h3>
-          <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative overflow-hidden border">
-            {selectedTemplate ? (
-              <img 
-                src={selectedTemplate.preview_url} 
-                alt="Card front"
-                className="w-full h-full object-cover rounded"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-red-100 to-green-100 rounded flex items-center justify-center">
-                <p className="text-gray-500 text-center text-sm">Select a template<br />to see preview</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Inside of Card */}
-        <div className="text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Card Inside</h3>
-          <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-6 relative flex flex-col border">
-            {/* Message in top 1/3 */}
-            <div className="h-1/3 flex items-center justify-center px-2 mb-4">
-              <div className="text-center max-w-full">
-                {currentMessage ? (
-                  <p className="font-playfair text-gray-800 text-sm leading-relaxed">
-                    {currentMessage}
-                  </p>
-                ) : (
-                  <p className="text-gray-400 text-sm">
-                    Warmest wishes for a joyful<br />and restful holiday season.
-                  </p>
-                )}
-              </div>
+      <div className="mb-12">
+        <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">Preview Your Cards</h3>
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Front of Card */}
+          <div className="text-center">
+            <h4 className="text-lg font-medium text-gray-700 mb-4">Card Front</h4>
+            <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative overflow-hidden border-2 border-gray-200">
+              {selectedTemplate ? (
+                <img 
+                  src={selectedTemplate.preview_url} 
+                  alt="Card front"
+                  className="w-full h-full object-cover rounded"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-red-100 to-green-100 rounded flex items-center justify-center">
+                  <p className="text-gray-500 text-center text-sm">Select a template<br />to see preview</p>
+                </div>
+              )}
             </div>
-            
-            {/* Bottom half with logo and signature */}
-            <div className="flex-1 flex flex-col justify-center space-y-6">
-              {/* Logo placeholder/preview */}
-              <div className="flex justify-center">
-                {logoPreview ? (
-                  <img 
-                    src={logoPreview} 
-                    alt="Logo" 
-                    className="max-w-20 max-h-16 object-contain"
-                  />
-                ) : (
-                  <div className="w-20 h-12 bg-black rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-medium">Logo</span>
-                  </div>
-                )}
+          </div>
+
+          {/* Inside of Card */}
+          <div className="text-center">
+            <h4 className="text-lg font-medium text-gray-700 mb-4">Card Inside</h4>
+            <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-6 relative flex flex-col border-2 border-gray-200">
+              {/* Message in top 1/3 */}
+              <div className="h-1/3 flex items-center justify-center px-2 mb-4">
+                <div className="text-center max-w-full">
+                  {currentMessage ? (
+                    <p className="font-playfair text-gray-800 text-sm leading-relaxed">
+                      {currentMessage}
+                    </p>
+                  ) : (
+                    <p className="text-gray-400 text-sm">
+                      Warmest wishes for a joyful<br />and restful holiday season.
+                    </p>
+                  )}
+                </div>
               </div>
               
-              {/* Signature placeholder/preview */}
-              <div className="flex justify-center">
-                {signaturePreview ? (
-                  <img 
-                    src={signaturePreview} 
-                    alt="Signature" 
-                    className="max-w-24 max-h-10 object-contain"
-                  />
-                ) : (
-                  <div className="w-24 h-8 border border-gray-300 rounded flex items-center justify-center">
-                    <span className="text-gray-500 text-xs">Signature</span>
-                  </div>
-                )}
+              {/* Bottom half with logo and signature */}
+              <div className="flex-1 flex flex-col justify-center space-y-6">
+                {/* Logo placeholder/preview */}
+                <div className="flex justify-center">
+                  {logoPreview ? (
+                    <img 
+                      src={logoPreview} 
+                      alt="Logo" 
+                      className="max-w-20 max-h-16 object-contain"
+                    />
+                  ) : (
+                    <div className="w-20 h-12 bg-black rounded flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">LOGO</span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Signature placeholder/preview */}
+                <div className="flex justify-center">
+                  {signaturePreview ? (
+                    <img 
+                      src={signaturePreview} 
+                      alt="Signature" 
+                      className="max-w-24 max-h-10 object-contain"
+                    />
+                  ) : (
+                    <div className="w-24 h-8 border border-gray-300 rounded flex items-center justify-center">
+                      <span className="text-gray-500 text-xs">Signature</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
