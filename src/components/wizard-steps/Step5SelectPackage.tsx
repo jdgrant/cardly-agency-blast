@@ -33,9 +33,10 @@ const Step5SelectPackage = () => {
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         {pricingTiers.map((tier) => {
           const isSelected = state.selectedTier?.name === tier.name;
-          const finalPrice = state.earlyBirdActive ? tier.earlyBirdPrice : tier.regularPrice;
-          const savings = tier.regularPrice - tier.earlyBirdPrice;
-          const totalWithPostage = finalPrice + (postageAdditionalCost * tier.quantity);
+          const regularPiecePrice = tier.regularPrice / tier.quantity;
+          const earlyBirdPiecePrice = tier.earlyBirdPrice / tier.quantity;
+          const currentPiecePrice = state.earlyBirdActive ? earlyBirdPiecePrice : regularPiecePrice;
+          const totalWithPostage = (currentPiecePrice + postageAdditionalCost) * tier.quantity;
 
           return (
             <Card 
@@ -48,24 +49,25 @@ const Step5SelectPackage = () => {
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-lg">{tier.name}</CardTitle>
                 <div className="text-3xl font-bold text-gray-900">
-                  ${finalPrice.toLocaleString()}
+                  ${currentPiecePrice.toFixed(2)}
                 </div>
+                <div className="text-sm text-gray-600">per card</div>
                 {state.earlyBirdActive && (
                   <div className="space-y-1">
                     <div className="text-sm text-gray-500 line-through">
-                      ${tier.regularPrice.toLocaleString()}
+                      ${regularPiecePrice.toFixed(2)} each
                     </div>
                     <div className="text-sm text-green-600 font-medium">
-                      Save ${savings.toLocaleString()}
+                      Save ${(regularPiecePrice - earlyBirdPiecePrice).toFixed(2)} per card
                     </div>
                   </div>
                 )}
-                <div className="text-sm text-gray-600">
-                  {tier.quantity} cards
+                <div className="text-lg font-semibold text-blue-600">
+                  {tier.quantity} cards total
                 </div>
                 {postageAdditionalCost > 0 && (
                   <div className="text-xs text-gray-500">
-                    + ${(postageAdditionalCost * tier.quantity).toFixed(2)} First-Class postage
+                    + ${postageAdditionalCost.toFixed(2)} First-Class postage per card
                   </div>
                 )}
               </CardHeader>
@@ -104,7 +106,7 @@ const Step5SelectPackage = () => {
                 {postageAdditionalCost > 0 && (
                   <div className="mt-4 pt-3 border-t border-gray-200">
                     <div className="text-sm font-medium text-gray-900">
-                      Total: ${totalWithPostage.toLocaleString()}
+                      Total with postage: ${totalWithPostage.toLocaleString()}
                     </div>
                   </div>
                 )}
