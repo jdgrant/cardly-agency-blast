@@ -38,27 +38,27 @@ const Step3UploadAssets = () => {
   return (
     <div className="space-y-8">
       {/* Title and Description */}
-      <div className="text-center mb-8">
+      <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Logo and Signature</h2>
         <p className="text-gray-600">Add your agency's branding to personalize your cards</p>
       </div>
 
-      {/* Card Preview Section - Front and Inside Side by Side */}
-      <div className="mb-12">
+      {/* Card Preview Section */}
+      <div className="w-full">
         <h3 className="text-xl font-semibold text-gray-900 mb-6 text-center">Preview Your Cards</h3>
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Front of Card */}
           <div className="text-center">
             <h4 className="text-lg font-medium text-gray-700 mb-4">Card Front</h4>
-            <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative overflow-hidden border-2 border-gray-200">
+            <div className="aspect-[3/4] bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-hidden">
               {selectedTemplate ? (
                 <img 
                   src={selectedTemplate.preview_url} 
                   alt="Card front"
-                  className="w-full h-full object-cover rounded"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-red-100 to-green-100 rounded flex items-center justify-center">
+                <div className="w-full h-full bg-gradient-to-br from-red-100 to-green-100 flex items-center justify-center">
                   <p className="text-gray-500 text-center text-sm">Select a template<br />to see preview</p>
                 </div>
               )}
@@ -68,10 +68,10 @@ const Step3UploadAssets = () => {
           {/* Inside of Card */}
           <div className="text-center">
             <h4 className="text-lg font-medium text-gray-700 mb-4">Card Inside</h4>
-            <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-6 relative flex flex-col border-2 border-gray-200">
+            <div className="aspect-[3/4] bg-white rounded-lg shadow-lg border-2 border-gray-200 p-6 relative flex flex-col">
               {/* Message in top 1/3 */}
-              <div className="h-1/3 flex items-center justify-center px-2 mb-4">
-                <div className="text-center max-w-full">
+              <div className="h-1/3 flex items-center justify-center mb-4">
+                <div className="text-center">
                   {currentMessage ? (
                     <p className="font-playfair text-gray-800 text-sm leading-relaxed">
                       {currentMessage}
