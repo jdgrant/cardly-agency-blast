@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -54,7 +53,7 @@ const mockTemplates = [
     id: 'template-8',
     name: 'Winter Story',
     description: 'Blue winter scene with Christmas tree',
-    preview_url: '/lovable-uploads/ab3b378f-82b6-41fb-ab61-0ccefe9be59e.png'
+    preview_url: '/lovable-uploads/3498a312-1399-4642-bbc1-23489b9bcc4d.png'
   },
   {
     id: 'template-9',
@@ -64,9 +63,9 @@ const mockTemplates = [
   },
   {
     id: 'template-11',
-    name: 'Merry & Bright Snowflakes',
-    description: 'Elegant beige design with blue snowflakes',
-    preview_url: '/lovable-uploads/449019ff-fa63-4453-b187-dea0a98ce376.png'
+    name: 'Christmas Penguin',
+    description: 'Cute penguin with Christmas lights',
+    preview_url: '/lovable-uploads/c5aa71c0-e8a0-4223-bd76-40da834b1cdc.png'
   },
   {
     id: 'template-12',
@@ -82,51 +81,51 @@ const mockTemplates = [
   },
   {
     id: 'template-14',
-    name: 'Christmas Penguin',
-    description: 'Cute penguin with Christmas lights',
-    preview_url: '/lovable-uploads/3fc9d0d1-5cda-41e1-a1c5-edc35642161b.png'
+    name: 'Holiday Bear',
+    description: 'Adorable bear in festive winter sweater',
+    preview_url: '/lovable-uploads/f6fcf785-4b5f-472b-85c9-0c9bc03b95a2.png'
   },
   {
     id: 'template-15',
-    name: 'Holiday Bear',
-    description: 'Adorable bear in festive winter sweater',
-    preview_url: '/lovable-uploads/5f758811-9dad-4b62-a29c-4977b7cf1129.png'
+    name: 'Santa & Reindeer',
+    description: 'Classic Santa with reindeer in winter scene',
+    preview_url: '/lovable-uploads/35a20383-2af5-4567-a9de-61e8f9e5769c.png'
   },
   {
     id: 'template-16',
-    name: 'Santa & Reindeer',
-    description: 'Classic Santa with reindeer in winter scene',
-    preview_url: '/lovable-uploads/6544f16d-4367-4130-ac09-a7304e0da5b4.png'
+    name: 'Be Merry & Bright',
+    description: 'Cheerful yellow design with festive berries',
+    preview_url: '/lovable-uploads/be90f913-fa55-4d78-9b89-3989c0493ee3.png'
   },
   {
     id: 'template-17',
-    name: 'Be Merry & Bright',
-    description: 'Cheerful yellow design with festive berries',
-    preview_url: '/lovable-uploads/49b49a47-9cb3-4dea-9681-99c431cdd9d4.png'
+    name: 'Warm Wishes',
+    description: 'Cozy orange design with holiday foliage',
+    preview_url: '/lovable-uploads/9f51f7b4-3bb5-443c-b549-3e169e01204e.png'
   },
   {
     id: 'template-18',
-    name: 'Warm Wishes',
-    description: 'Cozy orange design with holiday foliage',
-    preview_url: '/lovable-uploads/b86b6ae0-bf14-4082-b945-bfc374cf7e74.png'
+    name: 'Happy Holidays Ornaments',
+    description: 'Elegant design with ornaments and snowflakes',
+    preview_url: '/lovable-uploads/66db12bd-1d65-4797-a8c0-dd1e77b1aa31.png'
   },
   {
     id: 'template-19',
-    name: 'Happy Holidays Ornaments',
-    description: 'Elegant design with ornaments and snowflakes',
-    preview_url: '/lovable-uploads/475e2fdc-9459-4806-a636-860b23fa4b5e.png'
+    name: 'Merry Christmas Classic',
+    description: 'Traditional Christmas greeting with ornaments',
+    preview_url: '/lovable-uploads/3d89fde9-f969-40b2-942f-4f8416e3accc.png'
   },
   {
     id: 'template-20',
-    name: 'Merry Christmas Classic',
-    description: 'Traditional Christmas greeting with ornaments',
-    preview_url: '/lovable-uploads/0df324f2-fca3-48e1-a7e4-f7654a0cd1e9.png'
+    name: 'Festive Reindeer',
+    description: 'Elegant coral design with festive reindeer and lights',
+    preview_url: '/lovable-uploads/cf4deb7e-b260-41ed-bc93-7c9f3b69a6b9.png'
   },
   {
     id: 'template-21',
-    name: 'Festive Reindeer',
-    description: 'Elegant coral design with festive reindeer and lights',
-    preview_url: '/lovable-uploads/481f64e4-7c7d-4e01-8768-084a0a232a5e.png'
+    name: 'Happy Holidays Snowflakes',
+    description: 'Modern geometric pattern with holiday elements',
+    preview_url: '/lovable-uploads/1933c517-f886-496f-8d3e-52d9fc80e756.png'
   },
   {
     id: 'template-22',
@@ -148,7 +147,7 @@ const mockTemplates = [
   },
   {
     id: 'template-25',
-    name: 'Happy Holidays Snowflakes',
+    name: 'Colorful Snowflakes',
     description: 'Elegant design with colorful snowflakes and circles',
     preview_url: '/lovable-uploads/b4db1c44-92b9-4b31-8fec-222edd74055d.png'
   },
@@ -361,4 +360,3 @@ const Step1ChooseTemplate = () => {
 };
 
 export default Step1ChooseTemplate;
-
