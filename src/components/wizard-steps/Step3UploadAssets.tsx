@@ -37,10 +37,17 @@ const Step3UploadAssets = () => {
 
   return (
     <div className="space-y-8">
+      {/* Title and Description */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Logo and Signature</h2>
+        <p className="text-gray-600">Add your agency's branding to personalize your cards</p>
+      </div>
+
       {/* Card Preview Section - Front and Inside Side by Side */}
-      <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mb-8">
         {/* Front of Card */}
         <div className="text-center">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Card Front</h3>
           <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative overflow-hidden border">
             {selectedTemplate ? (
               <img 
@@ -58,9 +65,10 @@ const Step3UploadAssets = () => {
 
         {/* Inside of Card */}
         <div className="text-center">
-          <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-4 relative flex flex-col border">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Card Inside</h3>
+          <div className="aspect-[3/4] bg-white rounded-lg shadow-lg p-6 relative flex flex-col border">
             {/* Message in top 1/3 */}
-            <div className="h-1/3 flex items-center justify-center px-2">
+            <div className="h-1/3 flex items-center justify-center px-2 mb-4">
               <div className="text-center max-w-full">
                 {currentMessage ? (
                   <p className="font-playfair text-gray-800 text-sm leading-relaxed">
@@ -75,17 +83,17 @@ const Step3UploadAssets = () => {
             </div>
             
             {/* Bottom half with logo and signature */}
-            <div className="flex-1 flex flex-col justify-end space-y-4 pb-2">
+            <div className="flex-1 flex flex-col justify-center space-y-6">
               {/* Logo placeholder/preview */}
               <div className="flex justify-center">
                 {logoPreview ? (
                   <img 
                     src={logoPreview} 
                     alt="Logo" 
-                    className="max-w-16 max-h-12 object-contain"
+                    className="max-w-20 max-h-16 object-contain"
                   />
                 ) : (
-                  <div className="w-16 h-8 bg-black rounded flex items-center justify-center">
+                  <div className="w-20 h-12 bg-black rounded flex items-center justify-center">
                     <span className="text-white text-xs font-medium">Logo</span>
                   </div>
                 )}
@@ -97,10 +105,10 @@ const Step3UploadAssets = () => {
                   <img 
                     src={signaturePreview} 
                     alt="Signature" 
-                    className="max-w-20 max-h-8 object-contain"
+                    className="max-w-24 max-h-10 object-contain"
                   />
                 ) : (
-                  <div className="w-20 h-6 border border-gray-300 rounded flex items-center justify-center">
+                  <div className="w-24 h-8 border border-gray-300 rounded flex items-center justify-center">
                     <span className="text-gray-500 text-xs">Signature</span>
                   </div>
                 )}
@@ -108,12 +116,6 @@ const Step3UploadAssets = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Title and Description */}
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Logo and Signature</h2>
-        <p className="text-gray-600">Add your agency's branding to personalize your cards</p>
       </div>
 
       {/* Upload Assets Section */}
