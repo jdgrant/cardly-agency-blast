@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -174,57 +175,63 @@ const Index = () => {
               { name: 'Growth', quantity: 500, regular: 1375, earlyBird: 1168.75, popular: true },
               { name: 'Agency Elite', quantity: 1000, regular: 2500, earlyBird: 2125, popular: false },
               { name: 'Agency Pro', quantity: 2000, regular: 4500, earlyBird: 3825, popular: false },
-            ].map((tier) => (
-              <Card key={tier.name} className={`relative border-0 shadow-lg hover:shadow-xl transition-shadow duration-200 ${tier.popular ? 'ring-2 ring-emerald-500 scale-105' : ''}`}>
-                {tier.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-emerald-600 text-white px-4 py-1 rounded-full text-sm font-medium">
-                      Most Popular
+            ].map((tier) => {
+              const regularPiecePrice = tier.regular / tier.quantity;
+              const earlyBirdPiecePrice = tier.earlyBird / tier.quantity;
+              
+              return (
+                <Card key={tier.name} className={`relative border-0 shadow-lg hover:shadow-xl transition-shadow duration-200 ${tier.popular ? 'ring-2 ring-emerald-500 scale-105' : ''}`}>
+                  {tier.popular && (
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                      <div className="bg-emerald-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                        Most Popular
+                      </div>
                     </div>
-                  </div>
-                )}
-                <CardHeader className="text-center pb-4">
-                  <CardTitle className="text-xl font-bold">{tier.name}</CardTitle>
-                  <div className="text-4xl font-bold text-gray-900 mb-2">
-                    ${tier.earlyBird.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-500 line-through mb-1">
-                    ${tier.regular.toLocaleString()}
-                  </div>
-                  <div className="text-sm text-emerald-600 font-medium mb-4">
-                    Save ${(tier.regular - tier.earlyBird).toLocaleString()}
-                  </div>
-                  <div className="text-lg text-gray-700 font-medium">
-                    {tier.quantity} cards
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center space-x-3">
-                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <span className="text-sm text-gray-600">Premium cardstock</span>
+                  )}
+                  <CardHeader className="text-center pb-4">
+                    <CardTitle className="text-xl font-bold">{tier.name}</CardTitle>
+                    <div className="text-4xl font-bold text-gray-900 mb-2">
+                      ${earlyBirdPiecePrice.toFixed(2)}
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <span className="text-sm text-gray-600">Professional printing</span>
+                    <div className="text-sm text-gray-600">per card</div>
+                    <div className="text-sm text-gray-500 line-through mb-1">
+                      ${regularPiecePrice.toFixed(2)} each
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <span className="text-sm text-gray-600">Custom branding</span>
+                    <div className="text-sm text-emerald-600 font-medium mb-4">
+                      Save ${(regularPiecePrice - earlyBirdPiecePrice).toFixed(2)} per card
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <span className="text-sm text-gray-600">Postage included</span>
+                    <div className="text-lg font-semibold text-blue-600">
+                      {tier.quantity} cards total
                     </div>
-                  </div>
-                  <Link to="/wizard">
-                    <Button className={`w-full ${tier.popular ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-lg`}>
-                      Get Started
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">Premium cardstock</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">Professional printing</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">Custom branding</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                        <span className="text-sm text-gray-600">Postage included</span>
+                      </div>
+                    </div>
+                    <Link to="/wizard">
+                      <Button className={`w-full ${tier.popular ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-lg`}>
+                        Get Started
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
