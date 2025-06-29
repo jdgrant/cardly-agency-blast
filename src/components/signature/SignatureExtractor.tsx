@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Wand2, Download, FileText, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { createClient } from '@/integrations/supabase/client';
 import FilePreview from './FilePreview';
 
 interface SignatureExtractorProps {
@@ -15,6 +16,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
   const [extractedSignature, setExtractedSignature] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -61,26 +63,32 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
 
     setIsProcessing(true);
     try {
-      const formData = new FormData();
-      formData.append('file', uploadedFile);
-      formData.append('fileType', uploadedFile.type);
+      // Convert file to base64 for the edge function
+      const arrayBuffer = await uploadedFile.arrayBuffer();
+      const base64File = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-      const response = await fetch('/api/extract-signature', {
-        method: 'POST',
-        body: formData,
+      console.log('Calling extract-signature function...');
+      
+      const { data, error } = await supabase.functions.invoke('extract-signature', {
+        body: {
+          file: base64File,
+          fileType: uploadedFile.type,
+          fileName: uploadedFile.name
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to extract signature');
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw new Error(`Function call failed: ${error.message}`);
       }
 
-      const result = await response.json();
+      console.log('Function response:', data);
       
-      if (result.signatureImage) {
-        setExtractedSignature(result.signatureImage);
+      if (data.signatureImage) {
+        setExtractedSignature(data.signatureImage);
         
         // Convert base64 to blob for the parent component
-        const byteCharacters = atob(result.signatureImage.split(',')[1]);
+        const byteCharacters = atob(data.signatureImage.split(',')[1]);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
@@ -94,12 +102,14 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           title: "Signature Extracted!",
           description: "Your signature has been successfully extracted and cleaned.",
         });
+      } else {
+        throw new Error('No signature image returned from AI extraction');
       }
     } catch (error) {
       console.error('Error extracting signature:', error);
       toast({
         title: "Extraction Failed",
-        description: "Failed to extract signature. Please try again or upload a different file.",
+        description: `Failed to extract signature: ${error.message}. Please try again or upload a different file.`,
         variant: "destructive",
       });
     } finally {

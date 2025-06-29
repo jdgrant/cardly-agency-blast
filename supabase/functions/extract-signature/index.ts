@@ -15,9 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File;
-    const fileType = formData.get('fileType') as string;
+    const { file, fileType, fileName } = await req.json();
     
     if (!file) {
       return new Response(JSON.stringify({ error: 'No file provided' }), {
@@ -26,12 +24,8 @@ serve(async (req) => {
       });
     }
 
-    console.log(`Processing ${fileType} file: ${file.name}`);
+    console.log(`Processing ${fileType} file: ${fileName}`);
 
-    // Convert file to base64 for OpenAI
-    const arrayBuffer = await file.arrayBuffer();
-    const base64File = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    
     // Determine the media type for OpenAI
     let mediaType = 'image/jpeg';
     if (fileType === 'application/pdf') {
@@ -66,7 +60,7 @@ serve(async (req) => {
               {
                 type: 'image_url',
                 image_url: {
-                  url: `data:${mediaType};base64,${base64File}`
+                  url: `data:${mediaType};base64,${file}`
                 }
               }
             ]
