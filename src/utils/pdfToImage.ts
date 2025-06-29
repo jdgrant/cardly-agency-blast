@@ -1,62 +1,52 @@
 
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Set worker to null to use the fallback worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+import { supabase } from '@/integrations/supabase/client';
 
 export const convertPdfToImage = async (file: File): Promise<File> => {
   try {
+    // Convert file to base64 for the edge function
     const arrayBuffer = await file.arrayBuffer();
+    const base64File = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+    console.log('Converting PDF server-side...');
     
-    // Configure PDF.js to not use a worker (fallback mode)
-    const loadingTask = pdfjsLib.getDocument({
-      data: arrayBuffer,
-      useWorkerFetch: false,
-      isEvalSupported: false,
-      useSystemFonts: true
+    const { data, error } = await supabase.functions.invoke('convert-pdf-to-image', {
+      body: {
+        file: base64File,
+        fileName: file.name
+      }
     });
+
+    if (error) {
+      console.error('PDF conversion error:', error);
+      throw new Error(`PDF conversion failed: ${error.message}`);
+    }
+
+    if (!data.imageData) {
+      throw new Error('No image data returned from conversion');
+    }
+
+    // Convert base64 back to File
+    const base64Data = data.imageData.split(',')[1];
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
     
-    const pdf = await loadingTask.promise;
-    
-    // Get the first page
-    const page = await pdf.getPage(1);
-    
-    // Set up canvas for rendering
-    const scale = 2.0; // Higher scale for better quality
-    const viewport = page.getViewport({ scale });
-    
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    
-    if (!context) {
-      throw new Error('Could not get canvas context');
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: 'image/png' });
     
-    // Render the page
-    await page.render({
-      canvasContext: context,
-      viewport: viewport
-    }).promise;
-    
-    // Convert canvas to blob
-    return new Promise((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const imageFile = new File([blob], file.name.replace('.pdf', '.png'), {
-            type: 'image/png',
-            lastModified: Date.now()
-          });
-          resolve(imageFile);
-        } else {
-          reject(new Error('Failed to convert canvas to blob'));
-        }
-      }, 'image/png', 0.95);
+    const imageFile = new File([blob], data.fileName || file.name.replace('.pdf', '.png'), {
+      type: 'image/png',
+      lastModified: Date.now()
     });
+
+    console.log('PDF converted successfully server-side');
+    return imageFile;
+    
   } catch (error) {
-    console.error('Error converting PDF to image:', error);
+    console.error('Error in PDF conversion:', error);
     throw new Error(`Failed to convert PDF: ${error.message}`);
   }
 };
