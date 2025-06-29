@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Wand2, Download, Camera, FileText } from 'lucide-react';
+import { Upload, Wand2, Download, FileText, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SignatureExtractorProps {
@@ -24,7 +24,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         setUploadedFile(file);
         setExtractedSignature(null);
         
-        const fileType = file.type.startsWith('image/') ? 'photo' : 'PDF';
+        const fileType = file.type.startsWith('image/') ? 'image' : 'PDF';
         toast({
           title: `${fileType} Uploaded`,
           description: "Ready to extract signature. Click 'Extract Signature' to process.",
@@ -103,17 +103,17 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
     if (uploadedFile.type === 'application/pdf') {
       return <FileText className="mx-auto h-8 w-8 text-red-500 mb-3" />;
     } else {
-      return <Camera className="mx-auto h-8 w-8 text-blue-500 mb-3" />;
+      return <Image className="mx-auto h-8 w-8 text-blue-500 mb-3" />;
     }
   };
 
   const getFileDescription = () => {
-    if (!uploadedFile) return 'Upload your signature template PDF or take a photo';
+    if (!uploadedFile) return 'Upload your signature template or image file';
     
     if (uploadedFile.type === 'application/pdf') {
       return `PDF: ${uploadedFile.name}`;
     } else {
-      return `Photo: ${uploadedFile.name}`;
+      return `Image: ${uploadedFile.name}`;
     }
   };
 
@@ -145,7 +145,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
               {getFileDescription()}
             </p>
             <p className="text-xs text-gray-500">PDF, JPG, PNG, HEIC files up to 10MB</p>
-            <p className="text-xs text-gray-400">Take a clear photo of your signature sheet or upload the PDF template</p>
+            <p className="text-xs text-gray-400">Upload your signature template PDF or image file</p>
           </div>
           <input
             type="file"
@@ -156,7 +156,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           />
           <label htmlFor="signature-file-upload">
             <Button variant="outline" className="cursor-pointer mt-3">
-              {uploadedFile ? 'Change File' : 'Choose File or Take Photo'}
+              {uploadedFile ? 'Change File' : 'Choose File'}
             </Button>
           </label>
         </div>
