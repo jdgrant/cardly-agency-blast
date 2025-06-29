@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Wand2, Download, FileText, Image } from 'lucide-react';
@@ -15,6 +14,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedSignature, setExtractedSignature] = useState<string | null>(null);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -38,6 +38,10 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         });
       }
     }
+  };
+
+  const handleChooseFileClick = () => {
+    fileInputRef.current?.click();
   };
 
   // Automatically call the parent's onSignatureExtracted when a file is uploaded
@@ -158,17 +162,19 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             <p className="text-xs text-gray-400">Upload your signature template PDF or image file</p>
           </div>
           <input
+            ref={fileInputRef}
             type="file"
             accept=".pdf,image/*"
             onChange={handleFileUpload}
             className="hidden"
-            id="signature-file-upload"
           />
-          <label htmlFor="signature-file-upload">
-            <Button variant="outline" className="cursor-pointer mt-3">
-              {uploadedFile ? 'Change File' : 'Choose File'}
-            </Button>
-          </label>
+          <Button 
+            variant="outline" 
+            className="mt-3"
+            onClick={handleChooseFileClick}
+          >
+            {uploadedFile ? 'Change File' : 'Choose File'}
+          </Button>
         </div>
 
         {/* File Preview */}
