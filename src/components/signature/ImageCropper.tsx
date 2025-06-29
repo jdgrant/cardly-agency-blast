@@ -43,10 +43,12 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       const scale = Math.min(scaleX, scaleY, 1); // Don't scale up
       
       img.scale(scale);
-      img.center();
+      
+      // Center the image manually
+      canvas.centerObject(img);
       
       canvas.add(img);
-      canvas.sendToBack(img);
+      canvas.sendObjectToBack(img);
       setOriginalImage(img);
       
       // Create initial crop rectangle
