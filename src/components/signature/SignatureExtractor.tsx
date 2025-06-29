@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Wand2, Download, FileText, Image } from 'lucide-react';
+import { Upload, Wand2, Download, FileText, Image, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import FilePreview from './FilePreview';
@@ -17,8 +17,9 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
   const [isConverting, setIsConverting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedSignature, setExtractedSignature] = useState<string | null>(null);
+  const [fileUploaded, setFileUploaded] = useState(false);
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -27,6 +28,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       
       if (validTypes.includes(file.type)) {
         setIsConverting(file.type === 'application/pdf');
+        setFileUploaded(false);
         
         try {
           let processedFile = file;
@@ -48,10 +50,15 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           
           setUploadedFile(processedFile);
           setExtractedSignature(null);
+          setFileUploaded(true);
+          
+          // Pass the raw file to parent (not AI-extracted)
+          const blob = new Blob([processedFile], { type: processedFile.type });
+          onSignatureExtracted(blob);
           
           toast({
-            title: "File Uploaded",
-            description: "File uploaded successfully. You can now extract the signature with AI.",
+            title: "File Uploaded Successfully",
+            description: "Your file is ready. Click 'Extract Signature with AI' to clean and enhance it.",
           });
         } catch (error) {
           console.error('Error processing file:', error);
@@ -76,18 +83,6 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
   const handleChooseFileClick = () => {
     fileInputRef.current?.click();
   };
-
-  // Memoize the callback to prevent infinite loops
-  const memoizedOnSignatureExtracted = useCallback(onSignatureExtracted, []);
-
-  // Automatically call the parent's onSignatureExtracted when a file is uploaded
-  useEffect(() => {
-    if (uploadedFile) {
-      // Convert the uploaded file to a blob and pass it to the parent
-      const blob = new Blob([uploadedFile], { type: uploadedFile.type });
-      memoizedOnSignatureExtracted(blob);
-    }
-  }, [uploadedFile, memoizedOnSignatureExtracted]);
 
   const extractSignature = async () => {
     if (!uploadedFile) return;
@@ -127,7 +122,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'image/png' });
         
-        memoizedOnSignatureExtracted(blob);
+        onSignatureExtracted(blob);
         
         toast({
           title: "Signature Extracted!",
@@ -191,13 +186,22 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       <CardContent className="space-y-4">
         {/* File Upload */}
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-          {getFileTypeIcon()}
+          {fileUploaded ? (
+            <CheckCircle className="mx-auto h-8 w-8 text-green-500 mb-3" />
+          ) : (
+            getFileTypeIcon()
+          )}
           <div className="space-y-2">
             <p className="text-sm text-gray-600">
-              {getFileDescription()}
+              {fileUploaded ? `✓ File uploaded: ${uploadedFile?.name}` : getFileDescription()}
             </p>
             <p className="text-xs text-gray-500">JPG, PNG, HEIC, PDF files up to 10MB</p>
-            <p className="text-xs text-gray-400">Upload a clear image or PDF of your signature</p>
+            <p className="text-xs text-gray-400">
+              {fileUploaded 
+                ? "File ready! Use AI extraction for best results." 
+                : "Upload a clear image or PDF of your signature"
+              }
+            </p>
           </div>
           <input
             ref={fileInputRef}
@@ -233,23 +237,28 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
 
         {/* Extract Button */}
         {uploadedFile && (
-          <Button 
-            onClick={extractSignature}
-            disabled={isProcessing}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-          >
-            {isProcessing ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Extracting Signature...</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Wand2 className="w-4 h-4" />
-                <span>Extract Signature with AI</span>
-              </div>
-            )}
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              onClick={extractSignature}
+              disabled={isProcessing}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+            >
+              {isProcessing ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Extracting Signature...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <Wand2 className="w-4 h-4" />
+                  <span>Extract Signature with AI</span>
+                </div>
+              )}
+            </Button>
+            <p className="text-xs text-gray-500 text-center">
+              Optional: AI will clean and enhance your signature for professional results
+            </p>
+          </div>
         )}
 
         {/* AI Extracted Preview */}
