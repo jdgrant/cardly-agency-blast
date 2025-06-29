@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, Download } from 'lucide-react';
 import { mockTemplates } from './Step1ChooseTemplate';
+import SignatureExtractor from '../signature/SignatureExtractor';
 
 const Step3CardPreview = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
@@ -75,6 +75,12 @@ const Step3CardPreview = () => {
     link.href = '/SignatureInstruction.pdf';
     link.download = 'SignatureInstruction.pdf';
     link.click();
+  };
+
+  const handleSignatureExtracted = (signatureBlob: Blob) => {
+    // Convert blob to file for consistent handling
+    const file = new File([signatureBlob], 'extracted-signature.png', { type: 'image/png' });
+    updateState({ signature: file });
   };
 
   return (
@@ -215,6 +221,20 @@ const Step3CardPreview = () => {
                 <span>Download Instructions</span>
               </Button>
             </div>
+            
+            {/* AI Signature Extractor */}
+            <SignatureExtractor onSignatureExtracted={handleSignatureExtracted} />
+            
+            {/* Manual Upload Option */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-muted-foreground">Or upload manually</span>
+              </div>
+            </div>
+            
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
               <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <div className="space-y-2">
