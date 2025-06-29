@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Wand2, Download } from 'lucide-react';
+import { Upload, Wand2, Download, Camera, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SignatureExtractorProps {
@@ -17,19 +17,25 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type === 'application/pdf') {
-      setUploadedFile(file);
-      setExtractedSignature(null);
-      toast({
-        title: "PDF Uploaded",
-        description: "Ready to extract signature. Click 'Extract Signature' to process.",
-      });
-    } else {
-      toast({
-        title: "Invalid File",
-        description: "Please upload a PDF file.",
-        variant: "destructive",
-      });
+    if (file) {
+      const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'];
+      
+      if (validTypes.includes(file.type)) {
+        setUploadedFile(file);
+        setExtractedSignature(null);
+        
+        const fileType = file.type.startsWith('image/') ? 'photo' : 'PDF';
+        toast({
+          title: `${fileType} Uploaded`,
+          description: "Ready to extract signature. Click 'Extract Signature' to process.",
+        });
+      } else {
+        toast({
+          title: "Invalid File Type",
+          description: "Please upload a PDF file or image (JPG, PNG, HEIC).",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -38,9 +44,9 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
 
     setIsProcessing(true);
     try {
-      // Convert PDF to image first
       const formData = new FormData();
-      formData.append('pdf', uploadedFile);
+      formData.append('file', uploadedFile);
+      formData.append('fileType', uploadedFile.type);
 
       const response = await fetch('/api/extract-signature', {
         method: 'POST',
@@ -91,6 +97,26 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
     link.click();
   };
 
+  const getFileTypeIcon = () => {
+    if (!uploadedFile) return <Upload className="mx-auto h-8 w-8 text-gray-400 mb-3" />;
+    
+    if (uploadedFile.type === 'application/pdf') {
+      return <FileText className="mx-auto h-8 w-8 text-red-500 mb-3" />;
+    } else {
+      return <Camera className="mx-auto h-8 w-8 text-blue-500 mb-3" />;
+    }
+  };
+
+  const getFileDescription = () => {
+    if (!uploadedFile) return 'Upload your signature template PDF or take a photo';
+    
+    if (uploadedFile.type === 'application/pdf') {
+      return `PDF: ${uploadedFile.name}`;
+    } else {
+      return `Photo: ${uploadedFile.name}`;
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -113,23 +139,24 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       <CardContent className="space-y-4">
         {/* File Upload */}
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-          <Upload className="mx-auto h-8 w-8 text-gray-400 mb-3" />
+          {getFileTypeIcon()}
           <div className="space-y-2">
             <p className="text-sm text-gray-600">
-              {uploadedFile ? uploadedFile.name : 'Upload your signature template PDF'}
+              {getFileDescription()}
             </p>
-            <p className="text-xs text-gray-500">PDF files only, max 10MB</p>
+            <p className="text-xs text-gray-500">PDF, JPG, PNG, HEIC files up to 10MB</p>
+            <p className="text-xs text-gray-400">Take a clear photo of your signature sheet or upload the PDF template</p>
           </div>
           <input
             type="file"
-            accept=".pdf"
+            accept=".pdf,image/*"
             onChange={handleFileUpload}
             className="hidden"
-            id="pdf-signature-upload"
+            id="signature-file-upload"
           />
-          <label htmlFor="pdf-signature-upload">
+          <label htmlFor="signature-file-upload">
             <Button variant="outline" className="cursor-pointer mt-3">
-              Choose PDF File
+              {uploadedFile ? 'Change File' : 'Choose File or Take Photo'}
             </Button>
           </label>
         </div>
