@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Wand2, Download, FileText, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createClient } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import FilePreview from './FilePreview';
 
 interface SignatureExtractorProps {
@@ -16,7 +16,6 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
   const [extractedSignature, setExtractedSignature] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
