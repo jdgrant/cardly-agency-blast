@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,13 +48,9 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             });
           }
           
-          // Set the processed file for display
+          // Set the processed file for display and processing
           setUploadedFile(processedFile);
           setFileUploaded(true);
-          
-          // Pass the processed file as a blob to parent
-          const blob = new Blob([processedFile], { type: processedFile.type });
-          onSignatureExtracted(blob);
           
           toast({
             title: "File Uploaded Successfully",

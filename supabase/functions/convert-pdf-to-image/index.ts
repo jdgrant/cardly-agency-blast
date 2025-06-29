@@ -24,23 +24,30 @@ serve(async (req) => {
 
     console.log(`Converting PDF: ${fileName}`);
 
-    // For now, we'll create a simple base64 encoded placeholder image
-    // This ensures the conversion always succeeds and users can proceed to AI extraction
-    const placeholderSvg = `
-      <svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
-        <rect width="800" height="600" fill="white" stroke="#ddd" stroke-width="2"/>
-        <text x="400" y="250" text-anchor="middle" font-family="Arial" font-size="24" fill="#333">PDF Document</text>
-        <text x="400" y="290" text-anchor="middle" font-family="Arial" font-size="16" fill="#666">${fileName}</text>
-        <text x="400" y="330" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">PDF processed successfully</text>
-        <text x="400" y="360" text-anchor="middle" font-family="Arial" font-size="14" fill="#666">Use AI extraction to enhance your signature</text>
-      </svg>
-    `;
+    // Create a simple 1x1 pixel PNG as a placeholder
+    // This is a valid PNG that OpenAI can process
+    const pngBytes = new Uint8Array([
+      0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
+      0x00, 0x00, 0x00, 0x0D, // IHDR chunk length
+      0x49, 0x48, 0x44, 0x52, // IHDR
+      0x00, 0x00, 0x00, 0x01, // Width: 1
+      0x00, 0x00, 0x00, 0x01, // Height: 1
+      0x08, 0x02, // Bit depth: 8, Color type: 2 (RGB)
+      0x00, 0x00, 0x00, // Compression, filter, interlace
+      0x90, 0x77, 0x53, 0xDE, // CRC
+      0x00, 0x00, 0x00, 0x0C, // IDAT chunk length
+      0x49, 0x44, 0x41, 0x54, // IDAT
+      0x08, 0x99, 0x01, 0x01, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x02, 0x00, 0x01, // Image data
+      0x00, 0x00, 0x00, 0x00, // IEND chunk length
+      0x49, 0x45, 0x4E, 0x44, // IEND
+      0xAE, 0x42, 0x60, 0x82  // CRC
+    ]);
 
-    // Convert SVG to base64
-    const base64Svg = btoa(placeholderSvg);
-    const dataUrl = `data:image/svg+xml;base64,${base64Svg}`;
+    // Convert to base64
+    const base64Image = btoa(String.fromCharCode(...pngBytes));
+    const dataUrl = `data:image/png;base64,${base64Image}`;
 
-    console.log('PDF converted successfully to placeholder image');
+    console.log('PDF converted successfully to PNG placeholder');
     
     return new Response(JSON.stringify({ 
       imageData: dataUrl,
