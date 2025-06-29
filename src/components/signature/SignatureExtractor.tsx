@@ -1,10 +1,11 @@
+
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Wand2, Download, FileText, Image, CheckCircle } from 'lucide-react';
+import { Upload, Download, FileText, Image, CheckCircle, Scissors } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import FilePreview from './FilePreview';
+import ImageCropper from './ImageCropper';
 import { convertPdfToImage } from '@/utils/pdfToImage';
 
 interface SignatureExtractorProps {
@@ -12,11 +13,11 @@ interface SignatureExtractorProps {
 }
 
 const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtracted }) => {
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [extractedSignature, setExtractedSignature] = useState<string | null>(null);
+  const [croppedSignature, setCroppedSignature] = useState<string | null>(null);
   const [fileUploaded, setFileUploaded] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
   const { toast } = useToast();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -28,7 +29,8 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       if (validTypes.includes(file.type)) {
         setIsConverting(file.type === 'application/pdf');
         setFileUploaded(false);
-        setExtractedSignature(null);
+        setCroppedSignature(null);
+        setShowCropper(false);
         
         try {
           let processedFile = file;
@@ -37,7 +39,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           if (file.type === 'application/pdf') {
             toast({
               title: "Converting PDF",
-              description: "Converting PDF to image for signature extraction...",
+              description: "Converting PDF to image for cropping...",
             });
             
             processedFile = await convertPdfToImage(file);
@@ -54,7 +56,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           
           toast({
             title: "File Uploaded Successfully",
-            description: "Your file is ready. Click 'Extract Signature with AI' to clean and enhance it.",
+            description: "Your file is ready. Click 'Crop Signature' to select the signature area.",
           });
         } catch (error) {
           console.error('Error processing file:', error);
@@ -82,65 +84,31 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
     fileInputRef.current?.click();
   };
 
-  const extractSignature = async () => {
-    if (!uploadedFile) return;
+  const handleStartCropping = () => {
+    setShowCropper(true);
+  };
 
-    setIsProcessing(true);
-    try {
-      // Convert file to base64 for the edge function
-      const arrayBuffer = await uploadedFile.arrayBuffer();
-      const base64File = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-      console.log('Calling extract-signature function...');
+  const handleCropComplete = (croppedBlob: Blob) => {
+    // Convert blob to data URL for preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      setCroppedSignature(dataUrl);
+      setShowCropper(false);
       
-      const { data, error } = await supabase.functions.invoke('extract-signature', {
-        body: {
-          file: base64File,
-          fileType: uploadedFile.type,
-          fileName: uploadedFile.name
-        }
-      });
-
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(`Function call failed: ${error.message}`);
-      }
-
-      console.log('Function response:', data);
+      // Pass the blob to the parent component
+      onSignatureExtracted(croppedBlob);
       
-      if (data.signatureImage) {
-        setExtractedSignature(data.signatureImage);
-        
-        // Convert base64 to blob for the parent component
-        const byteCharacters = atob(data.signatureImage.split(',')[1]);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'image/png' });
-        
-        onSignatureExtracted(blob);
-        
-        toast({
-          title: "Signature Extracted!",
-          description: "Your signature has been successfully extracted and cleaned.",
-        });
-      } else if (data.error) {
-        throw new Error(data.error);
-      } else {
-        throw new Error('No signature image returned from AI extraction');
-      }
-    } catch (error) {
-      console.error('Error extracting signature:', error);
       toast({
-        title: "Extraction Failed",
-        description: `Failed to extract signature: ${error.message}. Please try again with a clear image of your signature.`,
-        variant: "destructive",
+        title: "Signature Cropped!",
+        description: "Your signature has been successfully cropped and is ready to use.",
       });
-    } finally {
-      setIsProcessing(false);
-    }
+    };
+    reader.readAsDataURL(croppedBlob);
+  };
+
+  const handleCancelCropping = () => {
+    setShowCropper(false);
   };
 
   const handleDownloadInstructions = () => {
@@ -162,13 +130,24 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
     return `Image: ${uploadedFile.name}`;
   };
 
+  // Show cropper if requested
+  if (showCropper && uploadedFile) {
+    return (
+      <ImageCropper
+        imageFile={uploadedFile}
+        onCropComplete={handleCropComplete}
+        onCancel={handleCancelCropping}
+      />
+    );
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span className="flex items-center space-x-2">
-            <Wand2 className="w-5 h-5" />
-            <span>AI Signature Extractor</span>
+            <Scissors className="w-5 h-5" />
+            <span>Manual Signature Cropper</span>
           </span>
           <Button
             variant="outline"
@@ -196,7 +175,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             <p className="text-xs text-gray-500">JPG, PNG, HEIC, PDF files up to 10MB</p>
             <p className="text-xs text-gray-400">
               {fileUploaded 
-                ? "File ready! Use AI extraction for best results." 
+                ? "File ready! Use the cropping tool to select your signature area." 
                 : "Upload a clear image or PDF of your signature"
               }
             </p>
@@ -226,47 +205,39 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         </div>
 
         {/* File Preview */}
-        {uploadedFile && (
+        {uploadedFile && !showCropper && (
           <div className="mt-4">
             <h4 className="text-sm font-medium text-gray-700 mb-2">File Preview:</h4>
             <FilePreview file={uploadedFile} />
           </div>
         )}
 
-        {/* Extract Button */}
-        {uploadedFile && (
+        {/* Crop Button */}
+        {uploadedFile && !showCropper && (
           <div className="space-y-2">
             <Button 
-              onClick={extractSignature}
-              disabled={isProcessing}
+              onClick={handleStartCropping}
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
             >
-              {isProcessing ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Extracting Signature...</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <Wand2 className="w-4 h-4" />
-                  <span>Extract Signature with AI</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-2">
+                <Scissors className="w-4 h-4" />
+                <span>Crop Signature</span>
+              </div>
             </Button>
             <p className="text-xs text-gray-500 text-center">
-              Optional: AI will clean and enhance your signature for professional results
+              Use the cropping tool to manually select your signature area
             </p>
           </div>
         )}
 
-        {/* AI Extracted Preview */}
-        {extractedSignature && (
+        {/* Cropped Preview */}
+        {croppedSignature && (
           <div className="mt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">AI Extracted Signature:</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Cropped Signature:</h4>
             <div className="border rounded-lg p-4 bg-gray-50">
               <img 
-                src={extractedSignature} 
-                alt="Extracted signature"
+                src={croppedSignature} 
+                alt="Cropped signature"
                 className="max-w-full h-auto max-h-32 mx-auto"
               />
             </div>
