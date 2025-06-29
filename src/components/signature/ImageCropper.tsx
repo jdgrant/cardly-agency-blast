@@ -31,7 +31,11 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
 
     // Load the image
     const imageUrl = URL.createObjectURL(imageFile);
+    console.log('Loading image:', imageFile.name, imageFile.type);
+    
     FabricImage.fromURL(imageUrl).then((img) => {
+      console.log('Image loaded:', img.width, img.height);
+      
       // Scale image to fit canvas while maintaining aspect ratio
       const canvasWidth = 800;
       const canvasHeight = 600;
@@ -42,18 +46,25 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       const scaleY = canvasHeight / imageHeight;
       const scale = Math.min(scaleX, scaleY, 1); // Don't scale up
       
+      console.log('Scaling image by:', scale);
       img.scale(scale);
       
-      // Center the image manually
-      canvas.centerObject(img);
+      // Center the image on the canvas
+      const scaledWidth = imageWidth * scale;
+      const scaledHeight = imageHeight * scale;
+      
+      img.set({
+        left: (canvasWidth - scaledWidth) / 2,
+        top: (canvasHeight - scaledHeight) / 2,
+      });
       
       canvas.add(img);
       canvas.sendObjectToBack(img);
       setOriginalImage(img);
       
       // Create initial crop rectangle
-      const cropWidth = Math.min(400, imageWidth * scale);
-      const cropHeight = Math.min(200, imageHeight * scale);
+      const cropWidth = Math.min(400, scaledWidth * 0.8);
+      const cropHeight = Math.min(200, scaledHeight * 0.4);
       
       const rect = new Rect({
         left: (canvasWidth - cropWidth) / 2,
@@ -71,7 +82,11 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       canvas.add(rect);
       setCropRect(rect);
       canvas.setActiveObject(rect);
+      canvas.renderAll();
       
+      URL.revokeObjectURL(imageUrl);
+    }).catch((error) => {
+      console.error('Error loading image:', error);
       URL.revokeObjectURL(imageUrl);
     });
 
@@ -92,6 +107,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       const cropWidth = (cropRect.width || 0) * (cropRect.scaleX || 1);
       const cropHeight = (cropRect.height || 0) * (cropRect.scaleY || 1);
       
+      console.log('Cropping area:', { cropLeft, cropTop, cropWidth, cropHeight });
+      
       // Create a temporary canvas for cropping
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = cropWidth;
@@ -111,6 +128,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       // Convert to blob
       tempCanvas.toBlob((blob) => {
         if (blob) {
+          console.log('Cropped image created:', blob.size, 'bytes');
           onCropComplete(blob);
         }
       }, 'image/png');
@@ -123,14 +141,22 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
   };
 
   const resetCrop = () => {
-    if (!fabricCanvas || !cropRect) return;
+    if (!fabricCanvas || !cropRect || !originalImage) return;
+    
+    const canvasWidth = 800;
+    const canvasHeight = 600;
+    const imageWidth = (originalImage.width || 1) * (originalImage.scaleX || 1);
+    const imageHeight = (originalImage.height || 1) * (originalImage.scaleY || 1);
     
     // Reset crop rectangle to center
+    const cropWidth = Math.min(400, imageWidth * 0.8);
+    const cropHeight = Math.min(200, imageHeight * 0.4);
+    
     cropRect.set({
-      left: 200,
-      top: 200,
-      width: 400,
-      height: 200,
+      left: (canvasWidth - cropWidth) / 2,
+      top: (canvasHeight - cropHeight) / 2,
+      width: cropWidth,
+      height: cropHeight,
       scaleX: 1,
       scaleY: 1,
     });
