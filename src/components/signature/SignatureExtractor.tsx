@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Wand2, Download, FileText, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import FilePreview from './FilePreview';
 
 interface SignatureExtractorProps {
   onSignatureExtracted: (imageBlob: Blob) => void;
@@ -27,7 +28,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         const fileType = file.type.startsWith('image/') ? 'image' : 'PDF';
         toast({
           title: `${fileType} Uploaded`,
-          description: "Ready to extract signature. Click 'Extract Signature' to process.",
+          description: "File uploaded successfully. You can now extract the signature or use AI extraction.",
         });
       } else {
         toast({
@@ -38,6 +39,15 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       }
     }
   };
+
+  // Automatically call the parent's onSignatureExtracted when a file is uploaded
+  useEffect(() => {
+    if (uploadedFile) {
+      // Convert the uploaded file to a blob and pass it to the parent
+      const blob = new Blob([uploadedFile], { type: uploadedFile.type });
+      onSignatureExtracted(blob);
+    }
+  }, [uploadedFile, onSignatureExtracted]);
 
   const extractSignature = async () => {
     if (!uploadedFile) return;
@@ -161,6 +171,14 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           </label>
         </div>
 
+        {/* File Preview */}
+        {uploadedFile && (
+          <div className="mt-4">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">File Preview:</h4>
+            <FilePreview file={uploadedFile} />
+          </div>
+        )}
+
         {/* Extract Button */}
         {uploadedFile && (
           <Button 
@@ -182,10 +200,10 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           </Button>
         )}
 
-        {/* Preview */}
+        {/* AI Extracted Preview */}
         {extractedSignature && (
           <div className="mt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Extracted Signature:</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">AI Extracted Signature:</h4>
             <div className="border rounded-lg p-4 bg-gray-50">
               <img 
                 src={extractedSignature} 
