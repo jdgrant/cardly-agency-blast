@@ -4,7 +4,7 @@ import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload } from 'lucide-react';
+import { Upload, Download } from 'lucide-react';
 import { mockTemplates } from './Step1ChooseTemplate';
 
 const Step3CardPreview = () => {
@@ -68,6 +68,13 @@ const Step3CardPreview = () => {
     if (file) {
       updateState({ signature: file });
     }
+  };
+
+  const handleDownloadInstructions = () => {
+    const link = document.createElement('a');
+    link.href = '/SignatureInstruction.pdf';
+    link.download = 'SignatureInstruction.pdf';
+    link.click();
   };
 
   return (
@@ -194,21 +201,32 @@ const Step3CardPreview = () => {
 
           {/* Signature Upload */}
           <div className="space-y-4">
-            <Label htmlFor="signature-upload" className="text-base font-medium text-gray-700">
-              Signature
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="signature-upload" className="text-base font-medium text-gray-700">
+                Signature
+              </Label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadInstructions}
+                className="flex items-center space-x-2 text-xs"
+              >
+                <Download className="w-3 h-3" />
+                <span>Download Instructions</span>
+              </Button>
+            </div>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
               <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <div className="space-y-2">
                 <p className="text-sm text-gray-600">
                   {state.signature ? state.signature.name : 'Click to upload your signature'}
                 </p>
-                <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+                <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
               </div>
               <Input
                 id="signature-upload"
                 type="file"
-                accept="image/*"
+                accept="image/*,.pdf"
                 onChange={handleSignatureUpload}
                 className="hidden"
               />
