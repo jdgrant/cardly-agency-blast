@@ -26,12 +26,22 @@ serve(async (req) => {
 
     console.log(`Processing ${fileType} file: ${fileName}`);
 
-    // Determine the media type for OpenAI
-    let mediaType = 'image/jpeg';
+    // For PDFs, we need to inform the user that only image files are supported
     if (fileType === 'application/pdf') {
-      mediaType = 'application/pdf';
-    } else if (fileType.includes('png')) {
+      return new Response(JSON.stringify({ 
+        error: 'PDF files are not supported. Please upload an image file (JPG, PNG, HEIC) containing your signature.' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Determine the media type for OpenAI (only image types)
+    let mediaType = 'image/jpeg';
+    if (fileType.includes('png')) {
       mediaType = 'image/png';
+    } else if (fileType.includes('heic') || fileType.includes('heif')) {
+      mediaType = 'image/heic';
     }
     
     // Call OpenAI Vision API to analyze and describe the signature
@@ -46,16 +56,14 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are an expert at analyzing handwritten signatures in documents. Describe the signature you see in detail, focusing on the style, characteristics, and positioning within any borders or frames.'
+            content: 'You are an expert at analyzing handwritten signatures in images. Describe the signature you see in detail, focusing on the style, characteristics, and any unique features.'
           },
           {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: fileType === 'application/pdf' 
-                  ? 'Please analyze this PDF document and describe the handwritten signature within the rectangular border. Focus on the signature style, stroke characteristics, and any unique features.'
-                  : 'Please analyze this photo and describe the handwritten signature you see. Focus on the signature style, stroke characteristics, and positioning within any borders or frames.'
+                text: 'Please analyze this image and describe the handwritten signature you see. Focus on the signature style, stroke characteristics, and any unique features that would help recreate it.'
               },
               {
                 type: 'image_url',
@@ -73,6 +81,7 @@ serve(async (req) => {
     const visionResult = await visionResponse.json();
     
     if (!visionResponse.ok) {
+      console.error('OpenAI Vision API error:', visionResult);
       throw new Error(`OpenAI Vision API error: ${visionResult.error?.message || 'Unknown error'}`);
     }
 
@@ -98,6 +107,7 @@ serve(async (req) => {
     const imageResult = await imageResponse.json();
     
     if (!imageResponse.ok) {
+      console.error('Image generation error:', imageResult);
       throw new Error(`Image generation error: ${imageResult.error?.message || 'Unknown error'}`);
     }
 

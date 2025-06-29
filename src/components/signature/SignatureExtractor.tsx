@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,21 +21,20 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'];
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'];
       
       if (validTypes.includes(file.type)) {
         setUploadedFile(file);
         setExtractedSignature(null);
         
-        const fileType = file.type.startsWith('image/') ? 'image' : 'PDF';
         toast({
-          title: `${fileType} Uploaded`,
-          description: "File uploaded successfully. You can now extract the signature or use AI extraction.",
+          title: "Image Uploaded",
+          description: "Image uploaded successfully. You can now extract the signature with AI.",
         });
       } else {
         toast({
           title: "Invalid File Type",
-          description: "Please upload a PDF file or image (JPG, PNG, HEIC).",
+          description: "Please upload an image file (JPG, PNG, HEIC). PDF files are not supported for signature extraction.",
           variant: "destructive",
         });
       }
@@ -101,6 +101,8 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           title: "Signature Extracted!",
           description: "Your signature has been successfully extracted and cleaned.",
         });
+      } else if (data.error) {
+        throw new Error(data.error);
       } else {
         throw new Error('No signature image returned from AI extraction');
       }
@@ -108,7 +110,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       console.error('Error extracting signature:', error);
       toast({
         title: "Extraction Failed",
-        description: `Failed to extract signature: ${error.message}. Please try again or upload a different file.`,
+        description: `Failed to extract signature: ${error.message}. Please try again with a clear image of your signature.`,
         variant: "destructive",
       });
     } finally {
@@ -125,22 +127,12 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
 
   const getFileTypeIcon = () => {
     if (!uploadedFile) return <Upload className="mx-auto h-8 w-8 text-gray-400 mb-3" />;
-    
-    if (uploadedFile.type === 'application/pdf') {
-      return <FileText className="mx-auto h-8 w-8 text-red-500 mb-3" />;
-    } else {
-      return <Image className="mx-auto h-8 w-8 text-blue-500 mb-3" />;
-    }
+    return <Image className="mx-auto h-8 w-8 text-blue-500 mb-3" />;
   };
 
   const getFileDescription = () => {
-    if (!uploadedFile) return 'Upload your signature template or image file';
-    
-    if (uploadedFile.type === 'application/pdf') {
-      return `PDF: ${uploadedFile.name}`;
-    } else {
-      return `Image: ${uploadedFile.name}`;
-    }
+    if (!uploadedFile) return 'Upload your signature image file';
+    return `Image: ${uploadedFile.name}`;
   };
 
   return (
@@ -170,13 +162,13 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             <p className="text-sm text-gray-600">
               {getFileDescription()}
             </p>
-            <p className="text-xs text-gray-500">PDF, JPG, PNG, HEIC files up to 10MB</p>
-            <p className="text-xs text-gray-400">Upload your signature template PDF or image file</p>
+            <p className="text-xs text-gray-500">JPG, PNG, HEIC files up to 10MB</p>
+            <p className="text-xs text-gray-400">Upload a clear image of your signature</p>
           </div>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,image/*"
+            accept="image/*"
             onChange={handleFileUpload}
             className="hidden"
           />
