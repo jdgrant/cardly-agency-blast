@@ -1,16 +1,22 @@
 
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Use the bundled worker instead of CDN
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url
-).toString();
+// Set worker to null to use the fallback worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = '';
 
 export const convertPdfToImage = async (file: File): Promise<File> => {
   try {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    
+    // Configure PDF.js to not use a worker (fallback mode)
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true
+    });
+    
+    const pdf = await loadingTask.promise;
     
     // Get the first page
     const page = await pdf.getPage(1);
