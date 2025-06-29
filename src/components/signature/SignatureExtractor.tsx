@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Wand2, Download, FileText, Image } from 'lucide-react';
@@ -44,14 +44,17 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
     fileInputRef.current?.click();
   };
 
+  // Memoize the callback to prevent infinite loops
+  const memoizedOnSignatureExtracted = useCallback(onSignatureExtracted, []);
+
   // Automatically call the parent's onSignatureExtracted when a file is uploaded
   useEffect(() => {
     if (uploadedFile) {
       // Convert the uploaded file to a blob and pass it to the parent
       const blob = new Blob([uploadedFile], { type: uploadedFile.type });
-      onSignatureExtracted(blob);
+      memoizedOnSignatureExtracted(blob);
     }
-  }, [uploadedFile, onSignatureExtracted]);
+  }, [uploadedFile, memoizedOnSignatureExtracted]);
 
   const extractSignature = async () => {
     if (!uploadedFile) return;
@@ -85,7 +88,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         const byteArray = new Uint8Array(byteNumbers);
         const blob = new Blob([byteArray], { type: 'image/png' });
         
-        onSignatureExtracted(blob);
+        memoizedOnSignatureExtracted(blob);
         
         toast({
           title: "Signature Extracted!",
