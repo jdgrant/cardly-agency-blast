@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -61,20 +62,6 @@ const Step3CardPreview = () => {
     if (file) {
       updateState({ logo: file });
     }
-  };
-
-  const handleSignatureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      updateState({ signature: file });
-    }
-  };
-
-  const handleDownloadInstructions = () => {
-    const link = document.createElement('a');
-    link.href = '/SignatureInstruction.pdf';
-    link.download = 'SignatureInstruction.pdf';
-    link.click();
   };
 
   const handleSignatureExtracted = (signatureBlob: Blob) => {
@@ -205,58 +192,12 @@ const Step3CardPreview = () => {
             </div>
           </div>
 
-          {/* Signature Upload */}
+          {/* Signature Upload - Only AI Extractor */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="signature-upload" className="text-base font-medium text-gray-700">
-                Signature
-              </Label>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownloadInstructions}
-                className="flex items-center space-x-2 text-xs"
-              >
-                <Download className="w-3 h-3" />
-                <span>Download Instructions</span>
-              </Button>
-            </div>
-            
-            {/* AI Signature Extractor */}
+            <Label className="text-base font-medium text-gray-700">
+              Signature
+            </Label>
             <SignatureExtractor onSignatureExtracted={handleSignatureExtracted} />
-            
-            {/* Manual Upload Option */}
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">Or upload manually</span>
-              </div>
-            </div>
-            
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  {state.signature ? state.signature.name : 'Click to upload your signature'}
-                </p>
-                <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
-              </div>
-              <Input
-                id="signature-upload"
-                type="file"
-                accept="image/*,.pdf"
-                onChange={handleSignatureUpload}
-                className="hidden"
-              />
-              <Label
-                htmlFor="signature-upload"
-                className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
-              >
-                Choose File
-              </Label>
-            </div>
           </div>
         </div>
       </div>
