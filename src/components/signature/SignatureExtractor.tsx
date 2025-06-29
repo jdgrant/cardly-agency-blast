@@ -6,6 +6,7 @@ import { Upload, Wand2, Download, FileText, Image } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import FilePreview from './FilePreview';
+import { convertPdfToImage } from '@/utils/pdfToImage';
 
 interface SignatureExtractorProps {
   onSignatureExtracted: (imageBlob: Blob) => void;
@@ -13,28 +14,59 @@ interface SignatureExtractorProps {
 
 const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtracted }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedSignature, setExtractedSignature] = useState<string | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif'];
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif', 'application/pdf'];
       
       if (validTypes.includes(file.type)) {
-        setUploadedFile(file);
-        setExtractedSignature(null);
+        setIsConverting(file.type === 'application/pdf');
         
-        toast({
-          title: "Image Uploaded",
-          description: "Image uploaded successfully. You can now extract the signature with AI.",
-        });
+        try {
+          let processedFile = file;
+          
+          // Convert PDF to image if needed
+          if (file.type === 'application/pdf') {
+            toast({
+              title: "Converting PDF",
+              description: "Converting PDF to image for signature extraction...",
+            });
+            
+            processedFile = await convertPdfToImage(file);
+            
+            toast({
+              title: "PDF Converted",
+              description: "PDF successfully converted to image.",
+            });
+          }
+          
+          setUploadedFile(processedFile);
+          setExtractedSignature(null);
+          
+          toast({
+            title: "File Uploaded",
+            description: "File uploaded successfully. You can now extract the signature with AI.",
+          });
+        } catch (error) {
+          console.error('Error processing file:', error);
+          toast({
+            title: "Conversion Failed",
+            description: `Failed to convert PDF: ${error.message}`,
+            variant: "destructive",
+          });
+        } finally {
+          setIsConverting(false);
+        }
       } else {
         toast({
           title: "Invalid File Type",
-          description: "Please upload an image file (JPG, PNG, HEIC). PDF files are not supported for signature extraction.",
+          description: "Please upload an image file (JPG, PNG, HEIC) or PDF containing your signature.",
           variant: "destructive",
         });
       }
@@ -127,11 +159,13 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
 
   const getFileTypeIcon = () => {
     if (!uploadedFile) return <Upload className="mx-auto h-8 w-8 text-gray-400 mb-3" />;
+    if (uploadedFile.type === 'application/pdf') return <FileText className="mx-auto h-8 w-8 text-red-500 mb-3" />;
     return <Image className="mx-auto h-8 w-8 text-blue-500 mb-3" />;
   };
 
   const getFileDescription = () => {
-    if (!uploadedFile) return 'Upload your signature image file';
+    if (!uploadedFile) return 'Upload your signature file';
+    if (uploadedFile.type === 'application/pdf') return `PDF converted to image: ${uploadedFile.name}`;
     return `Image: ${uploadedFile.name}`;
   };
 
@@ -162,13 +196,13 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             <p className="text-sm text-gray-600">
               {getFileDescription()}
             </p>
-            <p className="text-xs text-gray-500">JPG, PNG, HEIC files up to 10MB</p>
-            <p className="text-xs text-gray-400">Upload a clear image of your signature</p>
+            <p className="text-xs text-gray-500">JPG, PNG, HEIC, PDF files up to 10MB</p>
+            <p className="text-xs text-gray-400">Upload a clear image or PDF of your signature</p>
           </div>
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,application/pdf"
             onChange={handleFileUpload}
             className="hidden"
           />
@@ -176,8 +210,16 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             variant="outline" 
             className="mt-3"
             onClick={handleChooseFileClick}
+            disabled={isConverting}
           >
-            {uploadedFile ? 'Change File' : 'Choose File'}
+            {isConverting ? (
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                <span>Converting PDF...</span>
+              </div>
+            ) : (
+              uploadedFile ? 'Change File' : 'Choose File'
+            )}
           </Button>
         </div>
 

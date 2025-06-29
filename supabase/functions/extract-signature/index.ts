@@ -26,17 +26,7 @@ serve(async (req) => {
 
     console.log(`Processing ${fileType} file: ${fileName}`);
 
-    // For PDFs, we need to inform the user that only image files are supported
-    if (fileType === 'application/pdf') {
-      return new Response(JSON.stringify({ 
-        error: 'PDF files are not supported. Please upload an image file (JPG, PNG, HEIC) containing your signature.' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Determine the media type for OpenAI (only image types)
+    // Determine the media type for OpenAI (only image types supported)
     let mediaType = 'image/jpeg';
     if (fileType.includes('png')) {
       mediaType = 'image/png';
