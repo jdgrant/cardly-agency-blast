@@ -29,6 +29,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       if (validTypes.includes(file.type)) {
         setIsConverting(file.type === 'application/pdf');
         setFileUploaded(false);
+        setExtractedSignature(null);
         
         try {
           let processedFile = file;
@@ -48,11 +49,11 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             });
           }
           
+          // Set the processed file for display
           setUploadedFile(processedFile);
-          setExtractedSignature(null);
           setFileUploaded(true);
           
-          // Pass the raw file to parent (not AI-extracted)
+          // Pass the processed file as a blob to parent
           const blob = new Blob([processedFile], { type: processedFile.type });
           onSignatureExtracted(blob);
           
@@ -63,10 +64,12 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         } catch (error) {
           console.error('Error processing file:', error);
           toast({
-            title: "Conversion Failed",
-            description: `Failed to convert PDF: ${error.message}`,
+            title: "Processing Failed",
+            description: `Failed to process file: ${error.message}`,
             variant: "destructive",
           });
+          setUploadedFile(null);
+          setFileUploaded(false);
         } finally {
           setIsConverting(false);
         }
@@ -154,13 +157,13 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
 
   const getFileTypeIcon = () => {
     if (!uploadedFile) return <Upload className="mx-auto h-8 w-8 text-gray-400 mb-3" />;
-    if (uploadedFile.type === 'application/pdf') return <FileText className="mx-auto h-8 w-8 text-red-500 mb-3" />;
+    if (uploadedFile.name.toLowerCase().includes('.pdf')) return <FileText className="mx-auto h-8 w-8 text-red-500 mb-3" />;
     return <Image className="mx-auto h-8 w-8 text-blue-500 mb-3" />;
   };
 
   const getFileDescription = () => {
     if (!uploadedFile) return 'Upload your signature file';
-    if (uploadedFile.type === 'application/pdf') return `PDF converted to image: ${uploadedFile.name}`;
+    if (uploadedFile.name.toLowerCase().includes('.pdf')) return `PDF converted to image: ${uploadedFile.name}`;
     return `Image: ${uploadedFile.name}`;
   };
 
