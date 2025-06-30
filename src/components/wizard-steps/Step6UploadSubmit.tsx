@@ -4,7 +4,7 @@ import { useWizard, ClientRecord } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, CheckCircle } from 'lucide-react';
+import { Upload, CheckCircle, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -122,7 +122,7 @@ const Step6UploadSubmit = () => {
   };
 
   const handleSubmit = async () => {
-    if (!state.selectedTemplate || !state.selectedTier || !state.mailingWindow || !state.csvFile) {
+    if (!state.selectedTemplate || !state.selectedTier || !state.mailingWindow) {
       toast({
         title: "Missing Information",
         description: "Please complete all required steps before submitting.",
@@ -152,9 +152,10 @@ const Step6UploadSubmit = () => {
         csvUrl = await uploadFile(state.csvFile, `csv/${timestamp}-${state.csvFile.name}`);
       }
 
-      // Calculate final pricing
+      // Calculate final pricing based on contact list size
+      const contactCount = state.clientList.length || 0;
       const basePrice = state.earlyBirdActive ? state.selectedTier.earlyBirdPrice : state.selectedTier.regularPrice;
-      const postageAdditionalCost = state.postageOption === 'first-class' ? 0.20 * state.selectedTier.quantity : 0;
+      const postageAdditionalCost = state.postageOption === 'first-class' ? 0.20 * contactCount : 0;
       const finalPrice = basePrice + postageAdditionalCost;
 
       // Create order record
@@ -163,7 +164,7 @@ const Step6UploadSubmit = () => {
         .insert({
           template_id: state.selectedTemplate,
           tier_name: state.selectedTier.name,
-          card_quantity: state.selectedTier.quantity,
+          card_quantity: contactCount || state.selectedTier.quantity,
           regular_price: state.selectedTier.regularPrice,
           final_price: finalPrice,
           early_bird_discount: state.earlyBirdActive,
@@ -173,33 +174,39 @@ const Step6UploadSubmit = () => {
           logo_url: logoUrl,
           signature_url: signatureUrl,
           csv_file_url: csvUrl,
-          client_count: state.clientList.length,
+          client_count: contactCount,
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // Insert client records
-      const clientRecords = state.clientList.map(client => ({
-        order_id: order.id,
-        first_name: client.firstName,
-        last_name: client.lastName,
-        address: client.address,
-        city: client.city,
-        state: client.state,
-        zip: client.zip,
-      }));
+      // Insert client records if we have them
+      if (state.clientList.length > 0) {
+        const clientRecords = state.clientList.map(client => ({
+          order_id: order.id,
+          first_name: client.firstName,
+          last_name: client.lastName,
+          address: client.address,
+          city: client.city,
+          state: client.state,
+          zip: client.zip,
+        }));
 
-      const { error: clientError } = await supabase
-        .from('client_records')
-        .insert(clientRecords);
+        const { error: clientError } = await supabase
+          .from('client_records')
+          .insert(clientRecords);
 
-      if (clientError) throw clientError;
+        if (clientError) throw clientError;
+      }
+
+      const orderMessage = contactCount > 0 
+        ? `Your order for ${contactCount} holiday cards has been submitted.`
+        : `Your order has been submitted. You can upload your client list later.`;
 
       toast({
         title: "Order Submitted Successfully!",
-        description: `Your order for ${state.clientList.length} holiday cards has been submitted.`,
+        description: orderMessage,
       });
 
       // Show success message and redirect
@@ -220,7 +227,10 @@ const Step6UploadSubmit = () => {
     }
   };
 
-  const postageAdditionalCost = state.postageOption === 'first-class' && state.selectedTier ? 0.20 * state.selectedTier.quantity : 0;
+  // Calculate pricing based on actual contact count or tier quantity
+  const contactCount = state.clientList.length || 0;
+  const effectiveQuantity = contactCount || state.selectedTier?.quantity || 0;
+  const postageAdditionalCost = state.postageOption === 'first-class' && effectiveQuantity > 0 ? 0.20 * effectiveQuantity : 0;
   const finalPrice = state.selectedTier 
     ? (state.earlyBirdActive ? state.selectedTier.earlyBirdPrice : state.selectedTier.regularPrice) + postageAdditionalCost
     : 0;
@@ -229,8 +239,17 @@ const Step6UploadSubmit = () => {
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Client List</h2>
-        <p className="text-gray-600">Upload your client list to complete your order</p>
+        <p className="text-gray-600">Upload your client list to finalize your order (optional)</p>
       </div>
+
+      {/* Info Alert */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4" />
+        <AlertDescription className="text-blue-700">
+          <strong>Optional:</strong> You can upload your client list now or submit your order and upload it later. 
+          Your final pricing will be calculated based on the actual number of contacts.
+        </AlertDescription>
+      </Alert>
 
       {/* File Upload Area */}
       <div
@@ -258,7 +277,7 @@ const Step6UploadSubmit = () => {
         />
         <label htmlFor="csv-upload">
           <Button variant="outline" className="cursor-pointer">
-            Choose File
+            Choose File (Optional)
           </Button>
         </label>
       </div>
@@ -325,7 +344,13 @@ const Step6UploadSubmit = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Package:</span>
-                <span className="font-medium">{state.selectedTier.name} ({state.selectedTier.quantity} cards)</span>
+                <span className="font-medium">{state.selectedTier.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Contact Count:</span>
+                <span className="font-medium">
+                  {contactCount > 0 ? `${contactCount} contacts` : `Up to ${state.selectedTier.quantity} contacts`}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Base Price:</span>
@@ -343,6 +368,11 @@ const Step6UploadSubmit = () => {
                   <span>${finalPrice.toLocaleString()}</span>
                 </div>
               </div>
+              {contactCount === 0 && (
+                <p className="text-sm text-gray-600 mt-2">
+                  * Final pricing will be calculated based on your actual contact list size
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -354,7 +384,7 @@ const Step6UploadSubmit = () => {
         </Button>
         <Button 
           onClick={handleSubmit}
-          disabled={!state.csvFile || state.clientList.length === 0 || isSubmitting}
+          disabled={isSubmitting}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
           {isSubmitting ? 'Submitting Order...' : `Submit Order - $${finalPrice.toLocaleString()}`}
