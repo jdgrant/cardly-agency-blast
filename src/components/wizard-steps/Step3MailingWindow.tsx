@@ -13,28 +13,28 @@ const mailingWindows = [
     label: 'December 1-5', 
     description: 'Early delivery for maximum impact',
     approvalDeadline: 'November 17th',
-    approvalDate: new Date('2024-11-17')
+    approvalDate: new Date('2025-11-17')
   },
   { 
     value: 'dec-6-10', 
     label: 'December 6-10', 
     description: 'Popular choice - most orders ship this week',
     approvalDeadline: 'November 22nd',
-    approvalDate: new Date('2024-11-22')
+    approvalDate: new Date('2025-11-22')
   },
   { 
     value: 'dec-11-15', 
     label: 'December 11-15', 
     description: 'Perfect timing for holiday season',
     approvalDeadline: 'November 27th',
-    approvalDate: new Date('2024-11-27')
+    approvalDate: new Date('2025-11-27')
   },
   { 
     value: 'dec-16-20', 
     label: 'December 16-20', 
     description: 'Last chance for pre-Christmas delivery',
     approvalDeadline: 'December 2nd',
-    approvalDate: new Date('2024-12-02')
+    approvalDate: new Date('2025-12-02')
   },
 ];
 
@@ -48,7 +48,7 @@ const Step3MailingWindow = () => {
     return today > oneWeekBeforeApproval;
   };
 
-  // Filter out expired windows
+  // Since we're in June 2025, all windows should be available
   const availableWindows = mailingWindows.filter(window => !isOptionExpired(window.approvalDate));
 
   // Auto-select the earliest available window if none is selected
