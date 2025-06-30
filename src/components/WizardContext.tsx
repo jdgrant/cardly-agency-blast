@@ -31,6 +31,7 @@ export interface WizardState {
   customMessage: string;
   logo: File | null;
   signature: File | null;
+  signatureSelected: boolean;
   mailingWindow: string | null;
   shippingWindow: string | null;
   postageOption: 'standard' | 'first-class';
@@ -64,6 +65,7 @@ const initialState: WizardState = {
   customMessage: '',
   logo: null,
   signature: null,
+  signatureSelected: false,
   mailingWindow: null,
   shippingWindow: null,
   postageOption: 'standard',

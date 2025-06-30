@@ -63,13 +63,6 @@ const Step3CardPreview = () => {
     }
   };
 
-  const handleSignatureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      updateState({ signature: file });
-    }
-  };
-
   return (
     <div className="space-y-8">
       {/* Title and Description */}
@@ -78,7 +71,7 @@ const Step3CardPreview = () => {
         <p className="text-gray-600">Here's how your holiday cards will look</p>
       </div>
 
-      {/* Card Preview Section - Only Front and Back */}
+      {/* Card Preview Section - Front and Back */}
       <div className="w-full">
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Front of Card */}
@@ -135,17 +128,15 @@ const Step3CardPreview = () => {
                   )}
                 </div>
                 
-                {/* Signature - show uploaded signature or placeholder */}
+                {/* Signature - show if signature service is selected */}
                 <div className="flex justify-center">
-                  {state.signature ? (
-                    <img 
-                      src={URL.createObjectURL(state.signature)} 
-                      alt="Signature"
-                      className="w-24 h-8 object-contain"
-                    />
+                  {state.signatureSelected ? (
+                    <div className="text-xs italic text-gray-700">
+                      Your signature will appear here
+                    </div>
                   ) : (
                     <div className="w-24 h-8 border border-gray-300 rounded flex items-center justify-center">
-                      <span className="text-gray-500 text-xs">Signature</span>
+                      <span className="text-gray-500 text-xs">No signature</span>
                     </div>
                   )}
                 </div>
@@ -155,74 +146,38 @@ const Step3CardPreview = () => {
         </div>
       </div>
 
-      {/* Upload Assets Section */}
-      <div className="space-y-8 max-w-2xl mx-auto">
+      {/* Upload Logo Section */}
+      <div className="space-y-6 max-w-md mx-auto">
         <div className="text-center">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Upload Your Assets</h3>
-          <p className="text-gray-600">Add your logo and signature to personalize your cards</p>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Upload Your Logo</h3>
+          <p className="text-gray-600">Add your company logo to personalize your cards</p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Logo Upload */}
-          <div className="space-y-4">
-            <Label htmlFor="logo-upload" className="text-base font-medium text-gray-700">
-              Company Logo
-            </Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  {state.logo ? state.logo.name : 'Click to upload your logo'}
-                </p>
-                <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
-              </div>
-              <Input
-                id="logo-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleLogoUpload}
-                className="hidden"
-              />
-              <Label
-                htmlFor="logo-upload"
-                className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
-              >
-                Choose File
-              </Label>
+        <div className="space-y-4">
+          <Label htmlFor="logo-upload" className="text-base font-medium text-gray-700">
+            Company Logo
+          </Label>
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+            <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">
+                {state.logo ? state.logo.name : 'Click to upload your logo'}
+              </p>
+              <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
             </div>
-          </div>
-
-          {/* Signature Upload */}
-          <div className="space-y-4">
-            <Label htmlFor="signature-upload" className="text-base font-medium text-gray-700">
-              Signature Upload
-              <span className="text-emerald-600 font-semibold ml-2">+$50</span>
+            <Input
+              id="logo-upload"
+              type="file"
+              accept="image/*"
+              onChange={handleLogoUpload}
+              className="hidden"
+            />
+            <Label
+              htmlFor="logo-upload"
+              className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
+            >
+              Choose File
             </Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  {state.signature ? state.signature.name : 'Click to upload your signature'}
-                </p>
-                <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
-                <p className="text-xs text-gray-400">
-                  Our artists will professionally add your signature to the cards
-                </p>
-              </div>
-              <Input
-                id="signature-upload"
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={handleSignatureUpload}
-                className="hidden"
-              />
-              <Label
-                htmlFor="signature-upload"
-                className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
-              >
-                Choose File
-              </Label>
-            </div>
           </div>
         </div>
       </div>

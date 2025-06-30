@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useWizard } from './WizardContext';
 import { Card, CardContent } from './ui/card';
@@ -10,15 +11,17 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import Step1ChooseTemplate from './wizard-steps/Step1ChooseTemplate';
 import Step2SelectMessage from './wizard-steps/Step2SelectMessage';
 import Step3CardPreview from './wizard-steps/Step3CardPreview';
-import Step3MailingWindow from './wizard-steps/Step3MailingWindow';
-import Step4PostageOption from './wizard-steps/Step4PostageOption';
-import Step5SelectPackage from './wizard-steps/Step5SelectPackage';
-import Step6UploadSubmit from './wizard-steps/Step6UploadSubmit';
+import Step4SignatureUpsell from './wizard-steps/Step4SignatureUpsell';
+import Step5MailingWindow from './wizard-steps/Step3MailingWindow';
+import Step6PostageOption from './wizard-steps/Step4PostageOption';
+import Step7SelectPackage from './wizard-steps/Step5SelectPackage';
+import Step8UploadSubmit from './wizard-steps/Step6UploadSubmit';
 
 const stepTitles = [
   'Choose Template',
   'Select Message',
   'Card Preview',
+  'Add Signature',
   'Mailing Window',
   'Postage Option',
   'Select Package',
@@ -37,13 +40,15 @@ const WizardContent = () => {
       case 3:
         return <Step3CardPreview />;
       case 4:
-        return <Step3MailingWindow />;
+        return <Step4SignatureUpsell />;
       case 5:
-        return <Step4PostageOption />;
+        return <Step5MailingWindow />;
       case 6:
-        return <Step5SelectPackage />;
+        return <Step6PostageOption />;
       case 7:
-        return <Step6UploadSubmit />;
+        return <Step7SelectPackage />;
+      case 8:
+        return <Step8UploadSubmit />;
       default:
         return <Step1ChooseTemplate />;
     }
@@ -64,7 +69,7 @@ const WizardContent = () => {
             </div>
           </Link>
           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-            Step {state.step} of 7: {stepTitles[state.step - 1]}
+            Step {state.step} of 8: {stepTitles[state.step - 1]}
           </Badge>
         </div>
       </header>
@@ -84,7 +89,7 @@ const WizardContent = () => {
           
           <Button
             onClick={nextStep}
-            disabled={state.step === 7}
+            disabled={state.step === 8}
             className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
           >
             <span>Next</span>

@@ -14,7 +14,7 @@ const Step5SelectPackage = () => {
   };
 
   const postageAdditionalCost = state.postageOption === 'first-class' ? 0.20 : 0;
-  const signatureAdditionalCost = state.signature ? 50 : 0; // $50 for signature service
+  const signatureAdditionalCost = state.signatureSelected ? 50 : 0;
 
   return (
     <div className="space-y-6">
@@ -134,7 +134,7 @@ const Step5SelectPackage = () => {
           <li>• Individual envelope addressing and stuffing</li>
           <li>• Postage and mailing during your selected window</li>
           <li>• Order tracking and delivery confirmation</li>
-          {state.signature && (
+          {state.signatureSelected && (
             <li>• Professional signature service - our artists will add your signature to each card</li>
           )}
         </ul>
