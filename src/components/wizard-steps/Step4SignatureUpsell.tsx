@@ -148,31 +148,6 @@ const Step4SignatureUpsell = () => {
         </CardContent>
       </Card>
 
-      {/* Example Preview */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h4 className="font-semibold text-gray-900 mb-4 text-center">See the difference:</h4>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-md p-4 mb-3">
-              <div className="h-24 bg-gradient-to-br from-red-100 to-green-100 rounded mb-3"></div>
-              <div className="text-sm text-gray-600 mb-2">Happy Holidays!</div>
-              <div className="w-16 h-8 bg-black rounded mx-auto mb-2"></div>
-              <div className="text-xs text-gray-500">Without signature</div>
-            </div>
-            <p className="text-sm text-gray-600">Standard card</p>
-          </div>
-          <div className="text-center">
-            <div className="bg-white rounded-lg shadow-md p-4 mb-3 border-2 border-yellow-300">
-              <div className="h-24 bg-gradient-to-br from-red-100 to-green-100 rounded mb-3"></div>
-              <div className="text-sm text-gray-600 mb-2">Happy Holidays!</div>
-              <div className="w-16 h-8 bg-black rounded mx-auto mb-2"></div>
-              <div className="text-xs italic text-gray-700">John Smith</div>
-            </div>
-            <p className="text-sm text-emerald-600 font-medium">With signature (+$50)</p>
-          </div>
-        </div>
-      </div>
-
       {/* Navigation */}
       <div className="flex justify-between pt-6">
         <Button variant="outline" onClick={prevStep}>
