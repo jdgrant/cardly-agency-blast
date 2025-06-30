@@ -97,7 +97,7 @@ const Step4PostageOption = () => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-semibold text-blue-900 mb-2">Delivery Information:</h4>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Delivery times are estimates based on USPS service standards</li>
+          <li>• Standard USPS delivery normally takes 3-5 business days but could be delayed in some markets.</li>
           <li>• First-Class mail includes tracking and faster processing</li>
           <li>• All cards are mailed from our facility during your selected window</li>
           <li>• Holiday season may affect delivery times</li>
