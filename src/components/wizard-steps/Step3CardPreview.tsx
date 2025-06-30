@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, ImageIcon } from 'lucide-react';
 import { mockTemplates } from './Step1ChooseTemplate';
-import PreLaunchChecklist from './PreLaunchChecklist';
 
 const Step3CardPreview = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
@@ -220,9 +219,6 @@ const Step3CardPreview = () => {
           />
         </div>
       </div>
-
-      {/* Pre-Launch Checklist */}
-      <PreLaunchChecklist />
 
       {/* Navigation */}
       <div className="flex justify-between pt-6">
