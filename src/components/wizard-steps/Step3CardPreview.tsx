@@ -4,8 +4,9 @@ import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload } from 'lucide-react';
+import { Upload, ImageIcon } from 'lucide-react';
 import { mockTemplates } from './Step1ChooseTemplate';
+import PreLaunchChecklist from './PreLaunchChecklist';
 
 const Step3CardPreview = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
@@ -63,6 +64,10 @@ const Step3CardPreview = () => {
     }
   };
 
+  const handleRemoveLogo = () => {
+    updateState({ logo: null });
+  };
+
   return (
     <div className="space-y-8">
       {/* Title and Description */}
@@ -113,7 +118,7 @@ const Step3CardPreview = () => {
               
               {/* Bottom half with logo and signature */}
               <div className="flex-1 flex flex-col justify-center space-y-6">
-                {/* Logo - show uploaded logo or placeholder */}
+                {/* Logo - show uploaded logo, placeholder, or no logo message */}
                 <div className="flex justify-center">
                   {state.logo ? (
                     <img 
@@ -122,8 +127,11 @@ const Step3CardPreview = () => {
                       className="w-40 h-24 object-contain"
                     />
                   ) : (
-                    <div className="w-40 h-24 bg-black rounded flex items-center justify-center">
-                      <span className="text-white text-xs font-medium">LOGO</span>
+                    <div className="w-40 h-24 bg-gray-50 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                      <div className="text-center">
+                        <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                        <span className="text-gray-500 text-xs">No logo</span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -146,41 +154,75 @@ const Step3CardPreview = () => {
         </div>
       </div>
 
-      {/* Upload Logo Section */}
+      {/* Upload Logo Section - Now Optional */}
       <div className="space-y-6 max-w-md mx-auto">
         <div className="text-center">
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Upload Your Logo</h3>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Company Logo (Optional)</h3>
           <p className="text-gray-600">Add your company logo to personalize your cards</p>
         </div>
 
         <div className="space-y-4">
           <Label htmlFor="logo-upload" className="text-base font-medium text-gray-700">
             Company Logo
+            <span className="text-sm text-gray-500 font-normal ml-2">(Optional)</span>
           </Label>
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-            <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                {state.logo ? state.logo.name : 'Click to upload your logo'}
-              </p>
-              <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+          
+          {state.logo ? (
+            <div className="space-y-3">
+              <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center space-x-2 text-green-700 mb-2">
+                  <ImageIcon className="w-5 h-5" />
+                  <span className="font-medium">Logo uploaded</span>
+                </div>
+                <p className="text-sm text-green-600">{state.logo.name}</p>
+              </div>
+              <div className="flex space-x-2">
+                <Label
+                  htmlFor="logo-upload"
+                  className="cursor-pointer flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Replace Logo
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRemoveLogo}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                >
+                  Remove
+                </Button>
+              </div>
             </div>
-            <Input
-              id="logo-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="hidden"
-            />
-            <Label
-              htmlFor="logo-upload"
-              className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
-            >
-              Choose File
-            </Label>
-          </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  Click to upload your logo (optional)
+                </p>
+                <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+              </div>
+              <Label
+                htmlFor="logo-upload"
+                className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
+              >
+                Choose File
+              </Label>
+            </div>
+          )}
+          
+          <Input
+            id="logo-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleLogoUpload}
+            className="hidden"
+          />
         </div>
       </div>
+
+      {/* Pre-Launch Checklist */}
+      <PreLaunchChecklist />
 
       {/* Navigation */}
       <div className="flex justify-between pt-6">
