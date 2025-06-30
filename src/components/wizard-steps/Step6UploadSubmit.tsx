@@ -5,18 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, CheckCircle, Info } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
 
 const Step6UploadSubmit = () => {
-  const { state, updateState, prevStep, resetWizard } = useWizard();
+  const { state, updateState, prevStep, nextStep } = useWizard();
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<ClientRecord[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
 
   const parseCSV = useCallback((csvText: string): ClientRecord[] => {
     const lines = csvText.split('\n').filter(line => line.trim());
@@ -112,133 +106,18 @@ const Step6UploadSubmit = () => {
     }
   };
 
-  const uploadFile = async (file: File, path: string) => {
-    const { data, error } = await supabase.storage
-      .from('holiday-cards')
-      .upload(path, file);
-    
-    if (error) throw error;
-    return data.path;
-  };
-
-  const handleSubmit = async () => {
-    if (!state.selectedTemplate || !state.selectedTier || !state.mailingWindow) {
-      toast({
-        title: "Missing Information",
-        description: "Please complete all required steps before submitting.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      // Upload files to Supabase Storage
-      const timestamp = Date.now();
-      let logoUrl = null;
-      let signatureUrl = null;
-      let csvUrl = null;
-
-      if (state.logo) {
-        logoUrl = await uploadFile(state.logo, `logos/${timestamp}-${state.logo.name}`);
-      }
-
-      if (state.signature) {
-        signatureUrl = await uploadFile(state.signature, `signatures/${timestamp}-${state.signature.name}`);
-      }
-
-      if (state.csvFile) {
-        csvUrl = await uploadFile(state.csvFile, `csv/${timestamp}-${state.csvFile.name}`);
-      }
-
-      // Calculate final pricing based on contact list size
-      const contactCount = state.clientList.length || 0;
-      const basePrice = state.earlyBirdActive ? state.selectedTier.earlyBirdPrice : state.selectedTier.regularPrice;
-      const postageAdditionalCost = state.postageOption === 'first-class' ? 0.20 * contactCount : 0;
-      const finalPrice = basePrice + postageAdditionalCost;
-
-      // Create order record
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          template_id: state.selectedTemplate,
-          tier_name: state.selectedTier.name,
-          card_quantity: contactCount || state.selectedTier.quantity,
-          regular_price: state.selectedTier.regularPrice,
-          final_price: finalPrice,
-          early_bird_discount: state.earlyBirdActive,
-          mailing_window: state.mailingWindow,
-          postage_option: state.postageOption,
-          postage_cost: postageAdditionalCost,
-          logo_url: logoUrl,
-          signature_url: signatureUrl,
-          csv_file_url: csvUrl,
-          client_count: contactCount,
-        })
-        .select()
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Insert client records if we have them
-      if (state.clientList.length > 0) {
-        const clientRecords = state.clientList.map(client => ({
-          order_id: order.id,
-          first_name: client.firstName,
-          last_name: client.lastName,
-          address: client.address,
-          city: client.city,
-          state: client.state,
-          zip: client.zip,
-        }));
-
-        const { error: clientError } = await supabase
-          .from('client_records')
-          .insert(clientRecords);
-
-        if (clientError) throw clientError;
-      }
-
-      const orderMessage = contactCount > 0 
-        ? `Your order for ${contactCount} holiday cards has been submitted.`
-        : `Your order has been submitted. You can upload your client list later.`;
-
-      toast({
-        title: "Order Submitted Successfully!",
-        description: orderMessage,
-      });
-
-      // Show success message and redirect
-      setTimeout(() => {
-        resetWizard();
-        navigate('/?success=true');
-      }, 2000);
-
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      toast({
-        title: "Submission Failed",
-        description: "There was an error submitting your order. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Client List</h2>
-        <p className="text-gray-600">Upload your client list to finalize your order (optional)</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Upload Your List</h2>
+        <p className="text-gray-600">Upload your client list to personalize your holiday cards</p>
       </div>
 
       {/* Info Alert */}
       <Alert className="border-blue-200 bg-blue-50">
         <Info className="h-4 w-4" />
         <AlertDescription className="text-blue-700">
-          <strong>Optional:</strong> You can upload your client list now or submit your order and upload it later. 
+          <strong>Optional:</strong> You can upload your client list now or skip this step and upload it later. 
           Your final pricing will be calculated based on the actual number of contacts.
         </AlertDescription>
       </Alert>
@@ -269,7 +148,7 @@ const Step6UploadSubmit = () => {
         />
         <label htmlFor="csv-upload">
           <Button variant="outline" className="cursor-pointer">
-            Choose File (Optional)
+            Choose File
           </Button>
         </label>
       </div>
@@ -331,11 +210,10 @@ const Step6UploadSubmit = () => {
           Back
         </Button>
         <Button 
-          onClick={handleSubmit}
-          disabled={isSubmitting}
+          onClick={nextStep}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
-          {isSubmitting ? 'Submitting Order...' : 'Submit Order'}
+          Continue
         </Button>
       </div>
     </div>
