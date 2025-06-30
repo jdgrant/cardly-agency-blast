@@ -14,6 +14,7 @@ const Step5SelectPackage = () => {
   };
 
   const postageAdditionalCost = state.postageOption === 'first-class' ? 0.20 : 0;
+  const signatureAdditionalCost = state.signature ? 50 : 0; // $50 for signature service
 
   return (
     <div className="space-y-6">
@@ -36,7 +37,7 @@ const Step5SelectPackage = () => {
           const regularPiecePrice = tier.regularPrice / tier.quantity;
           const earlyBirdPiecePrice = tier.earlyBirdPrice / tier.quantity;
           const currentPiecePrice = state.earlyBirdActive ? earlyBirdPiecePrice : regularPiecePrice;
-          const totalWithPostage = (currentPiecePrice + postageAdditionalCost) * tier.quantity;
+          const totalWithPostage = ((currentPiecePrice + postageAdditionalCost) * tier.quantity) + signatureAdditionalCost;
 
           return (
             <Card 
@@ -70,6 +71,11 @@ const Step5SelectPackage = () => {
                     + ${postageAdditionalCost.toFixed(2)} First-Class postage per card
                   </div>
                 )}
+                {signatureAdditionalCost > 0 && (
+                  <div className="text-xs text-emerald-600 font-medium">
+                    + $50.00 signature service
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-3">
@@ -95,6 +101,12 @@ const Step5SelectPackage = () => {
                       <span className="text-sm">Standard postage</span>
                     </div>
                   )}
+                  {signatureAdditionalCost > 0 && (
+                    <div className="flex items-center space-x-2">
+                      <Check className="w-4 h-4 text-emerald-500" />
+                      <span className="text-sm">Professional signature service</span>
+                    </div>
+                  )}
                 </div>
                 
                 {isSelected && (
@@ -103,13 +115,11 @@ const Step5SelectPackage = () => {
                   </div>
                 )}
 
-                {postageAdditionalCost > 0 && (
-                  <div className="mt-4 pt-3 border-t border-gray-200">
-                    <div className="text-sm font-medium text-gray-900">
-                      Total with postage: ${totalWithPostage.toLocaleString()}
-                    </div>
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <div className="text-sm font-medium text-gray-900">
+                    Total: ${totalWithPostage.toLocaleString()}
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           );
@@ -120,10 +130,13 @@ const Step5SelectPackage = () => {
         <h4 className="font-semibold text-green-900 mb-2">What's included in every package:</h4>
         <ul className="text-sm text-green-800 space-y-1">
           <li>• High-quality cardstock and professional printing</li>
-          <li>• Your logo and signature applied to each card</li>
+          <li>• Your logo applied to each card</li>
           <li>• Individual envelope addressing and stuffing</li>
           <li>• Postage and mailing during your selected window</li>
           <li>• Order tracking and delivery confirmation</li>
+          {state.signature && (
+            <li>• Professional signature service - our artists will add your signature to each card</li>
+          )}
         </ul>
       </div>
 

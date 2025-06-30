@@ -4,9 +4,8 @@ import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Upload, Download } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { mockTemplates } from './Step1ChooseTemplate';
-import SignatureExtractor from '../signature/SignatureExtractor';
 
 const Step3CardPreview = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
@@ -64,10 +63,11 @@ const Step3CardPreview = () => {
     }
   };
 
-  const handleSignatureExtracted = (signatureBlob: Blob) => {
-    // Convert blob to file for consistent handling
-    const file = new File([signatureBlob], 'extracted-signature.png', { type: 'image/png' });
-    updateState({ signature: file });
+  const handleSignatureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      updateState({ signature: file });
+    }
   };
 
   return (
@@ -192,12 +192,37 @@ const Step3CardPreview = () => {
             </div>
           </div>
 
-          {/* Signature Upload - Only AI Extractor */}
+          {/* Signature Upload */}
           <div className="space-y-4">
-            <Label className="text-base font-medium text-gray-700">
-              Signature
+            <Label htmlFor="signature-upload" className="text-base font-medium text-gray-700">
+              Signature Upload
+              <span className="text-emerald-600 font-semibold ml-2">+$50</span>
             </Label>
-            <SignatureExtractor onSignatureExtracted={handleSignatureExtracted} />
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  {state.signature ? state.signature.name : 'Click to upload your signature'}
+                </p>
+                <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
+                <p className="text-xs text-gray-400">
+                  Our artists will professionally add your signature to the cards
+                </p>
+              </div>
+              <Input
+                id="signature-upload"
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={handleSignatureUpload}
+                className="hidden"
+              />
+              <Label
+                htmlFor="signature-upload"
+                className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
+              >
+                Choose File
+              </Label>
+            </div>
           </div>
         </div>
       </div>
