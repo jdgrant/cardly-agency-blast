@@ -5,13 +5,33 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Calendar } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 
 const mailingWindows = [
-  { value: 'dec-1-5', label: 'December 1-5', description: 'Early delivery for maximum impact' },
-  { value: 'dec-6-10', label: 'December 6-10', description: 'Popular choice - most orders ship this week' },
-  { value: 'dec-11-15', label: 'December 11-15', description: 'Perfect timing for holiday season' },
-  { value: 'dec-16-20', label: 'December 16-20', description: 'Last chance for pre-Christmas delivery' },
+  { 
+    value: 'dec-1-5', 
+    label: 'December 1-5', 
+    description: 'Early delivery for maximum impact',
+    approvalDeadline: 'November 17th'
+  },
+  { 
+    value: 'dec-6-10', 
+    label: 'December 6-10', 
+    description: 'Popular choice - most orders ship this week',
+    approvalDeadline: 'November 22nd'
+  },
+  { 
+    value: 'dec-11-15', 
+    label: 'December 11-15', 
+    description: 'Perfect timing for holiday season',
+    approvalDeadline: 'November 27th'
+  },
+  { 
+    value: 'dec-16-20', 
+    label: 'December 16-20', 
+    description: 'Last chance for pre-Christmas delivery',
+    approvalDeadline: 'December 2nd'
+  },
 ];
 
 const Step3MailingWindow = () => {
@@ -52,9 +72,15 @@ const Step3MailingWindow = () => {
                     className="flex items-center space-x-3 cursor-pointer"
                   >
                     <Calendar className="w-5 h-5 text-blue-600" />
-                    <div>
+                    <div className="flex-1">
                       <div className="font-semibold text-gray-900">{window.label}</div>
                       <div className="text-sm text-gray-600">{window.description}</div>
+                      <div className="flex items-center space-x-2 mt-2">
+                        <Clock className="w-4 h-4 text-orange-600" />
+                        <div className="text-sm font-medium text-orange-700">
+                          Final approval needed by: {window.approvalDeadline}
+                        </div>
+                      </div>
                     </div>
                   </Label>
                 </div>
@@ -70,6 +96,7 @@ const Step3MailingWindow = () => {
           <li>• Cards are printed and mailed within your selected window</li>
           <li>• Standard USPS delivery takes 3-5 business days</li>
           <li>• December 16-20 is the last window for pre-Christmas delivery</li>
+          <li>• Final approval must be received 2 weeks prior to mailing date</li>
           <li>• You'll receive tracking information once cards are shipped</li>
         </ul>
       </div>
