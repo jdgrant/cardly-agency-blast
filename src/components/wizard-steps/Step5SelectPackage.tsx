@@ -6,6 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Check, Zap } from 'lucide-react';
 
+const mailingWindows = [
+  { value: 'dec-1-5', rushFee: 0 },
+  { value: 'dec-6-10', rushFee: 0 },
+  { value: 'dec-11-15', rushFee: 0.25 },
+  { value: 'dec-16-20', rushFee: 0.25 },
+];
+
 const Step5SelectPackage = () => {
   const { state, updateState, nextStep, prevStep, pricingTiers } = useWizard();
 
@@ -15,6 +22,10 @@ const Step5SelectPackage = () => {
 
   const postageAdditionalCost = state.postageOption === 'first-class' ? 0.20 : 0;
   const signatureAdditionalCost = state.signatureSelected ? 50 : 0;
+  
+  // Get rush fee for selected mailing window
+  const selectedWindow = mailingWindows.find(w => w.value === state.mailingWindow);
+  const rushFeePerPiece = selectedWindow?.rushFee || 0;
 
   return (
     <div className="space-y-6">
@@ -29,6 +40,14 @@ const Step5SelectPackage = () => {
             </Badge>
           </div>
         )}
+        {rushFeePerPiece > 0 && (
+          <div className="flex items-center justify-center space-x-2 mt-2">
+            <Zap className="w-4 h-4 text-red-500" />
+            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+              ${rushFeePerPiece.toFixed(2)} rush fee per card applies to selected window
+            </Badge>
+          </div>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -36,8 +55,9 @@ const Step5SelectPackage = () => {
           const isSelected = state.selectedTier?.name === tier.name;
           const regularPiecePrice = tier.regularPrice / tier.quantity;
           const earlyBirdPiecePrice = tier.earlyBirdPrice / tier.quantity;
-          const currentPiecePrice = state.earlyBirdActive ? earlyBirdPiecePrice : regularPiecePrice;
-          const totalWithPostage = ((currentPiecePrice + postageAdditionalCost) * tier.quantity) + signatureAdditionalCost;
+          const basePiecePrice = state.earlyBirdActive ? earlyBirdPiecePrice : regularPiecePrice;
+          const finalPiecePrice = basePiecePrice + postageAdditionalCost + rushFeePerPiece;
+          const totalWithAddons = (finalPiecePrice * tier.quantity) + signatureAdditionalCost;
 
           return (
             <Card 
@@ -50,13 +70,13 @@ const Step5SelectPackage = () => {
               <CardHeader className="text-center pb-4">
                 <CardTitle className="text-lg">{tier.name}</CardTitle>
                 <div className="text-3xl font-bold text-gray-900">
-                  ${currentPiecePrice.toFixed(2)}
+                  ${finalPiecePrice.toFixed(2)}
                 </div>
                 <div className="text-sm text-gray-600">per card</div>
                 {state.earlyBirdActive && (
                   <div className="space-y-1">
                     <div className="text-sm text-gray-500 line-through">
-                      ${regularPiecePrice.toFixed(2)} each
+                      ${(regularPiecePrice + postageAdditionalCost + rushFeePerPiece).toFixed(2)} each
                     </div>
                     <div className="text-sm text-green-600 font-medium">
                       Save ${(regularPiecePrice - earlyBirdPiecePrice).toFixed(2)} per card
@@ -66,16 +86,17 @@ const Step5SelectPackage = () => {
                 <div className="text-lg font-semibold text-blue-600">
                   {tier.quantity} cards total
                 </div>
-                {postageAdditionalCost > 0 && (
-                  <div className="text-xs text-gray-500">
-                    + ${postageAdditionalCost.toFixed(2)} First-Class postage per card
-                  </div>
-                )}
-                {signatureAdditionalCost > 0 && (
-                  <div className="text-xs text-emerald-600 font-medium">
-                    + $50.00 signature service
-                  </div>
-                )}
+                <div className="space-y-1 text-xs text-gray-500">
+                  {postageAdditionalCost > 0 && (
+                    <div>+ ${postageAdditionalCost.toFixed(2)} First-Class postage per card</div>
+                  )}
+                  {rushFeePerPiece > 0 && (
+                    <div className="text-red-600 font-medium">+ ${rushFeePerPiece.toFixed(2)} rush fee per card</div>
+                  )}
+                  {signatureAdditionalCost > 0 && (
+                    <div className="text-emerald-600 font-medium">+ $50.00 signature service</div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-3">
@@ -117,7 +138,7 @@ const Step5SelectPackage = () => {
 
                 <div className="mt-4 pt-3 border-t border-gray-200">
                   <div className="text-sm font-medium text-gray-900">
-                    Total: ${totalWithPostage.toLocaleString()}
+                    Total: ${totalWithAddons.toLocaleString()}
                   </div>
                 </div>
               </CardContent>
@@ -136,6 +157,9 @@ const Step5SelectPackage = () => {
           <li>• Order tracking and delivery confirmation</li>
           {state.signatureSelected && (
             <li>• Professional signature service - our artists will add your signature to each card</li>
+          )}
+          {rushFeePerPiece > 0 && (
+            <li>• Rush processing for faster delivery window</li>
           )}
         </ul>
       </div>

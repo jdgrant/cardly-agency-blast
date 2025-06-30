@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock } from 'lucide-react';
+import { Calendar, Clock, Zap } from 'lucide-react';
 
 const mailingWindows = [
   { 
@@ -13,28 +13,32 @@ const mailingWindows = [
     label: 'December 1-5', 
     description: 'Early delivery for maximum impact',
     approvalDeadline: 'November 17th',
-    approvalDate: new Date('2025-11-17')
+    approvalDate: new Date('2025-11-17'),
+    rushFee: 0
   },
   { 
     value: 'dec-6-10', 
     label: 'December 6-10', 
     description: 'Popular choice - most orders ship this week',
     approvalDeadline: 'November 22nd',
-    approvalDate: new Date('2025-11-22')
+    approvalDate: new Date('2025-11-22'),
+    rushFee: 0
   },
   { 
     value: 'dec-11-15', 
     label: 'December 11-15', 
     description: 'Perfect timing for holiday season',
     approvalDeadline: 'November 27th',
-    approvalDate: new Date('2025-11-27')
+    approvalDate: new Date('2025-11-27'),
+    rushFee: 0.25
   },
   { 
     value: 'dec-16-20', 
     label: 'December 16-20', 
     description: 'Last chance for pre-Christmas delivery',
     approvalDeadline: 'December 2nd',
-    approvalDate: new Date('2025-12-02')
+    approvalDate: new Date('2025-12-02'),
+    rushFee: 0.25
   },
 ];
 
@@ -97,8 +101,16 @@ const Step3MailingWindow = () => {
                   >
                     <Calendar className="w-5 h-5 text-blue-600" />
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">
-                        {window.label}
+                      <div className="flex items-center space-x-3">
+                        <div className="font-semibold text-gray-900">
+                          {window.label}
+                        </div>
+                        {window.rushFee > 0 && (
+                          <div className="flex items-center space-x-1 bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-medium">
+                            <Zap className="w-3 h-3" />
+                            <span>+${window.rushFee.toFixed(2)} rush fee</span>
+                          </div>
+                        )}
                       </div>
                       <div className="text-sm text-gray-600">
                         {window.description}
@@ -127,6 +139,7 @@ const Step3MailingWindow = () => {
           <li>• Final approval must be received 2 weeks prior to mailing date</li>
           <li>• Selection deadline is 1 week before final approval date</li>
           <li>• You'll receive tracking information once cards are shipped</li>
+          <li>• Rush fees apply to December 11-15 and December 16-20 windows</li>
         </ul>
       </div>
 
