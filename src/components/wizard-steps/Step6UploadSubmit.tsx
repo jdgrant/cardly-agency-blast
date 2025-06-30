@@ -227,14 +227,6 @@ const Step6UploadSubmit = () => {
     }
   };
 
-  // Calculate pricing based on actual contact count or tier quantity
-  const contactCount = state.clientList.length || 0;
-  const effectiveQuantity = contactCount || state.selectedTier?.quantity || 0;
-  const postageAdditionalCost = state.postageOption === 'first-class' && effectiveQuantity > 0 ? 0.20 * effectiveQuantity : 0;
-  const finalPrice = state.selectedTier 
-    ? (state.earlyBirdActive ? state.selectedTier.earlyBirdPrice : state.selectedTier.regularPrice) + postageAdditionalCost
-    : 0;
-
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -334,50 +326,6 @@ const Step6UploadSubmit = () => {
         </Card>
       )}
 
-      {/* Order Summary */}
-      {state.selectedTier && (
-        <Card className="bg-blue-50 border-blue-200">
-          <CardHeader>
-            <CardTitle className="text-lg">Order Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Package:</span>
-                <span className="font-medium">{state.selectedTier.name}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Contact Count:</span>
-                <span className="font-medium">
-                  {contactCount > 0 ? `${contactCount} contacts` : `Up to ${state.selectedTier.quantity} contacts`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Base Price:</span>
-                <span>${(state.earlyBirdActive ? state.selectedTier.earlyBirdPrice : state.selectedTier.regularPrice).toLocaleString()}</span>
-              </div>
-              {postageAdditionalCost > 0 && (
-                <div className="flex justify-between">
-                  <span>First-Class Postage:</span>
-                  <span>+${postageAdditionalCost.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="border-t pt-2">
-                <div className="flex justify-between font-bold text-lg">
-                  <span>Total:</span>
-                  <span>${finalPrice.toLocaleString()}</span>
-                </div>
-              </div>
-              {contactCount === 0 && (
-                <p className="text-sm text-gray-600 mt-2">
-                  * Final pricing will be calculated based on your actual contact list size
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="flex justify-between pt-6">
         <Button variant="outline" onClick={prevStep}>
           Back
@@ -387,7 +335,7 @@ const Step6UploadSubmit = () => {
           disabled={isSubmitting}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
-          {isSubmitting ? 'Submitting Order...' : `Submit Order - $${finalPrice.toLocaleString()}`}
+          {isSubmitting ? 'Submitting Order...' : 'Submit Order'}
         </Button>
       </div>
     </div>
