@@ -114,6 +114,18 @@ const Step5ReviewSubmit = () => {
 
       if (orderError) throw orderError;
 
+      // Generate readable order ID
+      const { data: updatedOrder, error: updateError } = await supabase
+        .rpc('generate_readable_order_id', { uuid_val: order.id })
+        .single();
+
+      if (!updateError && updatedOrder) {
+        await supabase
+          .from('orders')
+          .update({ readable_order_id: updatedOrder })
+          .eq('id', order.id);
+      }
+
       // Insert client records
       if (state.clientList.length > 0 && order) {
         const clientRecords = state.clientList.map(client => ({
@@ -138,8 +150,23 @@ const Step5ReviewSubmit = () => {
         description: `Your order for ${state.clientList.length} holiday cards has been submitted.`,
       });
       
+      // Get the latest order data with readable ID
+      const { data: finalOrder } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', order.id)
+        .single();
+
       resetWizard();
-      navigate('/');
+      navigate('/order-confirmation', { 
+        state: { 
+          orderData: {
+            ...finalOrder,
+            contact_name: state.contactName,
+            contact_email: state.contactEmail
+          }
+        } 
+      });
     } catch (error) {
       console.error('Order submission error:', error);
       toast({

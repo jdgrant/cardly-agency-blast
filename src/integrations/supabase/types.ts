@@ -71,6 +71,7 @@ export type Database = {
           mailing_window: string
           postage_cost: number | null
           postage_option: string
+          readable_order_id: string | null
           regular_price: number
           signature_url: string | null
           status: string | null
@@ -90,6 +91,7 @@ export type Database = {
           mailing_window: string
           postage_cost?: number | null
           postage_option?: string
+          readable_order_id?: string | null
           regular_price: number
           signature_url?: string | null
           status?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           mailing_window?: string
           postage_cost?: number | null
           postage_option?: string
+          readable_order_id?: string | null
           regular_price?: number
           signature_url?: string | null
           status?: string | null
@@ -147,7 +150,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_readable_order_id: {
+        Args: { uuid_val: string }
+        Returns: string
+      }
     }
     Enums: {
       order_status: "pending" | "blocked" | "approved" | "sent"
