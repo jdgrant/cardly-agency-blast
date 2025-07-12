@@ -86,7 +86,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const nextStep = () => {
-    setState(prev => ({ ...prev, step: Math.min(prev.step + 1, 8) }));
+    setState(prev => ({ ...prev, step: Math.min(prev.step + 1, 7) }));
   };
 
   const prevStep = () => {
