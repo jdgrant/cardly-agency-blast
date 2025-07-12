@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Check, Calendar, Upload, File, Image } from 'lucide-react';
 
 const templates = [
@@ -50,26 +51,88 @@ const Step5ReviewSubmit = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    // Simulate order submission
-    setTimeout(() => {
-      // Store order in localStorage (simulating backend)
-      const order = {
-        id: Date.now(),
-        template: selectedTemplate?.name,
-        clientCount: state.clientList.length,
-        shippingWindow: selectedShippingWindow?.label,
-        hasLogo: !!state.logo,
-        hasSignature: !!state.signature,
-        total: total,
-        submittedAt: new Date().toISOString(),
-        clients: state.clientList,
-      };
+    try {
+      // Upload logo if exists
+      let logoUrl = null;
+      if (state.logo) {
+        const logoFile = `logos/${Date.now()}-${state.logo.name}`;
+        const { error: logoError } = await supabase.storage
+          .from('holiday-cards')
+          .upload(logoFile, state.logo);
+        
+        if (!logoError) {
+          logoUrl = logoFile;
+        }
+      }
 
-      const existingOrders = JSON.parse(localStorage.getItem('holidayCardOrders') || '[]');
-      existingOrders.push(order);
-      localStorage.setItem('holidayCardOrders', JSON.stringify(existingOrders));
+      // Upload signature if exists
+      let signatureUrl = null;
+      if (state.signature) {
+        const signatureFile = `signatures/${Date.now()}-${state.signature.name}`;
+        const { error: signatureError } = await supabase.storage
+          .from('holiday-cards')
+          .upload(signatureFile, state.signature);
+        
+        if (!signatureError) {
+          signatureUrl = signatureFile;
+        }
+      }
 
-      setIsSubmitting(false);
+      // Upload CSV file if exists
+      let csvFileUrl = null;
+      if (state.csvFile) {
+        const csvFile = `csvs/${Date.now()}-${state.csvFile.name}`;
+        const { error: csvError } = await supabase.storage
+          .from('holiday-cards')
+          .upload(csvFile, state.csvFile);
+        
+        if (!csvError) {
+          csvFileUrl = csvFile;
+        }
+      }
+
+      // Insert order into database
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          template_id: state.selectedTemplate || '',
+          tier_name: 'Standard',
+          card_quantity: state.clientList.length,
+          client_count: state.clientList.length,
+          regular_price: subtotal,
+          final_price: total,
+          postage_cost: 0,
+          mailing_window: state.mailingWindow || '',
+          postage_option: state.postageOption,
+          logo_url: logoUrl,
+          signature_url: signatureUrl,
+          csv_file_url: csvFileUrl,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Insert client records
+      if (state.clientList.length > 0 && order) {
+        const clientRecords = state.clientList.map(client => ({
+          order_id: order.id,
+          first_name: client.firstName,
+          last_name: client.lastName,
+          address: client.address,
+          city: client.city,
+          state: client.state,
+          zip: client.zip
+        }));
+
+        const { error: clientError } = await supabase
+          .from('client_records')
+          .insert(clientRecords);
+
+        if (clientError) throw clientError;
+      }
+
       toast({
         title: "Order Submitted Successfully!",
         description: `Your order for ${state.clientList.length} holiday cards has been submitted.`,
@@ -77,7 +140,16 @@ const Step5ReviewSubmit = () => {
       
       resetWizard();
       navigate('/');
-    }, 2000);
+    } catch (error) {
+      console.error('Order submission error:', error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your order. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
