@@ -40,6 +40,10 @@ export interface WizardState {
   csvFile: File | null;
   earlyBirdActive: boolean;
   promoCode: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  billingAddress: string;
 }
 
 interface WizardContextType {
@@ -74,6 +78,10 @@ const initialState: WizardState = {
   csvFile: null,
   earlyBirdActive: true,
   promoCode: '',
+  contactName: '',
+  contactEmail: '',
+  contactPhone: '',
+  billingAddress: '',
 };
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);

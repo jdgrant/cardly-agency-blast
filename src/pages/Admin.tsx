@@ -1,33 +1,51 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Link } from 'react-router-dom';
-import { Calendar, Download, Eye } from 'lucide-react';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Download, 
+  RefreshCw, 
+  Eye, 
+  Calendar,
+  CreditCard,
+  Users,
+  Package
+} from 'lucide-react';
 
 interface Order {
   id: string;
   template_id: string;
   tier_name: string;
   card_quantity: number;
+  client_count: number;
   regular_price: number;
   final_price: number;
-  early_bird_discount: boolean;
-  mailing_window: string;
-  postage_option: string;
   postage_cost: number;
+  mailing_window: string;
+  status: string;
   logo_url: string | null;
   signature_url: string | null;
   csv_file_url: string | null;
-  client_count: number;
-  status: string;
   created_at: string;
+  updated_at: string;
 }
 
 interface Template {
@@ -40,15 +58,21 @@ const Admin = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (isAuthenticated) {
+  const handleLogin = () => {
+    if (password === 'admin123') {
+      setIsAuthenticated(true);
       fetchData();
+    } else {
+      toast({
+        title: "Access Denied",
+        description: "Invalid password",
+        variant: "destructive"
+      });
     }
-  }, [isAuthenticated]);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -64,30 +88,20 @@ const Admin = () => {
       // Fetch templates
       const { data: templatesData, error: templatesError } = await supabase
         .from('templates')
-        .select('id, name');
+        .select('*');
 
       if (templatesError) throw templatesError;
 
       setOrders(ordersData || []);
       setTemplates(templatesData || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
       toast({
-        title: "Error loading data",
-        description: "Please try again later.",
-        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch data",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleLogin = () => {
-    if (password === 'admin123') {
-      setIsAuthenticated(true);
-      setError('');
-    } else {
-      setError('Incorrect password');
     }
   };
 
@@ -97,50 +111,89 @@ const Admin = () => {
   };
 
   const formatMailingWindow = (window: string) => {
-    const windowMap: { [key: string]: string } = {
+    const windows: Record<string, string> = {
       'dec-1-5': 'December 1-5',
       'dec-6-10': 'December 6-10',
       'dec-11-15': 'December 11-15',
-      'dec-16-20': 'December 16-20',
+      'dec-16-20': 'December 16-20'
     };
-    return windowMap[window] || window;
+    return windows[window] || window;
+  };
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, status: newStatus, updated_at: new Date().toISOString() }
+          : order
+      ));
+
+      toast({
+        title: "Status Updated",
+        description: `Order status changed to ${newStatus}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update order status",
+        variant: "destructive"
+      });
+    }
   };
 
   const exportOrders = async (format: 'csv' | 'json') => {
     try {
-      if (format === 'json') {
-        const dataStr = JSON.stringify(orders, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'holiday-card-orders.json';
-        link.click();
-        URL.revokeObjectURL(url);
+      const dataToExport = orders.map(order => ({
+        id: order.id,
+        template: getTemplateName(order.template_id),
+        cards: order.card_quantity,
+        clients: order.client_count,
+        price: order.final_price,
+        mailing_window: formatMailingWindow(order.mailing_window),
+        status: order.status,
+        created_at: order.created_at
+      }));
+
+      if (format === 'csv') {
+        const csv = [
+          'ID,Template,Cards,Clients,Price,Mailing Window,Status,Created At',
+          ...dataToExport.map(row => 
+            `${row.id},${row.template},${row.cards},${row.clients},${row.price},${row.mailing_window},${row.status},${row.created_at}`
+          )
+        ].join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orders-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
       } else {
-        const csvHeader = 'Order ID,Template,Tier,Card Quantity,Regular Price,Final Price,Early Bird,Mailing Window,Postage,Client Count,Status,Created At\n';
-        const csvData = orders.map(order => 
-          `${order.id},${getTemplateName(order.template_id)},${order.tier_name},${order.card_quantity},$${order.regular_price},$${order.final_price},${order.early_bird_discount},${formatMailingWindow(order.mailing_window)},${order.postage_option},${order.client_count},${order.status},${new Date(order.created_at).toLocaleDateString()}`
-        ).join('\n');
-        
-        const dataBlob = new Blob([csvHeader + csvData], { type: 'text/csv' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'holiday-card-orders.csv';
-        link.click();
-        URL.revokeObjectURL(url);
+        const json = JSON.stringify(dataToExport, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `orders-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
       }
-      
+
       toast({
-        title: "Export successful",
+        title: "Export Complete",
         description: `Orders exported as ${format.toUpperCase()}`,
       });
     } catch (error) {
       toast({
-        title: "Export failed",
-        description: "There was an error exporting the data.",
-        variant: "destructive",
+        title: "Export Failed",
+        description: "Unable to export orders",
+        variant: "destructive"
       });
     }
   };
@@ -154,229 +207,231 @@ const Admin = () => {
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
     } catch (error) {
       toast({
-        title: "Download failed",
-        description: "Could not download the file.",
-        variant: "destructive",
+        title: "Download Failed",
+        description: "Unable to download file",
+        variant: "destructive"
       });
     }
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Admin Access</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-center">Admin Access</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Input
-                type="password"
-                placeholder="Enter admin password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              />
-            </div>
-            {error && (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700">{error}</AlertDescription>
-              </Alert>
-            )}
+            <Input
+              type="password"
+              placeholder="Enter admin password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+            />
             <Button onClick={handleLogin} className="w-full">
               Login
             </Button>
-            <div className="text-center">
-              <Link to="/" className="text-sm text-blue-600 hover:underline">
-                ← Back to Home
-              </Link>
-            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
+  const pendingOrders = orders.filter(o => o.status === 'pending').length;
+  const approvedOrders = orders.filter(o => o.status === 'approved').length;
+  const totalRevenue = orders.reduce((sum, order) => sum + Number(order.final_price), 0);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-blue-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg"></div>
-            <span className="text-xl font-semibold text-gray-800">AgencyHolidayCards.com</span>
-          </Link>
-          <Badge variant="secondary">Admin Dashboard</Badge>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={() => exportOrders('csv')}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export CSV</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => exportOrders('json')}
+              className="flex items-center space-x-2"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export JSON</span>
+            </Button>
+            <Button 
+              onClick={fetchData}
+              disabled={loading}
+              className="flex items-center space-x-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </Button>
+          </div>
         </div>
-      </header>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Orders</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{orders.length}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Cards</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                {orders.reduce((sum, order) => sum + order.card_quantity, 0).toLocaleString()}
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Orders</p>
+                  <p className="text-2xl font-bold">{orders.length}</p>
+                </div>
+                <Package className="w-8 h-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
-
-          <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Revenue</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                ${orders.reduce((sum, order) => sum + order.final_price, 0).toLocaleString()}
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Pending</p>
+                  <p className="text-2xl font-bold text-orange-600">{pendingOrders}</p>
+                </div>
+                <Calendar className="w-8 h-8 text-orange-600" />
               </div>
             </CardContent>
           </Card>
-
-          <Card className="border-0 shadow-lg bg-white/70 backdrop-blur-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Avg Order Value</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">
-                ${orders.length > 0 ? Math.round(orders.reduce((sum, order) => sum + order.final_price, 0) / orders.length).toLocaleString() : '0'}
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Approved</p>
+                  <p className="text-2xl font-bold text-green-600">{approvedOrders}</p>
+                </div>
+                <Users className="w-8 h-8 text-green-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                  <p className="text-2xl font-bold text-green-600">${totalRevenue.toFixed(2)}</p>
+                </div>
+                <CreditCard className="w-8 h-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Orders Table */}
-        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+        <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl font-bold">Recent Orders</CardTitle>
-              <div className="space-x-2">
-                <Button variant="outline" size="sm" onClick={() => exportOrders('csv')}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export CSV
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => exportOrders('json')}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export JSON
-                </Button>
-                <Button variant="outline" size="sm" onClick={fetchData}>
-                  Refresh
-                </Button>
-              </div>
-            </div>
+            <CardTitle>Orders</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="text-center py-8 text-gray-500">Loading orders...</div>
-            ) : orders.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No orders found</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Order ID</TableHead>
-                      <TableHead>Template</TableHead>
-                      <TableHead>Package</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Mailing Window</TableHead>
-                      <TableHead>Files</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Template</TableHead>
+                    <TableHead>Cards</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Mailing Window</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Files</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell className="font-mono text-xs">
+                        {order.id.slice(0, 8)}...
+                      </TableCell>
+                      <TableCell>{getTemplateName(order.template_id)}</TableCell>
+                      <TableCell>{order.card_quantity}</TableCell>
+                      <TableCell className="font-semibold">
+                        ${Number(order.final_price).toFixed(2)}
+                      </TableCell>
+                      <TableCell>{formatMailingWindow(order.mailing_window)}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant={
+                            order.status === 'pending' ? 'secondary' :
+                            order.status === 'approved' ? 'default' :
+                            order.status === 'blocked' ? 'destructive' :
+                            'outline'
+                          }
+                        >
+                          {order.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-1">
+                          {order.logo_url && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadFile(order.logo_url!, 'logo')}
+                            >
+                              Logo
+                            </Button>
+                          )}
+                          {order.signature_url && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadFile(order.signature_url!, 'signature')}
+                            >
+                              Sig
+                            </Button>
+                          )}
+                          {order.csv_file_url && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadFile(order.csv_file_url!, 'clients.csv')}
+                            >
+                              CSV
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {new Date(order.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={order.status}
+                          onValueChange={(value) => updateOrderStatus(order.id, value)}
+                        >
+                          <SelectTrigger className="w-24">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="blocked">Blocked</SelectItem>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="sent">Sent</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell className="font-mono text-sm">
-                          #{order.id.slice(-8)}
-                        </TableCell>
-                        <TableCell>{getTemplateName(order.template_id)}</TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{order.tier_name}</div>
-                            {order.early_bird_discount && (
-                              <Badge variant="secondary" className="text-xs">Early Bird</Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{order.card_quantity.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="flex items-center space-x-1">
-                            <Calendar className="w-3 h-3" />
-                            <span>{formatMailingWindow(order.mailing_window)}</span>
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
-                            {order.logo_url && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => downloadFile(order.logo_url!, 'logo.png')}
-                              >
-                                <Eye className="w-3 h-3 mr-1" />
-                                Logo
-                              </Button>
-                            )}
-                            {order.signature_url && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => downloadFile(order.signature_url!, 'signature.png')}
-                              >
-                                <Eye className="w-3 h-3 mr-1" />
-                                Sig
-                              </Button>
-                            )}
-                            {order.csv_file_url && (
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => downloadFile(order.csv_file_url!, 'clients.csv')}
-                              >
-                                <Download className="w-3 h-3 mr-1" />
-                                CSV
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-semibold">
-                          ${order.final_price.toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={order.status === 'submitted' ? 'default' : 'secondary'}>
-                            {order.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {new Date(order.created_at).toLocaleDateString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </div>

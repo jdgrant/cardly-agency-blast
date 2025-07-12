@@ -33,11 +33,15 @@ const Step5ReviewSubmit = () => {
   const navigate = useNavigate();
 
   const selectedTemplate = templates.find(t => t.id === state.selectedTemplate);
-  const selectedShippingWindow = shippingWindows.find(w => w.value === state.shippingWindow);
+  const selectedShippingWindow = shippingWindows.find(w => w.value === state.mailingWindow);
+  
+  // Calculate rush fee per card for certain windows
+  const rushFeePerCard = (state.mailingWindow === 'dec-11-15' || state.mailingWindow === 'dec-16-20') ? 0.25 : 0;
+  const rushFeeTotal = rushFeePerCard * state.clientList.length;
   
   const subtotal = state.clientList.length * 1.91;
   const discount = state.promoCode ? subtotal * 0.1 : 0; // 10% discount for any promo code
-  const total = subtotal - discount;
+  const total = subtotal + rushFeeTotal - discount;
 
   const handlePromoCodeChange = (value: string) => {
     updateState({ promoCode: value });
@@ -83,6 +87,64 @@ const Step5ReviewSubmit = () => {
         <p className="text-gray-600">Please review all details before submitting your order</p>
       </div>
 
+      {/* Payment & Contact Information */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Payment & Contact Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="contact-name">Contact Name *</Label>
+              <Input 
+                id="contact-name"
+                placeholder="Full Name"
+                value={state.contactName || ''}
+                onChange={(e) => updateState({ contactName: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="contact-email">Email Address *</Label>
+              <Input 
+                id="contact-email"
+                type="email"
+                placeholder="email@company.com"
+                value={state.contactEmail || ''}
+                onChange={(e) => updateState({ contactEmail: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="contact-phone">Phone Number</Label>
+              <Input 
+                id="contact-phone"
+                placeholder="(555) 123-4567"
+                value={state.contactPhone || ''}
+                onChange={(e) => updateState({ contactPhone: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="billing-address">Billing Address *</Label>
+              <Input 
+                id="billing-address"
+                placeholder="123 Main St, City, State 12345"
+                value={state.billingAddress || ''}
+                onChange={(e) => updateState({ billingAddress: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="pt-3 border-t">
+            <div className="text-sm text-gray-600 mb-3">Payment will be processed upon order approval. We accept:</div>
+            <div className="flex space-x-4 text-sm text-gray-500">
+              <span>💳 Credit Cards</span>
+              <span>🏦 ACH/Bank Transfer</span>
+              <span>📄 Net 30 Terms (approved accounts)</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Order Summary */}
         <Card>
@@ -104,8 +166,13 @@ const Step5ReviewSubmit = () => {
             </div>
             
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Shipping Window:</span>
-              <span className="font-medium">{selectedShippingWindow?.label}</span>
+              <span className="text-gray-600">Mailing Window:</span>
+              <div className="text-right">
+                <div className="font-medium">{selectedShippingWindow?.label}</div>
+                {rushFeePerCard > 0 && (
+                  <div className="text-xs text-orange-600">+${rushFeePerCard.toFixed(2)} rush fee per card</div>
+                )}
+              </div>
             </div>
             
             <div className="flex justify-between items-center">
@@ -130,6 +197,13 @@ const Step5ReviewSubmit = () => {
               <span>Cards ({state.clientList.length} × $1.91):</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
+            
+            {rushFeeTotal > 0 && (
+              <div className="flex justify-between text-orange-600">
+                <span>Rush Fee ({state.clientList.length} × ${rushFeePerCard.toFixed(2)}):</span>
+                <span>${rushFeeTotal.toFixed(2)}</span>
+              </div>
+            )}
             
             <div className="space-y-3">
               <Label htmlFor="promo">Promo Code (optional)</Label>
@@ -209,7 +283,7 @@ const Step5ReviewSubmit = () => {
         </Button>
         <Button 
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !state.contactName || !state.contactEmail || !state.billingAddress}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
           {isSubmitting ? 'Submitting Order...' : `Submit Order - $${total.toFixed(2)}`}
