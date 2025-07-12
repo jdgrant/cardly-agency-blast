@@ -172,6 +172,13 @@ const Step5ReviewSubmit = () => {
               {state.logo && (
                 <div className="text-center">
                   <div className="font-medium mb-2">Logo</div>
+                  <div className="border border-gray-200 rounded-lg p-4 mb-2">
+                    <img 
+                      src={URL.createObjectURL(state.logo)} 
+                      alt="Logo preview" 
+                      className="max-w-full max-h-32 mx-auto object-contain"
+                    />
+                  </div>
                   <div className="text-sm text-gray-600">{state.logo.name}</div>
                 </div>
               )}
