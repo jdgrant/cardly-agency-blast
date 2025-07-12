@@ -26,9 +26,9 @@ const Step6UploadClients = () => {
       );
     };
 
-    const firstNameIndex = findHeader(['firstname', 'first_name', 'first name', 'fname']);
+    const fullNameIndex = findHeader(['full name', 'fullname', 'full_name', 'name']);
+    const businessNameIndex = findHeader(['business name', 'business_name', 'businessname', 'business', 'company', 'company_name']);
     const lastNameIndex = findHeader(['lastname', 'last_name', 'last name', 'lname']);
-    const businessNameIndex = findHeader(['business', 'company', 'business_name', 'company_name']);
     const addressIndex = findHeader(['address', 'street', 'address1', 'street_address']);
     const cityIndex = findHeader(['city']);
     const stateIndex = findHeader(['state', 'province']);
@@ -39,8 +39,8 @@ const Step6UploadClients = () => {
       throw new Error('CSV must contain Address, City, State, and Zip columns');
     }
 
-    if (firstNameIndex === -1 && lastNameIndex === -1 && businessNameIndex === -1) {
-      throw new Error('CSV must contain either First Name/Last Name columns or Business Name column');
+    if (fullNameIndex === -1 && businessNameIndex === -1 && lastNameIndex === -1) {
+      throw new Error('CSV must contain either Full Name/Business Name column or Last Name column');
     }
 
     const records: ClientRecord[] = [];
@@ -57,9 +57,13 @@ const Step6UploadClients = () => {
         // If business name exists, use it as first name
         firstName = values[businessNameIndex];
         lastName = '';
+      } else if (fullNameIndex !== -1 && values[fullNameIndex]) {
+        // If full name exists, use it as first name
+        firstName = values[fullNameIndex];
+        lastName = lastNameIndex !== -1 ? values[lastNameIndex] || '' : '';
       } else {
-        // Use individual first/last names
-        firstName = firstNameIndex !== -1 ? values[firstNameIndex] || '' : '';
+        // Use last name only
+        firstName = '';
         lastName = lastNameIndex !== -1 ? values[lastNameIndex] || '' : '';
       }
 
@@ -150,7 +154,7 @@ const Step6UploadClients = () => {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Your CSV should include columns for: <strong>First Name/Business Name, Last Name, Address, City, State, Zip</strong>
+          Your CSV should include columns for: <strong>Full Name/Business Name, Last Name, Address, City, State, Zip</strong>
         </AlertDescription>
       </Alert>
 
