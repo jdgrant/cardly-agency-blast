@@ -36,7 +36,7 @@ const Index = () => {
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/wizard">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6">
+              <Button className="text-white rounded-full px-6" style={{ backgroundColor: '#069668' }}>
                 Get Started
               </Button>
             </Link>
@@ -74,7 +74,7 @@ const Index = () => {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 items-start mb-8">
               <Link to="/wizard">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200">
+                <Button size="lg" className="text-white px-6 py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200" style={{ backgroundColor: '#069668' }}>
                   Start Your Campaign
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
@@ -209,7 +209,7 @@ const Index = () => {
                       </div>
                     </div>
                     <Link to="/wizard">
-                      <Button className={`w-full ${tier.popular ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-gray-900 hover:bg-gray-800'} text-white rounded-lg`}>
+                      <Button className={`w-full ${tier.popular ? 'text-white rounded-lg' : 'bg-gray-900 hover:bg-gray-800 text-white rounded-lg'}`} style={tier.popular ? { backgroundColor: '#069668' } : {}}>
                         Get Started
                       </Button>
                     </Link>
