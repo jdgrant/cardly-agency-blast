@@ -87,22 +87,6 @@ const Index = () => {
                 <span>No setup fees • Fast turnaround</span>
               </div>
             </div>
-            
-            {/* Trust Indicators */}
-            <div className="flex items-center space-x-8 text-gray-500">
-              <div className="flex items-center space-x-2">
-                <Star className="w-5 h-5 text-yellow-400 fill-current" />
-                <span className="text-sm font-medium">4.9/5 Rating</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-blue-500" />
-                <span className="text-sm font-medium">500+ Agencies</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Shield className="w-5 h-5 text-emerald-500" />
-                <span className="text-sm font-medium">Secure & Private</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
