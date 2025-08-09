@@ -57,12 +57,11 @@ const WizardContent = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-3 text-gray-600 hover:text-gray-900 transition-colors">
             <ArrowLeft className="w-5 h-5" />
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
-              <span className="text-xl font-bold text-gray-900">AgencyHolidayCards</span>
-            </div>
+            <img 
+              src="/lovable-uploads/ba776ea7-9768-434b-849a-3d133cd46ece.png" 
+              alt="SendYourCards.io" 
+              className="h-8 w-auto"
+            />
           </Link>
           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
             Step {state.step} of 7: {stepTitles[state.step - 1]}

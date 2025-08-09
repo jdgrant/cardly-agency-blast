@@ -302,12 +302,11 @@ const Index = () => {
       <footer className="bg-gray-900 text-white py-12">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
-              <span className="text-xl font-bold">Agency Greeting Cards</span>
-            </div>
+            <img 
+              src="/lovable-uploads/ba776ea7-9768-434b-849a-3d133cd46ece.png" 
+              alt="SendYourCards.io" 
+              className="h-8 w-auto"
+            />
             <div className="text-gray-400 text-sm">
               © 2024 AgencyGreetingCards.com - Professional Greeting Card Service
             </div>
