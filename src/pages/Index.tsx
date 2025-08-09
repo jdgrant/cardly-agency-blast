@@ -49,12 +49,12 @@ const Index = () => {
 
       {/* Hero Section */}
       <section 
-        className="relative py-20 overflow-hidden"
+        className="relative py-16 overflow-hidden"
         style={{ backgroundColor: '#A2D7DD' }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/20 to-transparent"></div>
         <div 
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1/2 h-full bg-cover bg-center opacity-90"
+          className="absolute right-0 top-0 w-1/2 h-full bg-cover bg-center opacity-90"
           style={{
             backgroundImage: `url('/lovable-uploads/c8c6783e-87fc-471a-9d33-c0e0ae4cbab4.png')`,
             backgroundSize: 'contain',
@@ -62,22 +62,22 @@ const Index = () => {
             backgroundPosition: 'center right',
           }}
         ></div>
-        <div className="max-w-7xl mx-auto px-4 relative z-10">
-          <div className="max-w-3xl">
-            <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+        <div className="max-w-7xl mx-auto px-4 relative z-10 h-full flex items-center">
+          <div className="max-w-2xl">
+            <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
               Send Beautiful<br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600">
                 Greeting Cards
               </span><br />
               to Every Client
             </h1>
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl leading-relaxed">
+            <p className="text-lg text-gray-600 mb-8 max-w-xl leading-relaxed">
               Professional greeting card service designed for agencies. Choose stunning designs, 
               add your branding, and we'll handle printing and mailing to your entire client list.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 items-start mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 items-start mb-8">
               <Link to="/wizard">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200">
+                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200">
                   Start Your Campaign
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
