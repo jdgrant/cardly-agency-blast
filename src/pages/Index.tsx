@@ -264,7 +264,7 @@ const Index = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-emerald-600 to-blue-600">
+      <section className="py-20" style={{ backgroundColor: '#f16364' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold text-white mb-6">Ready to Wow Your Clients?</h2>
           <p className="text-xl text-emerald-100 mb-10 max-w-2xl mx-auto">
