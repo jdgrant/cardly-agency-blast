@@ -38,6 +38,8 @@ interface Order {
   updated_at: string;
   early_bird_discount: boolean;
   postage_option: string;
+  selected_message?: string;
+  custom_message?: string;
 }
 
 interface Template {
@@ -64,6 +66,8 @@ const JobDetail = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [template, setTemplate] = useState<Template | null>(null);
   const [clients, setClients] = useState<ClientRecord[]>([]);
+  const [logoBlob, setLogoBlob] = useState<string | null>(null);
+  const [signatureBlob, setSignatureBlob] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -111,6 +115,35 @@ const JobDetail = () => {
         setClients(clientsData || []);
       }
 
+      // Download logo and signature files for preview
+      if (orderData.logo_url) {
+        try {
+          const { data: logoData } = await supabase.storage
+            .from('holiday-cards')
+            .download(orderData.logo_url);
+          
+          if (logoData) {
+            setLogoBlob(URL.createObjectURL(logoData));
+          }
+        } catch (error) {
+          console.error('Error loading logo:', error);
+        }
+      }
+
+      if (orderData.signature_url) {
+        try {
+          const { data: signatureData } = await supabase.storage
+            .from('holiday-cards')
+            .download(orderData.signature_url);
+          
+          if (signatureData) {
+            setSignatureBlob(URL.createObjectURL(signatureData));
+          }
+        } catch (error) {
+          console.error('Error loading signature:', error);
+        }
+      }
+
     } catch (error) {
       console.error('Error fetching order details:', error);
       toast({
@@ -153,6 +186,53 @@ const JobDetail = () => {
         variant: "destructive"
       });
     }
+  };
+
+  // Business rule for splitting message at halfway point by character length (same as preview)
+  const formatMessageWithLineBreak = (message: string) => {
+    if (!message) return '';
+    
+    const halfLength = Math.floor(message.length / 2);
+    const words = message.split(' ');
+    
+    let characterCount = 0;
+    let splitIndex = 0;
+    
+    // Find the word closest to the halfway point
+    for (let i = 0; i < words.length; i++) {
+      const wordLength = words[i].length + (i > 0 ? 1 : 0); // +1 for space
+      
+      if (characterCount + wordLength >= halfLength) {
+        // Decide whether to split before or after this word based on which is closer to halfway
+        const beforeSplit = characterCount;
+        const afterSplit = characterCount + wordLength;
+        
+        splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
+        break;
+      }
+      
+      characterCount += wordLength;
+    }
+    
+    // Only split if we have words on both sides and the message is long enough
+    if (splitIndex > 0 && splitIndex < words.length && message.length > 30) {
+      const firstLine = words.slice(0, splitIndex).join(' ');
+      const secondLine = words.slice(splitIndex).join(' ');
+      return (
+        <>
+          {firstLine}
+          <br />
+          {secondLine}
+        </>
+      );
+    }
+    
+    return message;
+  };
+
+  // Get the current message for display
+  const getCurrentMessage = () => {
+    return order?.custom_message || order?.selected_message || '';
   };
 
   if (loading) {
@@ -332,41 +412,89 @@ const JobDetail = () => {
 
           {/* Right Column - Template Preview & Files */}
           <div className="space-y-6">
-            {/* Template Preview */}
+            {/* Card Preview */}
             {template && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <ImageIcon className="w-5 h-5" />
-                    <span>Template Preview</span>
+                    <span>Card Preview</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6">
                   <div className="text-center">
                     <h3 className="font-semibold text-lg">{template.name}</h3>
                     <p className="text-sm text-gray-600 mb-4">{template.description}</p>
                   </div>
                   
-                  {/* Front Side Preview */}
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Front Side</p>
-                    <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border bg-gray-50">
-                      <img 
-                        src={template.preview_url} 
-                        alt={`${template.name} - Front`}
-                        className="w-full h-full object-cover"
-                      />
+                  {/* Card Preview - Front and Inside */}
+                  <div className="space-y-6">
+                    {/* Front Side */}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-3">Card Front</p>
+                      <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border bg-gray-50">
+                        <img 
+                          src={template.preview_url} 
+                          alt={`${template.name} - Front`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Back Side Preview - Placeholder for now */}
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 mb-2">Back Side</p>
-                    <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border bg-gray-100 flex items-center justify-center">
-                      <div className="text-center text-gray-500">
-                        <FileText className="w-8 h-8 mx-auto mb-2" />
-                        <p className="text-sm">Back side preview</p>
-                        <p className="text-xs">Custom message will appear here</p>
+                    
+                    {/* Inside Side with Message, Logo, and Signature */}
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-3">Card Inside</p>
+                      <div className="aspect-[3/4] w-full bg-white rounded-lg border p-4 relative flex flex-col">
+                        {/* Message in top 1/3 */}
+                        <div className="h-1/3 flex items-center justify-center mb-4">
+                          <div className="text-center">
+                            {getCurrentMessage() ? (
+                              <p className="font-playfair text-gray-800 text-sm leading-relaxed">
+                                {formatMessageWithLineBreak(getCurrentMessage())}
+                              </p>
+                            ) : (
+                              <p className="text-gray-400 text-xs">
+                                Warmest wishes for a joyful<br />and restful holiday season.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Bottom half with logo and signature */}
+                        <div className="flex-1 flex flex-col justify-center space-y-4">
+                          {/* Logo */}
+                          <div className="flex justify-center">
+                            {logoBlob ? (
+                              <img 
+                                src={logoBlob} 
+                                alt="Company logo"
+                                className="w-32 h-20 object-contain"
+                              />
+                            ) : (
+                              <div className="w-32 h-20 bg-gray-50 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                                <div className="text-center">
+                                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                                  <span className="text-gray-500 text-xs">No logo</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Signature */}
+                          <div className="flex justify-center">
+                            {signatureBlob ? (
+                              <img 
+                                src={signatureBlob} 
+                                alt="Signature"
+                                className="w-24 h-12 object-contain"
+                              />
+                            ) : (
+                              <div className="w-20 h-6 border border-gray-300 rounded flex items-center justify-center">
+                                <span className="text-gray-500 text-xs">No signature</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
