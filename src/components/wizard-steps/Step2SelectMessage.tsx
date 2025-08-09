@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Edit3, RotateCcw } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { mockTemplates } from './Step1ChooseTemplate';
 
 // Message data organized by occasion
@@ -67,6 +68,7 @@ const occasionLabels = {
 
 const Step2SelectMessage = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
+  const { toast } = useToast();
   const [isCustom, setIsCustom] = useState(false);
   const [availableOccasions, setAvailableOccasions] = useState<string[]>([]);
 
@@ -101,6 +103,18 @@ const Step2SelectMessage = () => {
 
   const canContinue = () => {
     return isCustom ? state.customMessage.trim().length > 0 : state.selectedMessage.length > 0;
+  };
+
+  const handleContinue = () => {
+    if (!canContinue()) {
+      toast({
+        title: "Message Required",
+        description: "Please select a pre-written message or enter your own custom message to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+    nextStep();
   };
 
   // Get selected template for preview
@@ -264,8 +278,7 @@ const Step2SelectMessage = () => {
           Back
         </Button>
         <Button 
-          onClick={nextStep}
-          disabled={!canContinue()}
+          onClick={handleContinue}
           className="text-white"
           style={{ backgroundColor: '#069668' }}
         >
