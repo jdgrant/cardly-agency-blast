@@ -85,7 +85,8 @@ const WizardContent = () => {
           <Button
             onClick={nextStep}
             disabled={state.step === 7}
-            className="flex items-center space-x-2 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+            className="flex items-center space-x-2 text-white"
+            style={{ backgroundColor: '#069668' }}
           >
             <span>Next</span>
             <ChevronRight className="w-4 h-4" />
