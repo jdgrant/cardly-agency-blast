@@ -82,7 +82,7 @@ const WizardContent = () => {
             <span>Previous</span>
           </Button>
           
-          {state.step > 1 && (
+          {state.step > 2 && (
             <Button
               onClick={nextStep}
               disabled={state.step === 7}
