@@ -64,6 +64,7 @@ export type Database = {
           client_count: number | null
           created_at: string
           csv_file_url: string | null
+          custom_message: string | null
           early_bird_discount: boolean | null
           final_price: number
           id: string
@@ -73,6 +74,7 @@ export type Database = {
           postage_option: string
           readable_order_id: string | null
           regular_price: number
+          selected_message: string | null
           signature_url: string | null
           status: string | null
           template_id: string
@@ -84,6 +86,7 @@ export type Database = {
           client_count?: number | null
           created_at?: string
           csv_file_url?: string | null
+          custom_message?: string | null
           early_bird_discount?: boolean | null
           final_price: number
           id?: string
@@ -93,6 +96,7 @@ export type Database = {
           postage_option?: string
           readable_order_id?: string | null
           regular_price: number
+          selected_message?: string | null
           signature_url?: string | null
           status?: string | null
           template_id: string
@@ -104,6 +108,7 @@ export type Database = {
           client_count?: number | null
           created_at?: string
           csv_file_url?: string | null
+          custom_message?: string | null
           early_bird_discount?: boolean | null
           final_price?: number
           id?: string
@@ -113,6 +118,7 @@ export type Database = {
           postage_option?: string
           readable_order_id?: string | null
           regular_price?: number
+          selected_message?: string | null
           signature_url?: string | null
           status?: string | null
           template_id?: string
