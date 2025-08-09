@@ -387,6 +387,12 @@ const Step5ReviewSubmit = () => {
         >
           {isSubmitting ? 'Submitting Order...' : `Submit Order - $${total.toFixed(2)}`}
         </Button>
+        {/* Debug info */}
+        {(!state.contactName || !state.contactEmail || !state.billingAddress) && (
+          <div className="text-xs text-red-600 mt-2">
+            Missing required fields: {!state.contactName && 'Name '}{!state.contactEmail && 'Email '}{!state.billingAddress && 'Billing Address'}
+          </div>
+        )}
       </div>
     </div>
   );
