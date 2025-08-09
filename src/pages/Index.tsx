@@ -285,12 +285,12 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <img 
-              src="/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png" 
+              src="/lovable-uploads/788eec70-a5b9-4b17-bcb0-5e544a1a4b79.png" 
               alt="SendYourCards.io" 
-              className="h-12 w-auto"
+              className="h-12 w-auto mb-4 md:mb-0"
             />
             <div className="text-gray-400 text-sm">
-              © 2024 AgencyGreetingCards.com - Professional Greeting Card Service
+              © 2025 SendYourCards.io - Professional Greeting Card Service
             </div>
           </div>
         </div>
