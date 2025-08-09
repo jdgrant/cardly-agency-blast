@@ -9,6 +9,7 @@ import Wizard from "./pages/Wizard";
 import Admin from "./pages/Admin";
 import JobDetail from "./pages/JobDetail";
 import OrderConfirmation from "./pages/OrderConfirmation";
+import OrderStatus from "./pages/OrderStatus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/job/:orderId" element={<JobDetail />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/order-status" element={<OrderStatus />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
