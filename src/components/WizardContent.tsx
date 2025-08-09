@@ -82,15 +82,17 @@ const WizardContent = () => {
             <span>Previous</span>
           </Button>
           
-          <Button
-            onClick={nextStep}
-            disabled={state.step === 7}
-            className="flex items-center space-x-2 text-white"
-            style={{ backgroundColor: '#069668' }}
-          >
-            <span>Next</span>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
+          {state.step > 1 && (
+            <Button
+              onClick={nextStep}
+              disabled={state.step === 7}
+              className="flex items-center space-x-2 text-white"
+              style={{ backgroundColor: '#069668' }}
+            >
+              <span>Next</span>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         {/* Main Content */}
