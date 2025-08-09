@@ -48,16 +48,18 @@ const Index = () => {
 
       {/* Hero Section */}
       <section 
-        className="relative py-20 overflow-hidden"
-        style={{
-          backgroundColor: '#f8bdbd',
-          backgroundImage: `url('/lovable-uploads/e1b821b2-d927-41ae-9eeb-5aeefb41c829.png')`,
-          backgroundSize: 'auto 60%',
-          backgroundPosition: 'right center',
-          backgroundRepeat: 'no-repeat',
-        }}
+        className="relative py-20 overflow-hidden bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/80 to-white/60"></div>
+        <div 
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1/2 h-full bg-cover bg-center opacity-90"
+          style={{
+            backgroundImage: `url('/lovable-uploads/c8c6783e-87fc-471a-9d33-c0e0ae4cbab4.png')`,
+            backgroundSize: 'contain',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'center right',
+          }}
+        ></div>
         <div className="max-w-7xl mx-auto px-4 relative z-10">
           <div className="max-w-3xl">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
