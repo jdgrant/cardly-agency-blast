@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
   ArrowLeft, 
   Download, 
@@ -384,27 +385,47 @@ const JobDetail = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Users className="w-5 h-5" />
-                  <span>Client List ({clients.length})</span>
+                  <span>Client List</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="max-h-64 overflow-y-auto">
-                  <div className="space-y-2">
-                    {clients.map((client) => (
-                      <div key={client.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <p className="font-medium">{client.first_name} {client.last_name}</p>
-                          <p className="text-sm text-gray-600 flex items-center">
-                            <MapPin className="w-3 h-3 mr-1" />
-                            {client.address}, {client.city}, {client.state} {client.zip}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                    {clients.length === 0 && (
-                      <p className="text-gray-500 text-center py-4">No client records found</p>
-                    )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-lg font-medium">{clients.length} clients</p>
+                    <p className="text-sm text-gray-600">
+                      {clients.length > 0 ? 'Click to view full list' : 'No client records found'}
+                    </p>
                   </div>
+                  {clients.length > 0 && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View List
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden">
+                        <DialogHeader>
+                          <DialogTitle>Client List ({clients.length} clients)</DialogTitle>
+                        </DialogHeader>
+                        <div className="max-h-96 overflow-y-auto pr-2">
+                          <div className="space-y-3">
+                            {clients.map((client) => (
+                              <div key={client.id} className="p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                  <p className="font-medium text-lg">{client.first_name} {client.last_name}</p>
+                                  <p className="text-sm text-gray-600 flex items-center mt-2">
+                                    <MapPin className="w-4 h-4 mr-1" />
+                                    {client.address}, {client.city}, {client.state} {client.zip}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </div>
               </CardContent>
             </Card>
