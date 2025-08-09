@@ -7,6 +7,7 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Wizard from "./pages/Wizard";
 import Admin from "./pages/Admin";
+import JobDetail from "./pages/JobDetail";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import NotFound from "./pages/NotFound";
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/wizard" element={<Wizard />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/job/:orderId" element={<JobDetail />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

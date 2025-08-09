@@ -355,7 +355,7 @@ const Admin = () => {
                 </TableHeader>
                 <TableBody>
                   {orders.map((order) => (
-                    <TableRow key={order.id}>
+                    <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => window.location.href = `/#/admin/job/${order.id}`}>
                       <TableCell className="font-mono text-xs">
                         {order.id.slice(0, 8)}...
                       </TableCell>
