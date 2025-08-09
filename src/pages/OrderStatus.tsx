@@ -43,7 +43,7 @@ const OrderStatus = () => {
         .from('orders')
         .select('*')
         .eq('readable_order_id', orderId.trim())
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         toast({
