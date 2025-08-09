@@ -29,7 +29,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <img 
-              src="/lovable-uploads/ba776ea7-9768-434b-849a-3d133cd46ece.png" 
+              src="/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png" 
               alt="SendYourCards.io" 
               className="h-12 w-auto"
             />
@@ -303,7 +303,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <img 
-              src="/lovable-uploads/ba776ea7-9768-434b-849a-3d133cd46ece.png" 
+              src="/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png" 
               alt="SendYourCards.io" 
               className="h-12 w-auto"
             />

@@ -58,7 +58,7 @@ const WizardContent = () => {
           <Link to="/" className="flex items-center space-x-3 text-gray-600 hover:text-gray-900 transition-colors">
             <ArrowLeft className="w-5 h-5" />
             <img 
-              src="/lovable-uploads/ba776ea7-9768-434b-849a-3d133cd46ece.png" 
+              src="/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png" 
               alt="SendYourCards.io" 
               className="h-12 w-auto"
             />
