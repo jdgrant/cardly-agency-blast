@@ -413,94 +413,102 @@ const JobDetail = () => {
           {/* Right Column - Template Preview & Files */}
           <div className="space-y-6">
             {/* Card Preview */}
-            {template && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <ImageIcon className="w-5 h-5" />
-                    <span>Card Preview</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="text-center">
-                    <h3 className="font-semibold text-lg">{template.name}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{template.description}</p>
-                  </div>
-                  
-                  {/* Card Preview - Front and Inside */}
-                  <div className="space-y-6">
-                    {/* Front Side */}
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-3">Card Front</p>
-                      <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border bg-gray-50">
-                        <img 
-                          src={template.preview_url} 
-                          alt={`${template.name} - Front`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <ImageIcon className="w-5 h-5" />
+                  <span>Card Preview</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {template ? (
+                  <>
+                    <div className="text-center">
+                      <h3 className="font-semibold text-lg">{template.name}</h3>
+                      <p className="text-sm text-gray-600 mb-4">{template.description}</p>
                     </div>
                     
-                    {/* Inside Side with Message, Logo, and Signature */}
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-3">Card Inside</p>
-                      <div className="aspect-[3/4] w-full bg-white rounded-lg border p-4 relative flex flex-col">
-                        {/* Message in top 1/3 */}
-                        <div className="h-1/3 flex items-center justify-center mb-4">
-                          <div className="text-center">
-                            {getCurrentMessage() ? (
-                              <p className="font-playfair text-gray-800 text-sm leading-relaxed">
-                                {formatMessageWithLineBreak(getCurrentMessage())}
-                              </p>
-                            ) : (
-                              <p className="text-gray-400 text-xs">
-                                Warmest wishes for a joyful<br />and restful holiday season.
-                              </p>
-                            )}
-                          </div>
+                    {/* Card Preview - Front and Back Side by Side */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Front Side */}
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-3 text-center">Card Front</p>
+                        <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border bg-gray-50">
+                          <img 
+                            src={template.preview_url} 
+                            alt={`${template.name} - Front`}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                        
-                        {/* Bottom half with logo and signature */}
-                        <div className="flex-1 flex flex-col justify-center space-y-4">
-                          {/* Logo */}
-                          <div className="flex justify-center">
-                            {logoBlob ? (
-                              <img 
-                                src={logoBlob} 
-                                alt="Company logo"
-                                className="w-32 h-20 object-contain"
-                              />
-                            ) : (
-                              <div className="w-32 h-20 bg-gray-50 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                                <div className="text-center">
-                                  <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                                  <span className="text-gray-500 text-xs">No logo</span>
-                                </div>
-                              </div>
-                            )}
+                      </div>
+                      
+                      {/* Back/Inside Side with Message, Logo, and Signature */}
+                      <div>
+                        <p className="text-sm font-medium text-gray-700 mb-3 text-center">Card Inside</p>
+                        <div className="aspect-[3/4] w-full bg-white rounded-lg border p-4 relative flex flex-col">
+                          {/* Message in top 1/3 */}
+                          <div className="h-1/3 flex items-center justify-center mb-4">
+                            <div className="text-center">
+                              {getCurrentMessage() ? (
+                                <p className="font-playfair text-gray-800 text-sm leading-relaxed">
+                                  {formatMessageWithLineBreak(getCurrentMessage())}
+                                </p>
+                              ) : (
+                                <p className="text-gray-400 text-xs">
+                                  Warmest wishes for a joyful<br />and restful holiday season.
+                                </p>
+                              )}
+                            </div>
                           </div>
                           
-                          {/* Signature */}
-                          <div className="flex justify-center">
-                            {signatureBlob ? (
-                              <img 
-                                src={signatureBlob} 
-                                alt="Signature"
-                                className="w-24 h-12 object-contain"
-                              />
-                            ) : (
-                              <div className="w-20 h-6 border border-gray-300 rounded flex items-center justify-center">
-                                <span className="text-gray-500 text-xs">No signature</span>
-                              </div>
-                            )}
+                          {/* Bottom half with logo and signature */}
+                          <div className="flex-1 flex flex-col justify-center space-y-4">
+                            {/* Logo */}
+                            <div className="flex justify-center">
+                              {logoBlob ? (
+                                <img 
+                                  src={logoBlob} 
+                                  alt="Company logo"
+                                  className="w-32 h-20 object-contain"
+                                />
+                              ) : (
+                                <div className="w-32 h-20 bg-gray-50 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                                  <div className="text-center">
+                                    <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                                    <span className="text-gray-500 text-xs">No logo</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Signature */}
+                            <div className="flex justify-center">
+                              {signatureBlob ? (
+                                <img 
+                                  src={signatureBlob} 
+                                  alt="Signature"
+                                  className="w-24 h-12 object-contain"
+                                />
+                              ) : (
+                                <div className="w-20 h-6 border border-gray-300 rounded flex items-center justify-center">
+                                  <span className="text-gray-500 text-xs">No signature</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-red-500 mb-2">⚠️ Template Not Found</div>
+                    <p className="text-sm text-gray-600">Template ID: {order?.template_id}</p>
+                    <p className="text-xs text-gray-500 mt-2">This template no longer exists in the database.</p>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
 
             {/* Uploaded Files */}
             <Card>
