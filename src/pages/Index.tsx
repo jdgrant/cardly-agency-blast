@@ -35,9 +35,6 @@ const Index = () => {
             />
           </div>
           <div className="flex items-center space-x-4">
-            <Link to="/admin">
-              <Button variant="ghost" size="sm" className="text-gray-600">Admin</Button>
-            </Link>
             <Link to="/wizard">
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-full px-6">
                 Get Started
