@@ -49,7 +49,7 @@ const Index = () => {
 
       {/* Hero Section */}
       <section 
-        className="relative py-16 overflow-hidden"
+        className="relative py-8 overflow-hidden"
         style={{ backgroundColor: '#A2D7DD' }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/20 to-transparent"></div>
