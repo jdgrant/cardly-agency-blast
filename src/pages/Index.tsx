@@ -50,7 +50,7 @@ const Index = () => {
       <section 
         className="relative py-20 overflow-hidden bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/80 to-white/60"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/20 to-transparent"></div>
         <div 
           className="absolute right-0 top-1/2 transform -translate-y-1/2 w-1/2 h-full bg-cover bg-center opacity-90"
           style={{
