@@ -66,7 +66,7 @@ const Index = () => {
           <div className="max-w-2xl">
             <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4 leading-tight">
               Send Beautiful<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600">
+              <span style={{ color: '#F16364' }}>
                 Greeting Cards
               </span><br />
               to Every Client
