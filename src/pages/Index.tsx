@@ -305,7 +305,7 @@ const Index = () => {
             <img 
               src="/lovable-uploads/ba776ea7-9768-434b-849a-3d133cd46ece.png" 
               alt="SendYourCards.io" 
-              className="h-8 w-auto"
+              className="h-12 w-auto"
             />
             <div className="text-gray-400 text-sm">
               © 2024 AgencyGreetingCards.com - Professional Greeting Card Service

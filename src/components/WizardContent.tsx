@@ -60,7 +60,7 @@ const WizardContent = () => {
             <img 
               src="/lovable-uploads/ba776ea7-9768-434b-849a-3d133cd46ece.png" 
               alt="SendYourCards.io" 
-              className="h-8 w-auto"
+              className="h-12 w-auto"
             />
           </Link>
           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
