@@ -272,7 +272,7 @@ const Index = () => {
             Get started in minutes with our simple wizard.
           </p>
           <Link to="/wizard">
-            <Button size="lg" className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200">
+            <Button size="lg" className="bg-white hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200" style={{ color: '#f16364' }}>
               Start Your Campaign Now
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
