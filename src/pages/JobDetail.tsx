@@ -73,6 +73,7 @@ const JobDetail = () => {
   const [signatureBlob, setSignatureBlob] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSignatureUpload, setShowSignatureUpload] = useState(false);
+  const [generatingPDFs, setGeneratingPDFs] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -282,6 +283,43 @@ const JobDetail = () => {
         description: "Failed to upload signature",
         variant: "destructive"
       });
+    }
+  };
+
+  const handleGeneratePDFs = async () => {
+    if (!order?.id) return;
+
+    setGeneratingPDFs(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-card-pdfs', {
+        body: { orderId: order.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "PDFs generated successfully! You can now download them.",
+      });
+
+      // Optionally, you could download the PDFs automatically here
+      if (data.frontPdfPath) {
+        await downloadFile(data.frontPdfPath, `${order.readable_order_id || order.id}_front.pdf`);
+      }
+      if (data.backPdfPath) {
+        await downloadFile(data.backPdfPath, `${order.readable_order_id || order.id}_back.pdf`);
+      }
+
+    } catch (error) {
+      console.error('Error generating PDFs:', error);
+      toast({
+        title: "PDF Generation Failed",
+        description: "Failed to generate PDFs. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingPDFs(false);
     }
   };
 
@@ -577,6 +615,40 @@ const JobDetail = () => {
                     <p className="text-xs text-gray-500 mt-2">This template no longer exists in the database.</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* PDF Generation */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5" />
+                  <span>Generate PDFs</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Generate printable PDFs for the card front and back with all order details.
+                  </p>
+                  <Button
+                    onClick={handleGeneratePDFs}
+                    disabled={generatingPDFs}
+                    className="w-full"
+                  >
+                    {generatingPDFs ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating PDFs...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4" />
+                        <span>Generate Card PDFs</span>
+                      </div>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
