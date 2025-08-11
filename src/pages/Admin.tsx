@@ -68,6 +68,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'templates'>('orders');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [editingNames, setEditingNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   const handleLogin = () => {
@@ -268,7 +269,51 @@ const Admin = () => {
     }
   };
 
-  // Update template name
+  // Debounced template name update
+  useEffect(() => {
+    const timeouts: Record<string, NodeJS.Timeout> = {};
+    
+    Object.entries(editingNames).forEach(([templateId, newName]) => {
+      // Clear existing timeout for this template
+      if (timeouts[templateId]) {
+        clearTimeout(timeouts[templateId]);
+      }
+      
+      // Set new timeout to save after 1 second of no typing
+      timeouts[templateId] = setTimeout(async () => {
+        await updateTemplateName(templateId, newName);
+        // Remove from editing state after save
+        setEditingNames(prev => {
+          const updated = { ...prev };
+          delete updated[templateId];
+          return updated;
+        });
+      }, 1000);
+    });
+
+    // Cleanup function to clear timeouts
+    return () => {
+      Object.values(timeouts).forEach(clearTimeout);
+    };
+  }, [editingNames]);
+
+  // Update template name immediately in local state, debounce database save
+  const handleTemplateNameChange = (templateId: string, newName: string) => {
+    // Update local template state immediately for responsive UI
+    setTemplates(prev => prev.map(t => 
+      t.id === templateId 
+        ? { ...t, name: newName }
+        : t
+    ));
+    
+    // Track editing state for debounced save
+    setEditingNames(prev => ({
+      ...prev,
+      [templateId]: newName
+    }));
+  };
+
+  // Update template name in database
   const updateTemplateName = async (templateId: string, newName: string) => {
     try {
       const { error } = await supabase
@@ -277,13 +322,6 @@ const Admin = () => {
         .eq('id', templateId);
 
       if (error) throw error;
-
-      // Update local state
-      setTemplates(prev => prev.map(t => 
-        t.id === templateId 
-          ? { ...t, name: newName }
-          : t
-      ));
 
       toast({
         title: "Template Updated",
@@ -295,6 +333,16 @@ const Admin = () => {
         description: "Failed to update template name",
         variant: "destructive"
       });
+      
+      // Revert local state on error
+      const original = templates.find(t => t.id === templateId);
+      if (original) {
+        setTemplates(prev => prev.map(t => 
+          t.id === templateId 
+            ? { ...t, name: original.name }
+            : t
+        ));
+      }
     }
   };
 
@@ -570,12 +618,12 @@ const Admin = () => {
                           <div className="space-y-2">
                             <div className="space-y-2">
                               <label className="text-xs font-medium text-gray-600">Name:</label>
-                              <Input
-                                value={template.name}
-                                onChange={(e) => updateTemplateName(template.id, e.target.value)}
-                                className="h-8 text-xs"
-                                placeholder="Template name..."
-                              />
+                               <Input
+                                 value={template.name}
+                                 onChange={(e) => handleTemplateNameChange(template.id, e.target.value)}
+                                 className="h-8 text-xs"
+                                 placeholder="Template name..."
+                               />
                             </div>
                             <div className="space-y-2">
                               <label className="text-xs font-medium text-gray-600">Tag:</label>
