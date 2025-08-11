@@ -631,24 +631,6 @@ const Admin = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-2">
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => { e.stopPropagation(); window.open(`/#/preview/front/${order.id}`, '_blank'); }}
-                              className="flex items-center"
-                            >
-                              <Eye className="w-3 h-3 mr-1" /> Front
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={(e) => { e.stopPropagation(); window.open(`/#/preview/inside/${order.id}`, '_blank'); }}
-                              className="flex items-center"
-                            >
-                              <Eye className="w-3 h-3 mr-1" /> Inside
-                            </Button>
-                          </div>
                           <div onClick={(e) => e.stopPropagation()}>
                             <Select
                               value={order.status}
