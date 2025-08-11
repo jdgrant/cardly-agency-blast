@@ -151,7 +151,7 @@ serve(async (req) => {
       form.append('landscape', 'false');
       form.append('preferCssPageSize', 'true');
       form.append('emulatedMediaType', 'print');
-      form.append('waitDelay', '500');
+      form.append('waitDelay', '1500ms');
 
       const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/url`;
       console.log('Calling Gotenberg (url) at:', url, 'for:', targetUrl);
