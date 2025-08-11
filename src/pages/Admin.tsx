@@ -266,17 +266,17 @@ const Admin = () => {
   const generateOrderPDF = async (orderId: string) => {
     setGenerating(prev => ({ ...prev, [orderId]: true }));
     try {
-      toast({ title: "Building PDF", description: `Generating card for ${orderId.slice(0,8)}…` });
+      toast({ title: "Building PDF", description: `Generating preview card for ${orderId.slice(0,8)}…` });
 
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId }
+        body: { orderId, format: 'preview' }
       });
 
       if (error) throw error;
 
       if (data?.downloadUrl) {
         setDownloadUrls(prev => ({ ...prev, [orderId]: data.downloadUrl }));
-        toast({ title: "PDF Ready", description: "Click Download to open the file." });
+        toast({ title: "Preview PDF Ready", description: "Click Download to open the file." });
       } else {
         throw new Error('No downloadUrl returned');
       }
@@ -301,6 +301,32 @@ const Admin = () => {
       }
     } finally {
       setGenerating(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  const generateProductionPDF = async (orderId: string) => {
+    const key = `${orderId}-prod`;
+    setGenerating(prev => ({ ...prev, [key]: true }));
+    try {
+      toast({ title: "Building Production PDF", description: `Generating 7"x10.25" production card for ${orderId.slice(0,8)}…` });
+
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId, format: 'production' }
+      });
+
+      if (error) throw error;
+
+      if (data?.downloadUrl) {
+        setDownloadUrls(prev => ({ ...prev, [key]: data.downloadUrl }));
+        toast({ title: "Production PDF Ready", description: "7\"x10.25\" format ready for printing. Click Download to open." });
+      } else {
+        throw new Error('No downloadUrl returned');
+      }
+    } catch (err) {
+      console.error('generateProductionPDF error', err);
+      toast({ title: "Production PDF failed", description: "Could not generate the production PDF.", variant: 'destructive' });
+    } finally {
+      setGenerating(prev => ({ ...prev, [key]: false }));
     }
   };
   const availableOccasions = [
@@ -629,26 +655,68 @@ const Admin = () => {
                       <TableCell className="text-xs">
                         {new Date(order.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-2">
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <Select
-                              value={order.status}
-                              onValueChange={(value) => updateOrderStatus(order.id, value)}
-                            >
-                              <SelectTrigger className="w-24">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="blocked">Blocked</SelectItem>
-                                <SelectItem value="approved">Approved</SelectItem>
-                                <SelectItem value="sent">Sent</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </TableCell>
+                       <TableCell>
+                         <div className="flex flex-col gap-2">
+                           <div onClick={(e) => e.stopPropagation()}>
+                             <Select
+                               value={order.status}
+                               onValueChange={(value) => updateOrderStatus(order.id, value)}
+                             >
+                               <SelectTrigger className="w-24">
+                                 <SelectValue />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="pending">Pending</SelectItem>
+                                 <SelectItem value="blocked">Blocked</SelectItem>
+                                 <SelectItem value="approved">Approved</SelectItem>
+                                 <SelectItem value="sent">Sent</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           </div>
+                           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               onClick={() => generateOrderPDF(order.id)}
+                               disabled={generating[order.id]}
+                               className="text-xs px-2 py-1"
+                             >
+                               {generating[order.id] ? <RefreshCw className="w-3 h-3 animate-spin" /> : 'Preview PDF'}
+                             </Button>
+                             {downloadUrls[order.id] && (
+                               <Button
+                                 size="sm"
+                                 variant="secondary"
+                                 onClick={() => window.open(downloadUrls[order.id], '_blank')}
+                                 className="text-xs px-2 py-1"
+                               >
+                                 Download
+                               </Button>
+                             )}
+                           </div>
+                           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                             <Button
+                               size="sm"
+                               variant="default"
+                               onClick={() => generateProductionPDF(order.id)}
+                               disabled={generating[`${order.id}-prod`]}
+                               className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700"
+                             >
+                               {generating[`${order.id}-prod`] ? <RefreshCw className="w-3 h-3 animate-spin" /> : 'Production PDF'}
+                             </Button>
+                             {downloadUrls[`${order.id}-prod`] && (
+                               <Button
+                                 size="sm"
+                                 variant="secondary"
+                                 onClick={() => window.open(downloadUrls[`${order.id}-prod`], '_blank')}
+                                 className="text-xs px-2 py-1"
+                               >
+                                 Download
+                               </Button>
+                             )}
+                           </div>
+                         </div>
+                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

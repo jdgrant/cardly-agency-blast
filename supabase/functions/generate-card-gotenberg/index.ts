@@ -12,6 +12,7 @@ interface GenerateRequest {
   orderId: string;
   only?: 'inside' | 'front' | 'front+inside';
   mode?: 'url' | 'html';
+  format?: 'preview' | 'production'; // new format option
   origin?: string; // e.g., https://your-app.lovableproject.com
   fullUrl?: string; // direct URL to render
 }
@@ -22,7 +23,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, only, mode, origin, fullUrl } = await req.json() as GenerateRequest;
+    const { orderId, only, mode, format = 'preview', origin, fullUrl } = await req.json() as GenerateRequest;
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
         status: 400,
@@ -143,8 +144,9 @@ serve(async (req) => {
 
     let gotenbergResp: Response;
 
-    const paperWidth = '5.125';
-    const paperHeight = '7';
+    // Set dimensions based on format
+    const paperWidth = format === 'production' ? '7' : '5.125';
+    const paperHeight = format === 'production' ? '10.25' : '7';
 
     if (mode === 'url') {
       // Render the live preview URL directly to PDF (single page)
@@ -176,8 +178,8 @@ serve(async (req) => {
     } else {
       // Build HTML and convert (supports multi-page)
       const form = new FormData();
-      const frontHTML = buildFrontHTML(template, previewDataUrl);
-      const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl);
+      const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+      const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl, format, paperWidth, paperHeight);
 
       if (includeFront && !includeInside) {
         form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
@@ -245,15 +247,52 @@ serve(async (req) => {
   }
 });
 
-function buildFrontHTML(template: any, previewDataUrl: string) {
+function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7') {
   const imgSrc = previewDataUrl || template.preview_url || '';
+  
+  if (format === 'production') {
+    // Production format: 7" x 10.25" with front on left half, back template on right half
+    return `<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+        html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+        body { font-family: Arial, sans-serif; background: #ffffff; }
+        .production-layout { width: 100%; height: 100%; display: flex; }
+        .front-half { width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; border-right: 1px dashed #ccc; }
+        .back-half { width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .card-frame { width: 90%; height: 80%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
+        .card-img { width: 100%; height: 100%; object-fit: contain; display: block; background: #ffffff; }
+        .back-template { width: 100%; height: 100%; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <div class="production-layout">
+        <div class="front-half">
+          <div class="card-frame">
+            ${imgSrc ? `<img class="card-img" src="${imgSrc}" alt="${escapeHtml(template.name || 'Card front')}"/>` : ''}
+          </div>
+        </div>
+        <div class="back-half">
+          <div class="card-frame">
+            <div class="back-template">Card Back Template</div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>`;
+  }
+  
+  // Preview format (original)
   return `<!DOCTYPE html>
   <html>
   <head>
     <meta charset="utf-8" />
     <style>
-      @page { size: 5.125in 7in; margin: 0; }
-      html, body { margin: 0; padding: 0; width: 5.125in; height: 7in; }
+      @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+      html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
       body { font-family: Arial, sans-serif; background: #ffffff; }
       .wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
       .frame { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
@@ -270,15 +309,71 @@ function buildFrontHTML(template: any, previewDataUrl: string) {
   </html>`;
 }
 
-function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: string) {
+function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7') {
   const message = order?.custom_message || order?.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
+  
+  if (format === 'production') {
+    // Production format: 7" x 10.25" with inside on left half, outside back on right half
+    return `<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+        html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+        body { font-family: Georgia, serif; background: #ffffff; }
+        .production-layout { width: 100%; height: 100%; display: flex; }
+        .inside-half { width: 50%; height: 100%; border-right: 1px dashed #ccc; }
+        .outside-half { width: 50%; height: 100%; }
+        .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
+        .outside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; display: flex; align-items: center; justify-content: center; color: #6b7280; }
+        .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
+        .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
+        .msg { text-align: center; max-width: 85%; font-size: 16px; line-height: 1.5; color: #111827; font-style: italic; margin: 0 auto; }
+        .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 58%; display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; padding: 0 20px; box-sizing: border-box; }
+        .logo { max-width: 120px; max-height: 40px; object-fit: contain; }
+        .sig { max-width: 100px; max-height: 32px; object-fit: contain; }
+        .ph { color: #9ca3af; font-size: 10px; }
+      </style>
+    </head>
+    <body>
+      <div class="production-layout">
+        <div class="inside-half">
+          <div class="inside-content">
+            <div class="grid">
+              <div class="top">
+                <p class="msg">${escapeHtml(message)}</p>
+              </div>
+              <div class="brand">
+                ${logoDataUrl ? `<img class="logo" src="${logoDataUrl}" alt="Logo"/>` : `<div class="ph">Company Logo</div>`}
+                ${signatureDataUrl ? `<img class="sig" src="${signatureDataUrl}" alt="Signature"/>` : `<div class="ph">Signature</div>`}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="outside-half">
+          <div class="outside-content">
+            <div style="text-align: center; font-size: 14px;">
+              <div>Address Area</div>
+              <div style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
+                Recipient address will be printed here
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>`;
+  }
+  
+  // Preview format (original)
   return `<!DOCTYPE html>
   <html>
   <head>
     <meta charset="utf-8" />
     <style>
-      @page { size: 5.125in 7in; margin: 0; }
-      html, body { margin: 0; padding: 0; width: 5.125in; height: 7in; }
+      @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+      html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
       body { font-family: Georgia, serif; background: #ffffff; }
       .wrap { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
       .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 32px; box-sizing: border-box; }
