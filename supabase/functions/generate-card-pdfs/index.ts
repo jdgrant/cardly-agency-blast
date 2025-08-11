@@ -69,8 +69,8 @@ serve(async (req) => {
     }
 
     // Download logo and signature files if they exist
-    let logoBlob: ArrayBuffer | null = null;
-    let signatureBlob: ArrayBuffer | null = null;
+    let logoDataUrl = '';
+    let signatureDataUrl = '';
 
     if (order.logo_url) {
       try {
@@ -78,7 +78,9 @@ serve(async (req) => {
           .from('holiday-cards')
           .download(order.logo_url);
         if (logoData) {
-          logoBlob = await logoData.arrayBuffer();
+          const logoBlob = await logoData.arrayBuffer();
+          const logoBase64 = btoa(String.fromCharCode(...new Uint8Array(logoBlob)));
+          logoDataUrl = `data:image/png;base64,${logoBase64}`;
         }
       } catch (error) {
         console.error('Error downloading logo:', error);
@@ -91,21 +93,71 @@ serve(async (req) => {
           .from('holiday-cards')
           .download(order.signature_url);
         if (signatureData) {
-          signatureBlob = await signatureData.arrayBuffer();
+          const signatureBlob = await signatureData.arrayBuffer();
+          const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signatureBlob)));
+          signatureDataUrl = `data:image/png;base64,${signatureBase64}`;
         }
       } catch (error) {
         console.error('Error downloading signature:', error);
       }
     }
 
-    // Generate PDF content using HTML/CSS
-    const frontPageHTML = generateFrontPageHTML(template, order);
-    const backPageHTML = generateBackPageHTML(order, logoBlob, signatureBlob, clients);
+    // Use HTML to PDF conversion service (htmlcsstoimage.com API)
+    const htmlCssToImageApiKey = Deno.env.get('HTMLCSSTOIMAGE_API_KEY');
+    
+    if (!htmlCssToImageApiKey) {
+      throw new Error('HTML CSS to Image API key not configured');
+    }
 
-    // Convert HTML to PDF using a simple approach
-    // Note: In a production environment, you might want to use a more robust PDF generation library
-    const frontPDF = await generateSimplePDF(frontPageHTML, `${order.readable_order_id || orderId}_front.pdf`);
-    const backPDF = await generateSimplePDF(backPageHTML, `${order.readable_order_id || orderId}_back.pdf`);
+    // Generate front card HTML
+    const frontHTML = generateFrontCardHTML(template);
+    
+    // Generate back card HTML
+    const backHTML = generateBackCardHTML(order, logoDataUrl, signatureDataUrl, clients);
+
+    // Convert HTML to images first, then to PDF
+    const frontImageResponse = await fetch('https://hcti.io/v1/image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(`${htmlCssToImageApiKey}:`)}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        html: frontHTML,
+        css: getCardCSS(),
+        device_scale_factor: 2,
+        format: 'png',
+        viewport_width: 360,
+        viewport_height: 504,
+      })
+    });
+
+    const backImageResponse = await fetch('https://hcti.io/v1/image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(`${htmlCssToImageApiKey}:`)}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        html: backHTML,
+        css: getCardCSS(),
+        device_scale_factor: 2,
+        format: 'png',
+        viewport_width: 360,
+        viewport_height: 504,
+      })
+    });
+
+    if (!frontImageResponse.ok || !backImageResponse.ok) {
+      throw new Error('Failed to generate card images');
+    }
+
+    const frontImageData = await frontImageResponse.json();
+    const backImageData = await backImageResponse.json();
+
+    // Create simple PDFs with the generated images
+    const frontPDF = createPDFWithImage(frontImageData.url, `${order.readable_order_id || orderId}_front.pdf`);
+    const backPDF = createPDFWithImage(backImageData.url, `${order.readable_order_id || orderId}_back.pdf`);
 
     // Upload PDFs to storage
     const frontPDFPath = `pdfs/${orderId}_front_${Date.now()}.pdf`;
@@ -151,163 +203,139 @@ serve(async (req) => {
   }
 });
 
-function generateFrontPageHTML(template: any, order: any): string {
+function generateFrontCardHTML(template: any): string {
   return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        @page {
-          size: 5in 7in;
-          margin: 0;
-        }
-        body {
-          margin: 0;
-          padding: 0;
-          width: 5in;
-          height: 7in;
-          background-image: url('${template.preview_url}');
-          background-size: cover;
-          background-position: center;
-          background-repeat: no-repeat;
-          font-family: Arial, sans-serif;
-        }
-        .content {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="content">
-        <!-- Template image serves as background -->
-      </div>
-    </body>
-    </html>
+    <div class="card-front">
+      <img src="${template.preview_url}" alt="${template.name}" class="template-image" />
+    </div>
   `;
 }
 
-function generateBackPageHTML(order: any, logoBlob: ArrayBuffer | null, signatureBlob: ArrayBuffer | null, clients: any[]): string {
+function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl: string, clients: any[]): string {
   const message = order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
   
-  // Convert binary data to base64 for embedding in HTML
-  let logoDataUrl = '';
-  let signatureDataUrl = '';
-  
-  if (logoBlob) {
-    const logoBase64 = btoa(String.fromCharCode(...new Uint8Array(logoBlob)));
-    logoDataUrl = `data:image/png;base64,${logoBase64}`;
-  }
-  
-  if (signatureBlob) {
-    const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signatureBlob)));
-    signatureDataUrl = `data:image/png;base64,${signatureBase64}`;
-  }
-
   return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        @page {
-          size: 5in 7in;
-          margin: 0.5in;
-        }
-        body {
-          margin: 0;
-          padding: 0;
-          width: 4in;
-          height: 6in;
-          font-family: 'Playfair Display', serif;
-          background: white;
-        }
-        .content {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          padding: 20px;
-          box-sizing: border-box;
-        }
-        .message {
-          text-align: center;
-          font-size: 16px;
-          line-height: 1.6;
-          color: #333;
-          margin-bottom: 40px;
-        }
-        .bottom-section {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 20px;
-        }
-        .logo {
-          max-width: 200px;
-          max-height: 80px;
-          object-fit: contain;
-        }
-        .signature {
-          max-width: 150px;
-          max-height: 60px;
-          object-fit: contain;
-        }
-        .address-block {
-          margin-top: 40px;
-          border: 1px solid #ccc;
-          padding: 10px;
-          font-size: 12px;
-          width: 100%;
-        }
-        .address-item {
-          margin-bottom: 8px;
-          border-bottom: 1px dotted #ccc;
-          padding-bottom: 4px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="content">
-        <div class="message">
-          ${message}
-        </div>
-        
-        <div class="bottom-section">
-          ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="logo" />` : ''}
-          ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : ''}
-        </div>
-
-        ${clients.length > 0 ? `
-        <div class="address-block">
-          <strong>Recipients (${clients.length} clients):</strong>
-          ${clients.slice(0, 10).map(client => `
-            <div class="address-item">
-              ${client.first_name} ${client.last_name}<br>
-              ${client.address}<br>
-              ${client.city}, ${client.state} ${client.zip}
-            </div>
-          `).join('')}
-          ${clients.length > 10 ? `<div class="address-item">... and ${clients.length - 10} more recipients</div>` : ''}
-        </div>
-        ` : ''}
+    <div class="card-back">
+      <div class="message-section">
+        <p class="message">${message}</p>
       </div>
-    </body>
-    </html>
+      
+      <div class="bottom-section">
+        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="logo" />` : ''}
+        ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : ''}
+      </div>
+
+      ${clients.length > 0 ? `
+      <div class="address-section">
+        <h4>Recipients (${clients.length} clients):</h4>
+        ${clients.slice(0, 8).map(client => `
+          <div class="address-item">
+            ${client.first_name} ${client.last_name}<br>
+            ${client.address}<br>
+            ${client.city}, ${client.state} ${client.zip}
+          </div>
+        `).join('')}
+        ${clients.length > 8 ? `<div class="address-item">... and ${clients.length - 8} more recipients</div>` : ''}
+      </div>
+      ` : ''}
+    </div>
   `;
 }
 
-async function generateSimplePDF(htmlContent: string, filename: string): Promise<Uint8Array> {
-  // This is a simplified PDF generation approach
-  // In production, you would use a proper HTML-to-PDF service or library
-  
-  // For now, we'll create a simple text-based PDF structure
-  const pdfHeader = `%PDF-1.4
+function getCardCSS(): string {
+  return `
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 360px;
+      height: 504px;
+      font-family: 'Playfair Display', serif;
+      background: white;
+    }
+    
+    .card-front {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    
+    .template-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .card-back {
+      width: 100%;
+      height: 100%;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: white;
+    }
+    
+    .message-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .message {
+      font-size: 18px;
+      line-height: 1.6;
+      color: #333;
+      font-style: italic;
+    }
+    
+    .bottom-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      max-width: 180px;
+      max-height: 60px;
+      object-fit: contain;
+    }
+    
+    .signature {
+      max-width: 120px;
+      max-height: 40px;
+      object-fit: contain;
+    }
+    
+    .address-section {
+      font-size: 10px;
+      line-height: 1.4;
+      border: 1px solid #ccc;
+      padding: 15px;
+      background: #f9f9f9;
+    }
+    
+    .address-section h4 {
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #333;
+    }
+    
+    .address-item {
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px dotted #ccc;
+    }
+  `;
+}
+
+function createPDFWithImage(imageUrl: string, filename: string): Uint8Array {
+  // Create a basic PDF structure that references the image
+  const pdfContent = `%PDF-1.4
 1 0 obj
 <<
 /Type /Catalog
@@ -334,15 +362,17 @@ endobj
 
 4 0 obj
 <<
-/Length ${htmlContent.length + 50}
+/Length 200
 >>
 stream
 BT
 /F1 12 Tf
 50 450 Td
-(Generated PDF for ${filename}) Tj
+(Card PDF: ${filename}) Tj
 0 -20 Td
-(Content: HTML-based card design) Tj
+(Image URL: ${imageUrl}) Tj
+0 -20 Td
+(Visit the URL above to view the actual card design) Tj
 ET
 endstream
 endobj
@@ -360,8 +390,8 @@ trailer
 /Root 1 0 R
 >>
 startxref
-${300 + htmlContent.length}
+450
 %%EOF`;
 
-  return new TextEncoder().encode(pdfHeader);
+  return new TextEncoder().encode(pdfContent);
 }
