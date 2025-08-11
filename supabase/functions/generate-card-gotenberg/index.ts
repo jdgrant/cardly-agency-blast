@@ -126,6 +126,9 @@ serve(async (req) => {
 
     let gotenbergResp: Response;
 
+    const paperWidth = only === 'inside' ? '5.125' : '7';
+    const paperHeight = only === 'inside' ? '7' : '5.125';
+
     if (mode === 'url') {
       // Render the live preview URL directly to PDF
       const shortId = String(order.id).replace(/-/g, '').slice(0, 8).toLowerCase();
@@ -139,8 +142,8 @@ serve(async (req) => {
 
       const form = new FormData();
       form.append('url', targetUrl);
-      form.append('paperWidth', '7');
-      form.append('paperHeight', '5.125');
+      form.append('paperWidth', paperWidth);
+      form.append('paperHeight', paperHeight);
       form.append('marginTop', '0');
       form.append('marginBottom', '0');
       form.append('marginLeft', '0');
@@ -164,8 +167,8 @@ serve(async (req) => {
       if (includeFront) {
         form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
       }
-      form.append('paperWidth', '7');
-      form.append('paperHeight', '5.125');
+      form.append('paperWidth', paperWidth);
+      form.append('paperHeight', paperHeight);
       form.append('marginTop', '0');
       form.append('marginBottom', '0');
       form.append('marginLeft', '0');
@@ -248,8 +251,8 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
   <head>
     <meta charset="utf-8" />
     <style>
-      @page { size: 7in 5.125in; margin: 0; }
-      html, body { margin: 0; padding: 0; width: 7in; height: 5.125in; }
+      @page { size: 5.125in 7in; margin: 0; }
+      html, body { margin: 0; padding: 0; width: 5.125in; height: 7in; }
       body { font-family: Georgia, serif; background: #ffffff; }
       .wrap { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
       .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 32px; box-sizing: border-box; }
