@@ -74,6 +74,7 @@ const JobDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showSignatureUpload, setShowSignatureUpload] = useState(false);
   const [generatingPDFs, setGeneratingPDFs] = useState(false);
+  const [generatingFront, setGeneratingFront] = useState(false);
   const [generatingGotenberg, setGeneratingGotenberg] = useState(false);
   const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string}>({});
 
@@ -415,6 +416,30 @@ const JobDetail = () => {
     }
   };
 
+  const handleViewFrontPDF = async () => {
+    if (!order?.id) return;
+    setGeneratingFront(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId: order.id, only: 'front+inside', mode: 'url', origin: window.location.origin }
+      });
+      if (error) throw error;
+      const url = data?.downloadUrl;
+      if (!url) throw new Error('No PDF URL returned');
+      window.open(url, '_blank');
+      toast({ title: 'Front PDF Ready', description: 'Opened front-style PDF in a new tab.' });
+    } catch (error: any) {
+      console.error('Error generating front PDF:', error);
+      toast({
+        title: 'PDF Generation Failed',
+        description: error?.message || 'Could not generate front PDF.',
+        variant: 'destructive'
+      });
+    } finally {
+      setGeneratingFront(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -737,6 +762,40 @@ const JobDetail = () => {
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
                         <span>View Inside PDF</span>
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Front PDF */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5" />
+                  <span>Front PDF</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Generate and open a printable PDF of the front cover at 5.125" × 7".
+                  </p>
+                  <Button
+                    onClick={handleViewFrontPDF}
+                    disabled={generatingFront}
+                    className="w-full"
+                  >
+                    {generatingFront ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating Front PDF...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4" />
+                        <span>View Front PDF</span>
                       </div>
                     )}
                   </Button>
