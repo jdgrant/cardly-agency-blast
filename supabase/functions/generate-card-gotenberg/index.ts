@@ -145,8 +145,8 @@ serve(async (req) => {
     let gotenbergResp: Response;
 
     // Set dimensions based on format
-    const paperWidth = format === 'production' ? '7' : '5.125';
-    const paperHeight = format === 'production' ? '10.25' : '7';
+    const paperWidth = format === 'production' ? '10.25' : '5.125';
+    const paperHeight = format === 'production' ? '7' : '7';
 
     if (mode === 'url') {
       // Render the live preview URL directly to PDF (single page)
@@ -251,7 +251,7 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
   const imgSrc = previewDataUrl || template.preview_url || '';
   
   if (format === 'production') {
-    // Production format: 7" x 10.25" with front filling entire left half (5.125" x 7")
+    // Production format: 10.25" x 7" landscape with front filling left half (5.125" x 7")
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -262,7 +262,7 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
         body { font-family: Arial, sans-serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
         .front-half { width: 5.125in; height: 7in; overflow: hidden; }
-        .back-half { width: 2.125in; height: 7in; display: flex; align-items: center; justify-content: center; border-left: 1px dashed #ccc; }
+        .back-half { width: 5.125in; height: 7in; display: flex; align-items: center; justify-content: center; border-left: 1px dashed #ccc; }
         .front-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .back-template { width: 100%; height: 100%; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 12px; text-align: center; padding: 20px; box-sizing: border-box; }
       </style>
@@ -313,7 +313,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
   const message = order?.custom_message || order?.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
   
   if (format === 'production') {
-    // Production format: 7" x 10.25" with inside on left half, outside back on right half
+    // Production format: 10.25" x 7" landscape with inside on left half, outside back on right half
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -323,8 +323,8 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
         body { font-family: Georgia, serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
-        .inside-half { width: 50%; height: 100%; border-right: 1px dashed #ccc; }
-        .outside-half { width: 50%; height: 100%; }
+        .inside-half { width: 5.125in; height: 7in; border-right: 1px dashed #ccc; }
+        .outside-half { width: 5.125in; height: 7in; }
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
         .outside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; display: flex; align-items: center; justify-content: center; color: #6b7280; }
         .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
