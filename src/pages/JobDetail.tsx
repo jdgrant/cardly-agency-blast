@@ -421,7 +421,7 @@ const JobDetail = () => {
     setGeneratingFront(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, only: 'front+inside', mode: 'url', origin: window.location.origin }
+        body: { orderId: order.id, only: 'front', mode: 'html', origin: window.location.origin }
       });
       if (error) throw error;
       const url = data?.downloadUrl;

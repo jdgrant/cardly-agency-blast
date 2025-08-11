@@ -9,7 +9,7 @@ const corsHeaders = {
 
 interface GenerateRequest {
   orderId: string;
-  only?: 'inside' | 'front+inside';
+  only?: 'inside' | 'front' | 'front+inside';
   mode?: 'url' | 'html';
   origin?: string; // e.g., https://your-app.lovableproject.com
   fullUrl?: string; // direct URL to render
@@ -95,20 +95,35 @@ serve(async (req) => {
     let previewDataUrl = '';
     try {
       if (template.preview_url) {
-        // Handle both relative and absolute URLs
+        const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
         let fullUrl = template.preview_url;
-        if (template.preview_url.startsWith('/')) {
-          fullUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/storage/v1/object/public/holiday-cards${template.preview_url}`;
+
+        if (/^https?:\/\//i.test(fullUrl)) {
+          // already absolute
+        } else if (fullUrl.startsWith('/lovable-uploads/')) {
+          // public asset served by the web app
+          if (base) fullUrl = `${base}${fullUrl}`;
+        } else if (fullUrl.startsWith('/')) {
+          // try Supabase storage public path or fall back to app origin
+          const supa = 'https://wsibvneidsmtsazfbmgc.supabase.co';
+          fullUrl = `${supa}${fullUrl}`;
         }
-        
+
         console.log('Fetching preview from:', fullUrl);
-        const resp = await fetch(fullUrl);
+        let resp = await fetch(fullUrl);
+        if (!resp.ok && base && !/^https?:\/\//i.test(template.preview_url)) {
+          // Retry with app origin for any relative URL
+          const retryUrl = `${base}${template.preview_url}`;
+          console.log('Retrying preview fetch from:', retryUrl);
+          resp = await fetch(retryUrl);
+        }
+
         if (resp.ok) {
           const ct = resp.headers.get('content-type') || 'image/png';
           const buf = await resp.arrayBuffer();
           const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
           previewDataUrl = `data:${ct};base64,${base64}`;
-          console.log('Preview image fetched successfully');
+          console.log('Preview image fetched and inlined successfully');
         } else {
           console.log('Preview fetch failed with status:', resp.status);
         }
@@ -123,6 +138,7 @@ serve(async (req) => {
     headers['X-Api-Key'] = GOTENBERG_API_KEY;
 
     const includeFront = (only !== 'inside');
+    const includeInside = (only !== 'front');
 
     let gotenbergResp: Response;
 
@@ -130,7 +146,7 @@ serve(async (req) => {
     const paperHeight = '7';
 
     if (mode === 'url') {
-      // Render the live preview URL directly to PDF
+      // Render the live preview URL directly to PDF (single page)
       const shortId = String(order.id).replace(/-/g, '').slice(0, 8).toLowerCase();
       const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
       const route = only === 'inside' ? 'inside' : 'front';
@@ -157,16 +173,21 @@ serve(async (req) => {
       console.log('Calling Gotenberg (url) at:', url, 'for:', targetUrl);
       gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
     } else {
-      // Fallback: build HTML and convert
+      // Build HTML and convert (supports multi-page)
       const form = new FormData();
-      // Provide an entry file named index.html as required by Gotenberg
       const frontHTML = buildFrontHTML(template, previewDataUrl);
       const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl);
 
-      form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
-      if (includeFront) {
-        form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
+      if (includeFront && !includeInside) {
+        form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
+      } else if (includeInside && !includeFront) {
+        form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
+      } else {
+        // both pages, ensure order: front then inside
+        form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
+        form.append('files', new File([insideHTML], 'page2.html', { type: 'text/html' }));
       }
+
       form.append('paperWidth', paperWidth);
       form.append('paperHeight', paperHeight);
       form.append('marginTop', '0');
@@ -177,7 +198,7 @@ serve(async (req) => {
       form.append('preferCssPageSize', 'true');
 
       const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
-      console.log('Calling Gotenberg (html) at:', url);
+      console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
       gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
     }
 
@@ -206,7 +227,11 @@ serve(async (req) => {
       success: true,
       pdfPath,
       downloadUrl: signed?.signedUrl || null,
-      message: includeFront ? 'Gotenberg PDF generated successfully (2 pages: front + inside)' : 'Gotenberg PDF generated successfully (inside only)'
+      message: (includeFront && includeInside)
+        ? 'Gotenberg PDF generated successfully (2 pages: front + inside)'
+        : includeFront
+          ? 'Gotenberg PDF generated successfully (front only)'
+          : 'Gotenberg PDF generated successfully (inside only)'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
