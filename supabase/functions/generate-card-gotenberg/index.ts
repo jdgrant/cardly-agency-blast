@@ -264,7 +264,7 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
         .front-half { width: 5.125in; height: 7in; overflow: hidden; }
         .back-half { width: 5.125in; height: 7in; display: flex; align-items: center; justify-content: center; border-left: 1px dashed #ccc; }
         .front-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .back-template { width: 100%; height: 100%; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 12px; text-align: center; padding: 20px; box-sizing: border-box; }
+        .back-template { width: 100%; height: 100%; background: #ffffff; }
       </style>
     </head>
     <body>
@@ -273,12 +273,7 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
           ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="${escapeHtml(template.name || 'Card front')}"/>` : ''}
         </div>
         <div class="back-half">
-          <div class="back-template">
-            <div>
-              <div style="font-weight: bold; margin-bottom: 10px;">Card Back</div>
-              <div style="font-size: 10px; color: #9ca3af;">Address area</div>
-            </div>
-          </div>
+          <div class="back-template"></div>
         </div>
       </div>
     </body>
@@ -326,7 +321,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         .inside-half { width: 5.125in; height: 7in; border-right: 1px dashed #ccc; }
         .outside-half { width: 5.125in; height: 7in; }
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
-        .outside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; display: flex; align-items: center; justify-content: center; color: #6b7280; }
+        .outside-content { width: 100%; height: 100%; background: #ffffff; }
         .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
         .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
         .msg { text-align: center; max-width: 85%; font-size: 16px; line-height: 1.5; color: #111827; font-style: italic; margin: 0 auto; }
@@ -352,14 +347,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
           </div>
         </div>
         <div class="outside-half">
-          <div class="outside-content">
-            <div style="text-align: center; font-size: 14px;">
-              <div>Address Area</div>
-              <div style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
-                Recipient address will be printed here
-              </div>
-            </div>
-          </div>
+          <div class="outside-content"></div>
         </div>
       </div>
     </body>
