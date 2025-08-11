@@ -217,8 +217,8 @@ export default function PreviewCard() {
           />
         ) : (
           <div className="w-full h-full bg-background">
-            <div className="w-full h-full flex flex-col justify-between p-6">
-              <div className="text-center">
+            <div className="w-full h-full flex flex-col items-center justify-center p-8 gap-8">
+              <div className="text-center max-w-[80%]">
                 <p className="text-lg leading-relaxed italic text-foreground/90">
                   {message}
                 </p>
