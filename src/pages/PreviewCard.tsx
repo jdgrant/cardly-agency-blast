@@ -70,16 +70,30 @@ export default function PreviewCard() {
       if (!orderId) return;
       setLoading(true);
       try {
-        // Load order by id or readable_order_id
+        const isUuid = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/i.test(orderId);
+
         let found: any = null;
-        const byIdResp = await supabase
-          .from("orders")
-          .select("*")
-          .eq("id", orderId)
-          .maybeSingle();
-        if (byIdResp.data) {
-          found = byIdResp.data;
-        } else {
+
+        // 1) Exact UUID match (only if a valid UUID string)
+        if (isUuid) {
+          const byIdResp = await supabase
+            .from("orders")
+            .select("*")
+            .eq("id", orderId)
+            .maybeSingle();
+          if (byIdResp.data) found = byIdResp.data;
+        }
+
+        // 2) Short-id prefix (first 8 hex chars of UUID)
+        if (!found && /^[0-9a-fA-F]{6,12}$/.test(orderId)) {
+          const shortResp = await supabase.rpc("find_order_by_short_id", { short_id: orderId });
+          if (shortResp.data && shortResp.data.length > 0) {
+            found = shortResp.data[0];
+          }
+        }
+
+        // 3) Fallback by readable_order_id (exact or contains)
+        if (!found) {
           const byReadable = await supabase
             .from("orders")
             .select("*")
