@@ -102,62 +102,13 @@ serve(async (req) => {
       }
     }
 
-    // Use HTML to PDF conversion service (htmlcsstoimage.com API)
-    const htmlCssToImageApiKey = Deno.env.get('HTMLCSSTOIMAGE_API_KEY');
-    
-    if (!htmlCssToImageApiKey) {
-      throw new Error('HTML CSS to Image API key not configured');
-    }
-
-    // Generate front card HTML
+    // Generate HTML content for cards
     const frontHTML = generateFrontCardHTML(template);
-    
-    // Generate back card HTML
     const backHTML = generateBackCardHTML(order, logoDataUrl, signatureDataUrl, clients);
 
-    // Convert HTML to images first, then to PDF
-    const frontImageResponse = await fetch('https://hcti.io/v1/image', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(`${htmlCssToImageApiKey}:`)}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        html: frontHTML,
-        css: getCardCSS(),
-        device_scale_factor: 2,
-        format: 'png',
-        viewport_width: 360,
-        viewport_height: 504,
-      })
-    });
-
-    const backImageResponse = await fetch('https://hcti.io/v1/image', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(`${htmlCssToImageApiKey}:`)}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        html: backHTML,
-        css: getCardCSS(),
-        device_scale_factor: 2,
-        format: 'png',
-        viewport_width: 360,
-        viewport_height: 504,
-      })
-    });
-
-    if (!frontImageResponse.ok || !backImageResponse.ok) {
-      throw new Error('Failed to generate card images');
-    }
-
-    const frontImageData = await frontImageResponse.json();
-    const backImageData = await backImageResponse.json();
-
-    // Create simple PDFs with the generated images
-    const frontPDF = createPDFWithImage(frontImageData.url, `${order.readable_order_id || orderId}_front.pdf`);
-    const backPDF = createPDFWithImage(backImageData.url, `${order.readable_order_id || orderId}_back.pdf`);
+    // Create PDFs with embedded HTML content
+    const frontPDF = await generateHTMLPDF(frontHTML, `${order.readable_order_id || orderId}_front.pdf`);
+    const backPDF = await generateHTMLPDF(backHTML, `${order.readable_order_id || orderId}_back.pdf`);
 
     // Upload PDFs to storage
     const frontPDFPath = `pdfs/${orderId}_front_${Date.now()}.pdf`;
@@ -205,9 +156,62 @@ serve(async (req) => {
 
 function generateFrontCardHTML(template: any): string {
   return `
-    <div class="card-front">
-      <img src="${template.preview_url}" alt="${template.name}" class="template-image" />
-    </div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {
+          margin: 0;
+          padding: 0;
+          width: 360px;
+          height: 504px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: white;
+          font-family: Arial, sans-serif;
+        }
+        .card-container {
+          width: 100%;
+          height: 100%;
+          border: 2px solid #ccc;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 20px;
+          box-sizing: border-box;
+        }
+        .template-info {
+          font-size: 24px;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 20px;
+        }
+        .template-description {
+          font-size: 16px;
+          color: #666;
+          margin-bottom: 30px;
+        }
+        .template-preview {
+          width: 200px;
+          height: 200px;
+          border: 1px solid #ddd;
+          background: url('${template.preview_url}') center/cover;
+          border-radius: 8px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="card-container">
+        <div class="template-info">${template.name}</div>
+        <div class="template-description">${template.description || 'Holiday Card Template'}</div>
+        <div class="template-preview"></div>
+      </div>
+    </body>
+    </html>
   `;
 }
 
@@ -215,126 +219,126 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
   const message = order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
   
   return `
-    <div class="card-back">
-      <div class="message-section">
-        <p class="message">${message}</p>
-      </div>
-      
-      <div class="bottom-section">
-        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="logo" />` : ''}
-        ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : ''}
-      </div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {
+          margin: 0;
+          padding: 0;
+          width: 360px;
+          height: 504px;
+          font-family: 'Georgia', serif;
+          background: white;
+        }
+        .card-back {
+          width: 100%;
+          height: 100%;
+          padding: 30px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          box-sizing: border-box;
+          border: 2px solid #ccc;
+        }
+        .message-section {
+          text-align: center;
+          margin-bottom: 30px;
+        }
+        .message {
+          font-size: 18px;
+          line-height: 1.6;
+          color: #333;
+          font-style: italic;
+        }
+        .bottom-section {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 15px;
+          margin-bottom: 20px;
+        }
+        .logo {
+          max-width: 150px;
+          max-height: 50px;
+          object-fit: contain;
+        }
+        .signature {
+          max-width: 100px;
+          max-height: 30px;
+          object-fit: contain;
+        }
+        .address-section {
+          font-size: 10px;
+          line-height: 1.3;
+          border: 1px solid #ccc;
+          padding: 12px;
+          background: #f9f9f9;
+          border-radius: 4px;
+        }
+        .address-section h4 {
+          margin: 0 0 8px 0;
+          font-size: 11px;
+          color: #333;
+          font-weight: bold;
+        }
+        .address-item {
+          margin-bottom: 6px;
+          padding-bottom: 3px;
+          border-bottom: 1px dotted #ccc;
+        }
+        .order-info {
+          font-size: 8px;
+          color: #888;
+          text-align: center;
+          margin-top: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="card-back">
+        <div class="message-section">
+          <div class="message">${message}</div>
+        </div>
+        
+        <div class="bottom-section">
+          ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="logo" />` : '<div style="height: 50px; display: flex; align-items: center; color: #999;">Company Logo</div>'}
+          ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : '<div style="height: 30px; display: flex; align-items: center; color: #999;">Signature</div>'}
+        </div>
 
-      ${clients.length > 0 ? `
-      <div class="address-section">
-        <h4>Recipients (${clients.length} clients):</h4>
-        ${clients.slice(0, 8).map(client => `
-          <div class="address-item">
-            ${client.first_name} ${client.last_name}<br>
-            ${client.address}<br>
-            ${client.city}, ${client.state} ${client.zip}
-          </div>
-        `).join('')}
-        ${clients.length > 8 ? `<div class="address-item">... and ${clients.length - 8} more recipients</div>` : ''}
+        ${clients.length > 0 ? `
+        <div class="address-section">
+          <h4>Recipients (${clients.length} clients):</h4>
+          ${clients.slice(0, 6).map(client => `
+            <div class="address-item">
+              ${client.first_name} ${client.last_name}<br>
+              ${client.address}<br>
+              ${client.city}, ${client.state} ${client.zip}
+            </div>
+          `).join('')}
+          ${clients.length > 6 ? `<div class="address-item"><strong>... and ${clients.length - 6} more recipients</strong></div>` : ''}
+        </div>
+        ` : ''}
+        
+        <div class="order-info">
+          Order: ${order.readable_order_id || order.id} | ${order.card_quantity} cards | Generated: ${new Date().toLocaleDateString()}
+        </div>
       </div>
-      ` : ''}
-    </div>
+    </body>
+    </html>
   `;
 }
 
-function getCardCSS(): string {
-  return `
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      width: 360px;
-      height: 504px;
-      font-family: 'Playfair Display', serif;
-      background: white;
-    }
-    
-    .card-front {
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-    
-    .template-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .card-back {
-      width: 100%;
-      height: 100%;
-      padding: 30px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      background: white;
-    }
-    
-    .message-section {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    
-    .message {
-      font-size: 18px;
-      line-height: 1.6;
-      color: #333;
-      font-style: italic;
-    }
-    
-    .bottom-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-    
-    .logo {
-      max-width: 180px;
-      max-height: 60px;
-      object-fit: contain;
-    }
-    
-    .signature {
-      max-width: 120px;
-      max-height: 40px;
-      object-fit: contain;
-    }
-    
-    .address-section {
-      font-size: 10px;
-      line-height: 1.4;
-      border: 1px solid #ccc;
-      padding: 15px;
-      background: #f9f9f9;
-    }
-    
-    .address-section h4 {
-      margin-bottom: 10px;
-      font-size: 12px;
-      color: #333;
-    }
-    
-    .address-item {
-      margin-bottom: 8px;
-      padding-bottom: 4px;
-      border-bottom: 1px dotted #ccc;
-    }
-  `;
-}
-
-function createPDFWithImage(imageUrl: string, filename: string): Uint8Array {
-  // Create a basic PDF structure that references the image
+async function generateHTMLPDF(htmlContent: string, filename: string): Promise<Uint8Array> {
+  // Create a more detailed PDF that includes the HTML structure as text
+  // This is a simplified approach but completely free
+  
+  const textContent = htmlContent
+    .replace(/<[^>]*>/g, ' ')  // Remove HTML tags
+    .replace(/\s+/g, ' ')      // Normalize whitespace
+    .trim();
+  
   const pdfContent = `%PDF-1.4
 1 0 obj
 <<
@@ -355,42 +359,65 @@ endobj
 <<
 /Type /Page
 /Parent 2 0 R
-/MediaBox [0 0 360 504]
+/MediaBox [0 0 612 792]
 /Contents 4 0 R
+/Resources <<
+  /Font <<
+    /F1 5 0 R
+  >>
+>>
 >>
 endobj
 
 4 0 obj
 <<
-/Length 200
+/Length ${500 + textContent.length}
 >>
 stream
 BT
 /F1 12 Tf
-50 450 Td
-(Card PDF: ${filename}) Tj
-0 -20 Td
-(Image URL: ${imageUrl}) Tj
-0 -20 Td
-(Visit the URL above to view the actual card design) Tj
+50 750 Td
+(Holiday Card: ${filename}) Tj
+0 -30 Td
+/F1 10 Tf
+(Generated on: ${new Date().toLocaleString()}) Tj
+0 -30 Td
+(Card Dimensions: 5" x 7" (360x504 pixels)) Tj
+0 -40 Td
+/F1 8 Tf
+${textContent.substring(0, 500).split(' ').map((word, i) => {
+  if (i % 10 === 0) return `0 -15 Td (${word}) Tj`;
+  return `(${word}) Tj `;
+}).join(' ')}
+0 -30 Td
+(--- Visit the admin panel to see full card preview ---) Tj
 ET
 endstream
 endobj
 
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
 xref
-0 5
+0 6
 0000000000 65535 f 
 0000000010 00000 n 
 0000000060 00000 n 
 0000000120 00000 n 
-0000000200 00000 n 
+0000000250 00000 n 
+0000000${800 + textContent.length} 00000 n 
 trailer
 <<
-/Size 5
+/Size 6
 /Root 1 0 R
 >>
 startxref
-450
+${850 + textContent.length}
 %%EOF`;
 
   return new TextEncoder().encode(pdfContent);
