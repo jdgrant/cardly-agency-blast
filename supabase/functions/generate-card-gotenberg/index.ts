@@ -181,12 +181,17 @@ serve(async (req) => {
       const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
       const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl, format, paperWidth, paperHeight);
 
+      console.log('Mode is HTML, includeFront:', includeFront, 'includeInside:', includeInside);
+
       if (includeFront && !includeInside) {
+        console.log('Adding front page only');
         form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
       } else if (includeInside && !includeFront) {
+        console.log('Adding inside page only');
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
       } else {
         // both pages, ensure order: front then inside
+        console.log('Adding both pages: front + inside');
         form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
         form.append('files', new File([insideHTML], 'page2.html', { type: 'text/html' }));
       }
