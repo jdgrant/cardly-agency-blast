@@ -31,7 +31,8 @@ import {
   Package,
   Settings,
   Tags,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 
 interface Order {
@@ -225,6 +226,36 @@ const Admin = () => {
       toast({
         title: "Download Failed",
         description: "Unable to download file",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const generateTemplatePDF = async (templateId: string) => {
+    try {
+      toast({
+        title: "Generating PDF",
+        description: "Creating template PDF...",
+      });
+
+      const { data, error } = await supabase.functions
+        .invoke('generate-template-pdf', {
+          body: { templateId }
+        });
+
+      if (error) throw error;
+
+      if (data.downloadUrl) {
+        window.open(data.downloadUrl, '_blank');
+        toast({
+          title: "PDF Generated",
+          description: "Template PDF opened in new tab",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "PDF Generation Failed",
+        description: "Unable to generate template PDF",
         variant: "destructive"
       });
     }
@@ -688,7 +719,7 @@ const Admin = () => {
               </DialogTitle>
             </DialogHeader>
             {previewTemplate && (
-              <div className="space-y-4">
+                <div className="space-y-4">
                 <div className="flex justify-center">
                   <div className="max-w-md">
                     <img 
@@ -711,6 +742,15 @@ const Admin = () => {
                         ).join(' ')}
                       </Badge>
                     ))}
+                  </div>
+                  <div className="pt-4">
+                    <Button 
+                      onClick={() => generateTemplatePDF(previewTemplate.id)}
+                      className="w-full flex items-center space-x-2"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>Generate Card PDF</span>
+                    </Button>
                   </div>
                 </div>
               </div>
