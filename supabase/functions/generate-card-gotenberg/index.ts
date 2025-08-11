@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
-import { encode as base64Encode } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -71,7 +71,7 @@ serve(async (req) => {
         const { data } = await supabase.storage.from('holiday-cards').download(order.logo_url);
         if (data) {
           const buf = await data.arrayBuffer();
-          const base64 = base64Encode(new Uint8Array(buf));
+          const base64 = encodeBase64(new Uint8Array(buf));
           logoDataUrl = `data:image/png;base64,${base64}`;
         }
       } catch (e) {
@@ -84,7 +84,7 @@ serve(async (req) => {
         const { data } = await supabase.storage.from('holiday-cards').download(order.signature_url);
         if (data) {
           const buf = await data.arrayBuffer();
-          const base64 = base64Encode(new Uint8Array(buf));
+          const base64 = encodeBase64(new Uint8Array(buf));
           signatureDataUrl = `data:image/png;base64,${base64}`;
         }
       } catch (e) {
@@ -122,7 +122,7 @@ serve(async (req) => {
         if (resp.ok) {
           const ct = resp.headers.get('content-type') || 'image/png';
           const buf = await resp.arrayBuffer();
-          const base64 = base64Encode(new Uint8Array(buf));
+          const base64 = encodeBase64(new Uint8Array(buf));
           previewDataUrl = `data:${ct};base64,${base64}`;
           console.log('Preview image fetched and inlined successfully');
         } else {
