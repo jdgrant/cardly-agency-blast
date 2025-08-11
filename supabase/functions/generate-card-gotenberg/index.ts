@@ -9,6 +9,7 @@ const corsHeaders = {
 
 interface GenerateRequest {
   orderId: string;
+  only?: 'inside' | 'front+inside';
 }
 
 serve(async (req) => {
@@ -17,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId } = await req.json() as GenerateRequest;
+    const { orderId, only } = await req.json() as GenerateRequest;
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
         status: 400,
@@ -119,7 +120,10 @@ serve(async (req) => {
 
     // Prepare multipart form for Gotenberg
     const form = new FormData();
-    form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
+    const includeFront = (only !== 'inside');
+    if (includeFront) {
+      form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
+    }
     form.append('files', new File([insideHTML], 'inside.html', { type: 'text/html' }));
 
     // Page size: 7in x 5.125in, small margins
@@ -172,7 +176,7 @@ serve(async (req) => {
       success: true,
       pdfPath,
       downloadUrl: signed?.signedUrl || null,
-      message: 'Gotenberg PDF generated successfully (2 pages: front + inside)'
+      message: includeFront ? 'Gotenberg PDF generated successfully (2 pages: front + inside)' : 'Gotenberg PDF generated successfully (inside only)'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
