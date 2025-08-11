@@ -447,7 +447,7 @@ const JobDetail = () => {
     try {
       console.log('Generating Production PDF for order:', order.id);
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, format: 'production', mode: 'html' }
+        body: { orderId: order.id, format: 'production' }
       });
 
       console.log('Production PDF response:', data, error);

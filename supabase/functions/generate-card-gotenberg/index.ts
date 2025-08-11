@@ -181,33 +181,14 @@ serve(async (req) => {
       const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
       const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl, format, paperWidth, paperHeight);
 
-      console.log('Mode is HTML, includeFront:', includeFront, 'includeInside:', includeInside);
-      console.log('only parameter:', only);
-
       if (includeFront && !includeInside) {
-        console.log('Adding front page only');
         form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
       } else if (includeInside && !includeFront) {
-        console.log('Adding inside page only');
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
       } else {
-        // both pages - create a single HTML with page breaks
-        console.log('Adding both pages: front + inside');
-        const combinedHTML = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <style>
-    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-    .page-break { page-break-after: always; }
-  </style>
-</head>
-<body>
-  <div class="page-break">${frontHTML.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/gi, '').replace(/<\/body>[\s\S]*?<\/html>/gi, '')}</div>
-  ${insideHTML.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/gi, '').replace(/<\/body>[\s\S]*?<\/html>/gi, '')}
-</body>
-</html>`;
-        form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
+        // both pages, ensure order: front then inside
+        form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
+        form.append('files', new File([insideHTML], 'page2.html', { type: 'text/html' }));
       }
 
       form.append('paperWidth', paperWidth);
@@ -327,7 +308,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
   const message = order?.custom_message || order?.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
   
   if (format === 'production') {
-    // Production format: 10.25" x 7" landscape with inside content on left half, blank right half
+    // Production format: 10.25" x 7" landscape with inside on left half, outside back on right half
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -338,9 +319,10 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         body { font-family: Georgia, serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
         .inside-half { width: 5.125in; height: 7in; }
-        .blank-half { width: 5.125in; height: 7in; background: #ffffff; }
-        .inside-content { width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
-        .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; }
+        .outside-half { width: 5.125in; height: 7in; }
+        .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
+        .outside-content { width: 100%; height: 100%; background: #ffffff; }
+        .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
         .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
         .msg { text-align: center; max-width: 85%; font-size: 16px; line-height: 1.5; color: #111827; font-style: italic; margin: 0 auto; }
         .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 58%; display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; padding: 0 20px; box-sizing: border-box; }
@@ -364,7 +346,9 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
             </div>
           </div>
         </div>
-        <div class="blank-half"></div>
+        <div class="outside-half">
+          <div class="outside-content"></div>
+        </div>
       </div>
     </body>
     </html>`;

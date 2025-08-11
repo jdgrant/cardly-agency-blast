@@ -311,7 +311,7 @@ const Admin = () => {
       toast({ title: "Building Production PDF", description: `Generating 7"x10.25" production card for ${orderId.slice(0,8)}…` });
 
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId, format: 'production', mode: 'html' }
+        body: { orderId, format: 'production' }
       });
 
       if (error) throw error;
