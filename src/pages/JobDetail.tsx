@@ -391,6 +391,30 @@ const JobDetail = () => {
     }
   };
 
+  const handleViewInsidePDF = async () => {
+    if (!order?.id) return;
+    setGeneratingPDFs(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-card-pdfs', {
+        body: { orderId: order.id }
+      });
+      if (error) throw error;
+      const url = data?.backDownloadUrl;
+      if (!url) throw new Error('No inside PDF returned');
+      window.open(url, '_blank');
+      toast({ title: 'Inside PDF Ready', description: 'Opened inside PDF in a new tab.' });
+    } catch (error: any) {
+      console.error('Error generating inside PDF:', error);
+      toast({
+        title: 'PDF Generation Failed',
+        description: error?.message || 'Could not generate inside PDF.',
+        variant: 'destructive'
+      });
+    } finally {
+      setGeneratingPDFs(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -686,109 +710,36 @@ const JobDetail = () => {
               </CardContent>
             </Card>
 
-            {/* PDF Generation */}
+            {/* Inside PDF */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="w-5 h-5" />
-                  <span>Generate PDFs</span>
+                  <span>Inside PDF</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600">
-                    Generate printable PDFs for the card front and back with all order details (7" × 5.125").
+                    Generate and open a printable PDF of the inside page with message, logo, and signature.
                   </p>
-                  
-                  <div className="space-y-2">
-                    <Button
-                      onClick={handleGeneratePDFs}
-                      disabled={generatingPDFs}
-                      className="w-full"
-                    >
-                      {generatingPDFs ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Generating PDFs...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <FileText className="w-4 h-4" />
-                          <span>Generate Card PDFs</span>
-                        </div>
-                      )}
-                    </Button>
-
-                    <Button
-                      onClick={handleGenerateGotenberg}
-                      disabled={generatingGotenberg}
-                      variant="secondary"
-                      className="w-full"
-                    >
-                      {generatingGotenberg ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Generating via Gotenberg...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <FileText className="w-4 h-4" />
-                          <span>Generate PDF via Gotenberg</span>
-                        </div>
-                      )}
-                    </Button>
-                    
-                    {template && (
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => window.open(`/#/html2pdf?templateId=${template.id}`, '_blank')}
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View PDF Preview Page
-                      </Button>
+                  <Button
+                    onClick={handleViewInsidePDF}
+                    disabled={generatingPDFs}
+                    className="w-full"
+                  >
+                    {generatingPDFs ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating Inside PDF...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4" />
+                        <span>View Inside PDF</span>
+                      </div>
                     )}
-                  </div>
-                  
-                  {/* PDF Download Links */}
-                  {(pdfDownloadUrls.front || pdfDownloadUrls.back || pdfDownloadUrls.gotenberg) && (
-                    <div className="space-y-2 pt-3 border-t">
-                      <p className="text-sm font-medium text-gray-700">Download Links (Open in New Tab):</p>
-                      {pdfDownloadUrls.front && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start"
-                          onClick={() => window.open(pdfDownloadUrls.front!, '_blank')}
-                        >
-                          <FileText className="w-4 h-4 mr-2" />
-                          Front Card PDF (7" × 5.125")
-                        </Button>
-                      )}
-                      {pdfDownloadUrls.back && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start"
-                          onClick={() => window.open(pdfDownloadUrls.back!, '_blank')}
-                        >
-                          <FileText className="w-4 h-4 mr-2" />
-                          Back Card PDF (7" × 5.125")
-                        </Button>
-                      )}
-                      {pdfDownloadUrls.gotenberg && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full justify-start"
-                          onClick={() => window.open(pdfDownloadUrls.gotenberg!, '_blank')}
-                        >
-                          <FileText className="w-4 h-4 mr-2" />
-                          Combined PDF via Gotenberg (2 pages)
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
