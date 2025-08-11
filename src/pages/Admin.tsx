@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Download, 
   RefreshCw, 
@@ -29,7 +30,8 @@ import {
   Users,
   Package,
   Settings,
-  Tags
+  Tags,
+  X
 } from 'lucide-react';
 
 interface Order {
@@ -67,6 +69,7 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState<'orders' | 'templates'>('orders');
   const [selectedTag, setSelectedTag] = useState<string>('');
   const [templatesForTag, setTemplatesForTag] = useState<string[]>([]);
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const { toast } = useToast();
 
   const handleLogin = () => {
@@ -592,12 +595,23 @@ const Admin = () => {
                       {templates.map((template) => (
                         <Card key={template.id} className="border">
                           <CardContent className="p-4">
-                            <div className="space-y-3">
-                              <img 
-                                src={template.preview_url} 
-                                alt={template.name}
-                                className="w-full h-24 object-cover rounded"
-                              />
+                             <div className="space-y-3">
+                               <div className="relative group">
+                                 <img 
+                                   src={template.preview_url} 
+                                   alt={template.name}
+                                   className="w-full h-24 object-cover rounded cursor-pointer"
+                                   onClick={() => setPreviewTemplate(template)}
+                                 />
+                                 <Button
+                                   size="sm"
+                                   variant="secondary"
+                                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                   onClick={() => setPreviewTemplate(template)}
+                                 >
+                                   <Eye className="w-3 h-3" />
+                                 </Button>
+                               </div>
                               <div className="space-y-2">
                                 <h4 className="font-medium text-sm">{template.name}</h4>
                                 <div className="flex items-center space-x-2">
@@ -638,6 +652,52 @@ const Admin = () => {
             </Card>
           </div>
         )}
+
+        {/* Preview Modal */}
+        <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Template Preview: {previewTemplate?.name}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setPreviewTemplate(null)}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </DialogTitle>
+            </DialogHeader>
+            {previewTemplate && (
+              <div className="space-y-4">
+                <div className="flex justify-center">
+                  <div className="max-w-md">
+                    <img 
+                      src={previewTemplate.preview_url} 
+                      alt={previewTemplate.name}
+                      className="w-full h-auto rounded-lg shadow-lg"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">{previewTemplate.name}</h3>
+                  {previewTemplate.description && (
+                    <p className="text-gray-600">{previewTemplate.description}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {previewTemplate.occasions.map((occasion) => (
+                      <Badge key={occasion} variant="secondary">
+                        {occasion.replace('-', ' ').split(' ').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join(' ')}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
