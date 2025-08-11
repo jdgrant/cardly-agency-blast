@@ -189,7 +189,7 @@ const Step1ChooseTemplate = () => {
 
       {/* Preview Modal */}
       <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
-        <DialogContent className="max-w-2xl bg-white">
+        <DialogContent className="max-w-lg bg-white">
           <DialogHeader className="bg-white">
             <DialogTitle>{previewTemplateData?.name}</DialogTitle>
           </DialogHeader>
