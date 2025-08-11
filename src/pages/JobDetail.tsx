@@ -15,10 +15,12 @@ import {
   Package,
   FileText,
   Image as ImageIcon,
-  MapPin
+  MapPin,
+  Upload
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import SignatureExtractor from '@/components/signature/SignatureExtractor';
 
 interface Order {
   id: string;
@@ -70,6 +72,7 @@ const JobDetail = () => {
   const [logoBlob, setLogoBlob] = useState<string | null>(null);
   const [signatureBlob, setSignatureBlob] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSignatureUpload, setShowSignatureUpload] = useState(false);
 
   useEffect(() => {
     if (orderId) {
@@ -234,6 +237,52 @@ const JobDetail = () => {
   // Get the current message for display
   const getCurrentMessage = () => {
     return order?.custom_message || order?.selected_message || '';
+  };
+
+  const handleSignatureUpload = async (signatureBlob: Blob) => {
+    if (!order?.id) return;
+
+    try {
+      // Upload signature to Supabase storage
+      const fileName = `signatures/${order.id}_signature_${Date.now()}.png`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('holiday-cards')
+        .upload(fileName, signatureBlob, {
+          contentType: 'image/png',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Update order record with signature URL
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ signature_url: fileName })
+        .eq('id', order.id);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setOrder(prev => prev ? { ...prev, signature_url: fileName } : null);
+      
+      // Create blob URL for immediate preview
+      setSignatureBlob(URL.createObjectURL(signatureBlob));
+      setShowSignatureUpload(false);
+
+      toast({
+        title: "Success",
+        description: "Signature uploaded successfully",
+      });
+
+    } catch (error) {
+      console.error('Error uploading signature:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload signature",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading) {
@@ -561,6 +610,17 @@ const JobDetail = () => {
                     Download Signature
                   </Button>
                 )}
+
+                {!order.signature_url && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => setShowSignatureUpload(true)}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Signature
+                  </Button>
+                )}
                 
                 {order.csv_file_url && (
                   <Button
@@ -581,6 +641,18 @@ const JobDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Signature Upload Dialog */}
+      <Dialog open={showSignatureUpload} onOpenChange={setShowSignatureUpload}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Upload Signature</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
+            <SignatureExtractor onSignatureExtracted={handleSignatureUpload} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
