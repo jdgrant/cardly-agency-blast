@@ -663,23 +663,37 @@ const JobDetail = () => {
                   <p className="text-sm text-gray-600">
                     Generate printable PDFs for the card front and back with all order details (7" × 5.125").
                   </p>
-                  <Button
-                    onClick={handleGeneratePDFs}
-                    disabled={generatingPDFs}
-                    className="w-full"
-                  >
-                    {generatingPDFs ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Generating PDFs...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <FileText className="w-4 h-4" />
-                        <span>Generate Card PDFs</span>
-                      </div>
+                  
+                  <div className="space-y-2">
+                    <Button
+                      onClick={handleGeneratePDFs}
+                      disabled={generatingPDFs}
+                      className="w-full"
+                    >
+                      {generatingPDFs ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Generating PDFs...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <FileText className="w-4 h-4" />
+                          <span>Generate Card PDFs</span>
+                        </div>
+                      )}
+                    </Button>
+                    
+                    {template && (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => window.open(`/#/html2pdf?templateId=${template.id}`, '_blank')}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View PDF Preview Page
+                      </Button>
                     )}
-                  </Button>
+                  </div>
                   
                   {/* PDF Download Links */}
                   {(pdfDownloadUrls.front || pdfDownloadUrls.back) && (
