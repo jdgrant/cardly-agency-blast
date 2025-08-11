@@ -251,7 +251,7 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
   const imgSrc = previewDataUrl || template.preview_url || '';
   
   if (format === 'production') {
-    // Production format: 7" x 10.25" with front on left half, back template on right half
+    // Production format: 7" x 10.25" with front filling entire left half (5.125" x 7")
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -261,28 +261,29 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
         html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
         body { font-family: Arial, sans-serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
-        .front-half { width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; border-right: 1px dashed #ccc; }
-        .back-half { width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; }
-        .card-frame { width: 90%; height: 80%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
-        .card-img { width: 100%; height: 100%; object-fit: contain; display: block; background: #ffffff; }
-        .back-template { width: 100%; height: 100%; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 14px; }
+        .front-half { width: 5.125in; height: 7in; overflow: hidden; }
+        .back-half { width: 2.125in; height: 7in; display: flex; align-items: center; justify-content: center; border-left: 1px dashed #ccc; }
+        .front-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .back-template { width: 100%; height: 100%; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 12px; text-align: center; padding: 20px; box-sizing: border-box; }
       </style>
     </head>
     <body>
       <div class="production-layout">
         <div class="front-half">
-          <div class="card-frame">
-            ${imgSrc ? `<img class="card-img" src="${imgSrc}" alt="${escapeHtml(template.name || 'Card front')}"/>` : ''}
-          </div>
+          ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="${escapeHtml(template.name || 'Card front')}"/>` : ''}
         </div>
         <div class="back-half">
-          <div class="card-frame">
-            <div class="back-template">Card Back Template</div>
+          <div class="back-template">
+            <div>
+              <div style="font-weight: bold; margin-bottom: 10px;">Card Back</div>
+              <div style="font-size: 10px; color: #9ca3af;">Address area</div>
+            </div>
           </div>
         </div>
       </div>
     </body>
     </html>`;
+  }
   }
   
   // Preview format (original)
