@@ -182,6 +182,7 @@ serve(async (req) => {
       const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl, format, paperWidth, paperHeight);
 
       console.log('Mode is HTML, includeFront:', includeFront, 'includeInside:', includeInside);
+      console.log('only parameter:', only);
 
       if (includeFront && !includeInside) {
         console.log('Adding front page only');
@@ -190,10 +191,23 @@ serve(async (req) => {
         console.log('Adding inside page only');
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
       } else {
-        // both pages, ensure order: front then inside
+        // both pages - create a single HTML with page breaks
         console.log('Adding both pages: front + inside');
-        form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
-        form.append('files', new File([insideHTML], 'page2.html', { type: 'text/html' }));
+        const combinedHTML = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+    .page-break { page-break-after: always; }
+  </style>
+</head>
+<body>
+  <div class="page-break">${frontHTML.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/gi, '').replace(/<\/body>[\s\S]*?<\/html>/gi, '')}</div>
+  ${insideHTML.replace(/<!DOCTYPE html>[\s\S]*?<body[^>]*>/gi, '').replace(/<\/body>[\s\S]*?<\/html>/gi, '')}
+</body>
+</html>`;
+        form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
       }
 
       form.append('paperWidth', paperWidth);
