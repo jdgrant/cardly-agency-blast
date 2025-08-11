@@ -10,6 +10,9 @@ const corsHeaders = {
 interface GenerateRequest {
   orderId: string;
   only?: 'inside' | 'front+inside';
+  mode?: 'url' | 'html';
+  origin?: string; // e.g., https://your-app.lovableproject.com
+  fullUrl?: string; // direct URL to render
 }
 
 serve(async (req) => {
@@ -18,7 +21,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, only } = await req.json() as GenerateRequest;
+    const { orderId, only, mode, origin, fullUrl } = await req.json() as GenerateRequest;
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
         status: 400,
@@ -114,50 +117,68 @@ serve(async (req) => {
       console.log('Preview image fetch failed:', (e as any)?.message);
     }
 
-    // Build HTML for two pages
-    const frontHTML = buildFrontHTML(template, previewDataUrl);
-    const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl);
-
-    // Prepare multipart form for Gotenberg
-    const form = new FormData();
-    const includeFront = (only !== 'inside');
-
-    if (only === 'inside') {
-      // Gotenberg requires an entry file named index.html
-      form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
-    } else {
-      // Default: still provide an index.html (inside) to satisfy Gotenberg
-      form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
-      // Optionally include front.html as an asset (not used by entrypoint)
-      form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
-    }
-
-    // Page size: 7in x 5.125in, small margins
-    form.append('paperWidth', '7');
-    form.append('paperHeight', '5.125');
-    form.append('marginTop', '0');
-    form.append('marginBottom', '0');
-    form.append('marginLeft', '0');
-    form.append('marginRight', '0');
-    form.append('landscape', 'false');
-    form.append('preferCssPageSize', 'true');
-
-    const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
-    console.log('Calling Gotenberg at:', url);
-
+    // Build PDF via Gotenberg
     const headers: Record<string, string> = {};
-    // Send both Authorization and X-Api-Key for compatibility
     headers['Authorization'] = `Bearer ${GOTENBERG_API_KEY}`;
     headers['X-Api-Key'] = GOTENBERG_API_KEY;
 
-    const gotenbergResp = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: form as any,
-    });
+    const includeFront = (only !== 'inside');
+
+    let gotenbergResp: Response;
+
+    if (mode === 'url') {
+      // Render the live preview URL directly to PDF
+      const shortId = String(order.id).replace(/-/g, '').slice(0, 8).toLowerCase();
+      const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
+      const route = only === 'inside' ? 'inside' : 'front';
+      const targetUrl = fullUrl || (base ? `${base}/#/preview/${route}/${shortId}` : '');
+
+      if (!targetUrl) {
+        throw new Error('No target URL provided; pass origin or fullUrl');
+      }
+
+      const form = new FormData();
+      form.append('url', targetUrl);
+      form.append('paperWidth', '7');
+      form.append('paperHeight', '5.125');
+      form.append('marginTop', '0');
+      form.append('marginBottom', '0');
+      form.append('marginLeft', '0');
+      form.append('marginRight', '0');
+      form.append('landscape', 'false');
+      form.append('preferCssPageSize', 'true');
+      form.append('emulatedMediaType', 'print');
+      form.append('waitDelay', '500');
+
+      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/url`;
+      console.log('Calling Gotenberg (url) at:', url, 'for:', targetUrl);
+      gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
+    } else {
+      // Fallback: build HTML and convert
+      const form = new FormData();
+      // Provide an entry file named index.html as required by Gotenberg
+      const frontHTML = buildFrontHTML(template, previewDataUrl);
+      const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl);
+
+      form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
+      if (includeFront) {
+        form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
+      }
+      form.append('paperWidth', '7');
+      form.append('paperHeight', '5.125');
+      form.append('marginTop', '0');
+      form.append('marginBottom', '0');
+      form.append('marginLeft', '0');
+      form.append('marginRight', '0');
+      form.append('landscape', 'false');
+      form.append('preferCssPageSize', 'true');
+
+      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
+      console.log('Calling Gotenberg (html) at:', url);
+      gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
+    }
 
     console.log('Gotenberg response status:', gotenbergResp.status);
-
     if (!gotenbergResp.ok) {
       const errText = await gotenbergResp.text();
       console.error('Gotenberg error response:', errText);

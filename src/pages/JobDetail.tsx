@@ -396,7 +396,7 @@ const JobDetail = () => {
     setGeneratingPDFs(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, only: 'inside' }
+        body: { orderId: order.id, only: 'inside', mode: 'url', origin: window.location.origin }
       });
       if (error) throw error;
       const url = data?.downloadUrl;
