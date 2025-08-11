@@ -68,7 +68,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'templates'>('orders');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
-  const [editingNames, setEditingNames] = useState<Record<string, string>>({});
+  const [originalNames, setOriginalNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   const handleLogin = () => {
@@ -269,35 +269,15 @@ const Admin = () => {
     }
   };
 
-  // Debounced template name update
-  useEffect(() => {
-    const timeouts: Record<string, NodeJS.Timeout> = {};
-    
-    Object.entries(editingNames).forEach(([templateId, newName]) => {
-      // Clear existing timeout for this template
-      if (timeouts[templateId]) {
-        clearTimeout(timeouts[templateId]);
-      }
-      
-      // Set new timeout to save after 1 second of no typing
-      timeouts[templateId] = setTimeout(async () => {
-        await updateTemplateName(templateId, newName);
-        // Remove from editing state after save
-        setEditingNames(prev => {
-          const updated = { ...prev };
-          delete updated[templateId];
-          return updated;
-        });
-      }, 1000);
-    });
+  // Handle template name input focus - store original value
+  const handleTemplateNameFocus = (templateId: string, currentName: string) => {
+    setOriginalNames(prev => ({
+      ...prev,
+      [templateId]: currentName
+    }));
+  };
 
-    // Cleanup function to clear timeouts
-    return () => {
-      Object.values(timeouts).forEach(clearTimeout);
-    };
-  }, [editingNames]);
-
-  // Update template name immediately in local state, debounce database save
+  // Handle template name input change - update local state only
   const handleTemplateNameChange = (templateId: string, newName: string) => {
     // Update local template state immediately for responsive UI
     setTemplates(prev => prev.map(t => 
@@ -305,12 +285,30 @@ const Admin = () => {
         ? { ...t, name: newName }
         : t
     ));
+  };
+
+  // Handle template name input blur - save to database if changed
+  const handleTemplateNameBlur = async (templateId: string, currentName: string) => {
+    const originalName = originalNames[templateId];
     
-    // Track editing state for debounced save
-    setEditingNames(prev => ({
-      ...prev,
-      [templateId]: newName
-    }));
+    // Only save if the name actually changed
+    if (originalName && originalName !== currentName) {
+      await updateTemplateName(templateId, currentName);
+    }
+    
+    // Clean up original name tracking
+    setOriginalNames(prev => {
+      const updated = { ...prev };
+      delete updated[templateId];
+      return updated;
+    });
+  };
+
+  // Handle Enter key - blur the input to trigger save
+  const handleTemplateNameKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
+    }
   };
 
   // Update template name in database
@@ -335,11 +333,11 @@ const Admin = () => {
       });
       
       // Revert local state on error
-      const original = templates.find(t => t.id === templateId);
-      if (original) {
+      const originalName = originalNames[templateId];
+      if (originalName) {
         setTemplates(prev => prev.map(t => 
           t.id === templateId 
-            ? { ...t, name: original.name }
+            ? { ...t, name: originalName }
             : t
         ));
       }
@@ -621,6 +619,9 @@ const Admin = () => {
                                <Input
                                  value={template.name}
                                  onChange={(e) => handleTemplateNameChange(template.id, e.target.value)}
+                                 onFocus={() => handleTemplateNameFocus(template.id, template.name)}
+                                 onBlur={(e) => handleTemplateNameBlur(template.id, e.target.value)}
+                                 onKeyDown={handleTemplateNameKeyPress}
                                  className="h-8 text-xs"
                                  placeholder="Template name..."
                                />
