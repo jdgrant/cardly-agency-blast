@@ -450,6 +450,9 @@ async function generateHTMLToPNG(htmlContent: string, filename: string): Promise
   const width = Math.round(7 * 300); // 2100 pixels at 300 DPI
   const height = Math.round(5.125 * 300); // 1537 pixels at 300 DPI
   
+  // Determine if this is front or back card based on filename
+  const isBackCard = filename.includes('_back');
+  
   try {
     // Extract text content from HTML for display
     const textContent = htmlContent
@@ -459,38 +462,93 @@ async function generateHTMLToPNG(htmlContent: string, filename: string): Promise
       .replace(/\s+/g, ' ')
       .trim();
     
-    // Create an SVG representation of the card
-    const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-      <!-- White background -->
-      <rect width="100%" height="100%" fill="white"/>
-      
-      <!-- Border -->
-      <rect x="4" y="4" width="${width - 8}" height="${height - 8}" fill="none" stroke="#e5e7eb" stroke-width="4"/>
-      
-      <!-- Title -->
-      <text x="${width / 2}" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#1e293b">Holiday Card</text>
-      
-      <!-- Filename -->
-      <text x="${width / 2}" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" fill="#475569">${filename.replace('.png', '')}</text>
-      
-      <!-- Decorative line -->
-      <rect x="${width / 2 - 300}" y="270" width="600" height="6" fill="#3b82f6"/>
-      
-      <!-- Card dimensions -->
-      <text x="${width / 2}" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#64748b">7" × 5.125" Holiday Card</text>
-      
-      <!-- Template preview area background -->
-      <rect x="100" y="400" width="${width - 200}" height="${height - 600}" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-      
-      <!-- Content lines to represent card content -->
-      ${Array.from({ length: 8 }, (_, i) => {
-        const lineWidth = 200 + Math.floor(Math.random() * 400);
-        return `<rect x="150" y="${450 + i * 60}" width="${lineWidth}" height="20" fill="#e5e7eb"/>`;
-      }).join('\n      ')}
-      
-      <!-- Generation date -->
-      <text x="${width / 2}" y="${height - 50}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
-    </svg>`;
+    // Create different SVG content for front vs back cards
+    let svg: string;
+    
+    if (isBackCard) {
+      // Back card design with message and address information
+      svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background gradient -->
+        <defs>
+          <linearGradient id="backGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#fafafa;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#f5f5f5;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#backGrad)"/>
+        
+        <!-- Border -->
+        <rect x="4" y="4" width="${width - 8}" height="${height - 8}" fill="none" stroke="#e5e7eb" stroke-width="4"/>
+        
+        <!-- Header -->
+        <text x="${width / 2}" y="100" text-anchor="middle" font-family="Georgia, serif" font-size="48" font-weight="bold" fill="#1e293b">Holiday Card - Back</text>
+        
+        <!-- Message section -->
+        <rect x="150" y="150" width="${width - 300}" height="300" fill="rgba(255,255,255,0.8)" stroke="#e5e7eb" stroke-width="2" rx="12"/>
+        <text x="${width / 2}" y="200" text-anchor="middle" font-family="Georgia, serif" font-size="32" font-style="italic" fill="#1e293b">Holiday Message</text>
+        <text x="${width / 2}" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#374151">Warmest wishes for a joyful</text>
+        <text x="${width / 2}" y="300" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#374151">and restful holiday season.</text>
+        <text x="${width / 2}" y="380" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#6b7280">From your friends at [Company Name]</text>
+        
+        <!-- Branding section -->
+        <rect x="300" y="500" width="400" height="80" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="8"/>
+        <text x="${width / 2}" y="535" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#9ca3af">Company Logo</text>
+        <text x="${width / 2}" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#9ca3af">Signature</text>
+        
+        <!-- Recipients info -->
+        <rect x="150" y="650" width="${width - 300}" height="300" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="8"/>
+        <text x="${width / 2}" y="685" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#374151">Recipients (325 clients)</text>
+        
+        <!-- Sample addresses grid -->
+        ${Array.from({ length: 6 }, (_, i) => {
+          const x = 200 + (i % 3) * 500;
+          const y = 720 + Math.floor(i / 3) * 100;
+          return `
+            <rect x="${x}" y="${y}" width="450" height="80" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="4"/>
+            <text x="${x + 10}" y="${y + 25}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1f2937">Sample Client ${i + 1}</text>
+            <text x="${x + 10}" y="${y + 45}" font-family="Arial, sans-serif" font-size="14" fill="#374151">123 Holiday Lane</text>
+            <text x="${x + 10}" y="${y + 65}" font-family="Arial, sans-serif" font-size="14" fill="#374151">City, ST 12345</text>
+          `;
+        }).join('')}
+        
+        <!-- Footer -->
+        <text x="${width / 2}" y="${height - 80}" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#374151">Order: ${filename.replace('_back.png', '')} | 325 cards | 7" × 5.125"</text>
+        <text x="${width / 2}" y="${height - 50}" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
+      </svg>`;
+    } else {
+      // Front card design
+      svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+        <!-- White background -->
+        <rect width="100%" height="100%" fill="white"/>
+        
+        <!-- Border -->
+        <rect x="4" y="4" width="${width - 8}" height="${height - 8}" fill="none" stroke="#e5e7eb" stroke-width="4"/>
+        
+        <!-- Title -->
+        <text x="${width / 2}" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#1e293b">Holiday Card</text>
+        
+        <!-- Filename -->
+        <text x="${width / 2}" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" fill="#475569">${filename.replace('.png', '')}</text>
+        
+        <!-- Decorative line -->
+        <rect x="${width / 2 - 300}" y="270" width="600" height="6" fill="#3b82f6"/>
+        
+        <!-- Card dimensions -->
+        <text x="${width / 2}" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#64748b">7" × 5.125" Holiday Card</text>
+        
+        <!-- Template preview area background -->
+        <rect x="100" y="400" width="${width - 200}" height="${height - 600}" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+        
+        <!-- Content lines to represent card content -->
+        ${Array.from({ length: 8 }, (_, i) => {
+          const lineWidth = 200 + Math.floor(Math.random() * 400);
+          return `<rect x="150" y="${450 + i * 60}" width="${lineWidth}" height="20" fill="#e5e7eb"/>`;
+        }).join('\n        ')}
+        
+        <!-- Generation date -->
+        <text x="${width / 2}" y="${height - 50}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
+      </svg>`;
+    }
     
     // Create a simple PNG header and data
     // This is a minimal PNG implementation for demonstration
