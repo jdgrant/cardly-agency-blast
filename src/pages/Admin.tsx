@@ -264,8 +264,8 @@ const Admin = () => {
   };
 
   const generateOrderPDF = async (orderId: string) => {
+    setGenerating(prev => ({ ...prev, [orderId]: true }));
     try {
-      setGenerating(prev => ({ ...prev, [orderId]: true }));
       toast({ title: "Building PDF", description: `Generating card for ${orderId.slice(0,8)}…` });
 
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
@@ -278,11 +278,27 @@ const Admin = () => {
         setDownloadUrls(prev => ({ ...prev, [orderId]: data.downloadUrl }));
         toast({ title: "PDF Ready", description: "Click Download to open the file." });
       } else {
-        toast({ title: "No URL returned", description: "PDF generated but no link was provided.", variant: 'destructive' });
+        throw new Error('No downloadUrl returned');
       }
     } catch (err) {
       console.error('generateOrderPDF error', err);
-      toast({ title: "Generation failed", description: "Could not generate the PDF.", variant: 'destructive' });
+      // Fallback to SVG generator if PDF service fails
+      try {
+        const { data: svgData, error: svgError } = await supabase.functions.invoke('generate-card-pdfs', {
+          body: { orderId }
+        });
+        if (svgError) throw svgError;
+        if (svgData?.frontDownloadUrl && svgData?.backDownloadUrl) {
+          window.open(svgData.frontDownloadUrl, '_blank');
+          window.open(svgData.backDownloadUrl, '_blank');
+          toast({ title: "Preview SVGs ready", description: "Opened front and inside previews in new tabs." });
+          return;
+        }
+        throw new Error('SVG fallback did not return URLs');
+      } catch (fallbackErr) {
+        console.error('fallback SVG generation failed', fallbackErr);
+        toast({ title: "Generation failed", description: "Could not generate the PDF.", variant: 'destructive' });
+      }
     } finally {
       setGenerating(prev => ({ ...prev, [orderId]: false }));
     }
