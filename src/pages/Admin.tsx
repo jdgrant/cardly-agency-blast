@@ -27,7 +27,9 @@ import {
   Calendar,
   CreditCard,
   Users,
-  Package
+  Package,
+  Settings,
+  Tags
 } from 'lucide-react';
 
 interface Order {
@@ -51,6 +53,9 @@ interface Order {
 interface Template {
   id: string;
   name: string;
+  occasions: string[];
+  preview_url: string;
+  description?: string;
 }
 
 const Admin = () => {
@@ -59,6 +64,9 @@ const Admin = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'orders' | 'templates'>('orders');
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [editingOccasions, setEditingOccasions] = useState<string[]>([]);
   const { toast } = useToast();
 
   const handleLogin = () => {
@@ -220,6 +228,59 @@ const Admin = () => {
     }
   };
 
+  const availableOccasions = [
+    'christmas',
+    'hanukkah', 
+    'kwanzaa',
+    'new-year',
+    'general-holiday',
+    'thanksgiving'
+  ];
+
+  const updateTemplateOccasions = async (templateId: string, occasions: string[]) => {
+    try {
+      const { error } = await supabase
+        .from('templates')
+        .update({ occasions })
+        .eq('id', templateId);
+
+      if (error) throw error;
+
+      setTemplates(templates.map(template => 
+        template.id === templateId 
+          ? { ...template, occasions }
+          : template
+      ));
+
+      toast({
+        title: "Template Updated",
+        description: "Template occasions have been updated successfully",
+      });
+      
+      setSelectedTemplate(null);
+      setEditingOccasions([]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update template occasions",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleTemplateEdit = (template: Template) => {
+    setSelectedTemplate(template);
+    setEditingOccasions([...template.occasions]);
+  };
+
+  const toggleOccasion = (occasion: string) => {
+    setEditingOccasions(prev => 
+      prev.includes(occasion)
+        ? prev.filter(o => o !== occasion)
+        : [...prev, occasion]
+    );
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -252,7 +313,27 @@ const Admin = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Order Management</h1>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <div className="flex space-x-2">
+              <Button 
+                variant={activeTab === 'orders' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('orders')}
+                className="flex items-center space-x-2"
+              >
+                <Package className="w-4 h-4" />
+                <span>Orders</span>
+              </Button>
+              <Button 
+                variant={activeTab === 'templates' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('templates')}
+                className="flex items-center space-x-2"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Templates</span>
+              </Button>
+            </div>
+          </div>
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
@@ -332,8 +413,9 @@ const Admin = () => {
           </Card>
         </div>
 
-        {/* Orders Table */}
-        <Card>
+        {activeTab === 'orders' && (
+          /* Orders Table */
+          <Card>
           <CardHeader>
             <CardTitle>Orders</CardTitle>
           </CardHeader>
@@ -434,6 +516,109 @@ const Admin = () => {
             </div>
           </CardContent>
         </Card>
+        )}
+
+        {activeTab === 'templates' && (
+          <div className="space-y-6">
+            {/* Template Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Tags className="w-5 h-5" />
+                  <span>Template Management</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {templates.map((template) => (
+                    <Card key={template.id} className="border">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <img 
+                            src={template.preview_url} 
+                            alt={template.name}
+                            className="w-full h-32 object-cover rounded"
+                          />
+                          <h3 className="font-semibold">{template.name}</h3>
+                          <div className="flex flex-wrap gap-1">
+                            {template.occasions.map((occasion) => (
+                              <Badge key={occasion} variant="secondary" className="text-xs">
+                                {occasion}
+                              </Badge>
+                            ))}
+                          </div>
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleTemplateEdit(template)}
+                            className="w-full"
+                          >
+                            Edit Tags
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Edit Template Modal */}
+            {selectedTemplate && (
+              <Card className="border-2 border-blue-200">
+                <CardHeader>
+                  <CardTitle>Edit Template: {selectedTemplate.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <img 
+                        src={selectedTemplate.preview_url} 
+                        alt={selectedTemplate.name}
+                        className="w-full h-40 object-cover rounded"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Select Occasions:</label>
+                        <div className="grid grid-cols-2 gap-2 mt-2">
+                          {availableOccasions.map((occasion) => (
+                            <label key={occasion} className="flex items-center space-x-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={editingOccasions.includes(occasion)}
+                                onChange={() => toggleOccasion(occasion)}
+                                className="rounded"
+                              />
+                              <span className="text-sm capitalize">{occasion.replace('-', ' ')}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button 
+                          onClick={() => updateTemplateOccasions(selectedTemplate.id, editingOccasions)}
+                          className="flex-1"
+                        >
+                          Save Changes
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedTemplate(null);
+                            setEditingOccasions([]);
+                          }}
+                          className="flex-1"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
