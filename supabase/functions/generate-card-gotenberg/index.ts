@@ -308,7 +308,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
   const message = order?.custom_message || order?.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
   
   if (format === 'production') {
-    // Production format: 10.25" x 7" landscape with inside on left half, outside back on right half
+    // Production format: 10.25" x 7" landscape with inside content on left half, blank right half
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -319,10 +319,9 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         body { font-family: Georgia, serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
         .inside-half { width: 5.125in; height: 7in; }
-        .outside-half { width: 5.125in; height: 7in; }
-        .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
-        .outside-content { width: 100%; height: 100%; background: #ffffff; }
-        .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
+        .blank-half { width: 5.125in; height: 7in; background: #ffffff; }
+        .inside-content { width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
+        .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; }
         .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
         .msg { text-align: center; max-width: 85%; font-size: 16px; line-height: 1.5; color: #111827; font-style: italic; margin: 0 auto; }
         .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 58%; display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; padding: 0 20px; box-sizing: border-box; }
@@ -346,9 +345,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
             </div>
           </div>
         </div>
-        <div class="outside-half">
-          <div class="outside-content"></div>
-        </div>
+        <div class="blank-half"></div>
       </div>
     </body>
     </html>`;
