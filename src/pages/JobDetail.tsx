@@ -74,6 +74,7 @@ const JobDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showSignatureUpload, setShowSignatureUpload] = useState(false);
   const [generatingPDFs, setGeneratingPDFs] = useState(false);
+  const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string}>({});
 
   useEffect(() => {
     if (orderId) {
@@ -331,20 +332,16 @@ const JobDetail = () => {
         throw new Error(data?.error || 'Unknown error occurred');
       }
 
-      toast({
-        title: "Success",
-        description: "PDFs generated successfully! Downloading now...",
+      // Store download URLs for display
+      setPdfDownloadUrls({
+        front: data.frontDownloadUrl,
+        back: data.backDownloadUrl
       });
 
-      // Download the PDFs automatically
-      if (data.frontPdfPath) {
-        console.log('Downloading front PDF:', data.frontPdfPath);
-        await downloadFile(data.frontPdfPath, `${order.readable_order_id || order.id}_front.pdf`);
-      }
-      if (data.backPdfPath) {
-        console.log('Downloading back PDF:', data.backPdfPath);
-        await downloadFile(data.backPdfPath, `${order.readable_order_id || order.id}_back.pdf`);
-      }
+      toast({
+        title: "Success",
+        description: "PDFs generated successfully! (7\" x 5.125\") - Links available below.",
+      });
 
     } catch (error) {
       console.error('Error generating PDFs:', error);
@@ -664,7 +661,7 @@ const JobDetail = () => {
               <CardContent>
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600">
-                    Generate printable PDFs for the card front and back with all order details.
+                    Generate printable PDFs for the card front and back with all order details (7" × 5.125").
                   </p>
                   <Button
                     onClick={handleGeneratePDFs}
@@ -683,6 +680,35 @@ const JobDetail = () => {
                       </div>
                     )}
                   </Button>
+                  
+                  {/* PDF Download Links */}
+                  {(pdfDownloadUrls.front || pdfDownloadUrls.back) && (
+                    <div className="space-y-2 pt-3 border-t">
+                      <p className="text-sm font-medium text-gray-700">Download Links (Open in New Tab):</p>
+                      {pdfDownloadUrls.front && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start"
+                          onClick={() => window.open(pdfDownloadUrls.front, '_blank')}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Front Card PDF (7" × 5.125")
+                        </Button>
+                      )}
+                      {pdfDownloadUrls.back && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start"
+                          onClick={() => window.open(pdfDownloadUrls.back, '_blank')}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Back Card PDF (7" × 5.125")
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
