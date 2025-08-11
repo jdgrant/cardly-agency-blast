@@ -219,7 +219,7 @@ export default function PreviewCard() {
           </div>
         ) : (
           <div className="w-full h-full bg-background border-2 border-border rounded-md overflow-hidden">
-            <div className="w-full h-full grid grid-rows-3 p-8">
+            <div className="w-full h-full grid grid-rows-3 p-8 relative">
               {/* Top third: message */}
               <div className="row-start-1 row-end-2 flex items-center justify-center">
                 <div className="text-center max-w-[80%]">
@@ -232,8 +232,8 @@ export default function PreviewCard() {
               {/* Middle third: spacer (empty) */}
               <div className="row-start-2 row-end-3" />
 
-              {/* Bottom third: logo + signature */}
-              <div className="row-start-3 row-end-4 flex items-center justify-center gap-10">
+              {/* Logo + signature slightly above midline */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-[56%] flex items-center justify-center gap-10 w-full px-8">
                 {logoUrl && (
                   <img
                     src={logoUrl}
