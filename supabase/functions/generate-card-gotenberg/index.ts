@@ -262,7 +262,7 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
         body { font-family: Arial, sans-serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
         .front-half { width: 5.125in; height: 7in; overflow: hidden; }
-        .back-half { width: 5.125in; height: 7in; display: flex; align-items: center; justify-content: center; border-left: 1px dashed #ccc; }
+        .back-half { width: 5.125in; height: 7in; display: flex; align-items: center; justify-content: center; }
         .front-img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .back-template { width: 100%; height: 100%; background: #ffffff; }
       </style>
@@ -318,7 +318,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
         body { font-family: Georgia, serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
-        .inside-half { width: 5.125in; height: 7in; border-right: 1px dashed #ccc; }
+        .inside-half { width: 5.125in; height: 7in; }
         .outside-half { width: 5.125in; height: 7in; }
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
         .outside-content { width: 100%; height: 100%; background: #ffffff; }
