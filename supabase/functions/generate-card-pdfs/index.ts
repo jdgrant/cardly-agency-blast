@@ -191,15 +191,46 @@ function generateFrontCardHTML(template: any): string {
         .card-front {
           width: 100%;
           height: 100%;
-          background-image: url('${template.preview_url}');
-          background-size: cover;
-          background-position: center;
-          background-repeat: no-repeat;
+          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
+          background: white;
+          border: 2px solid #e5e7eb;
+          box-sizing: border-box;
+        }
+        .template-preview {
+          width: calc(100% - 40px);
+          height: calc(100% - 40px);
+          background-image: url('${template.preview_url}');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          border-radius: 8px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
           position: relative;
+        }
+        .template-overlay {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: linear-gradient(transparent, rgba(0,0,0,0.8));
+          color: white;
+          padding: 20px;
+          border-radius: 0 0 8px 8px;
+        }
+        .template-name {
+          font-size: 24px;
+          font-weight: bold;
+          margin-bottom: 8px;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .template-description {
+          font-size: 14px;
+          opacity: 0.9;
+          line-height: 1.4;
         }
         .fallback-content {
           width: 100%;
@@ -215,51 +246,44 @@ function generateFrontCardHTML(template: any): string {
           box-sizing: border-box;
           background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
-        .template-name {
-          font-size: 36px;
-          font-weight: bold;
-          color: #1e293b;
-          margin-bottom: 20px;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-        }
-        .template-description {
-          font-size: 18px;
-          color: #475569;
-          margin-bottom: 30px;
-          line-height: 1.4;
-        }
-        .decorative-border {
-          width: 200px;
-          height: 3px;
-          background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
-          border-radius: 2px;
-          margin: 20px 0;
-        }
         .card-info {
           position: absolute;
-          bottom: 20px;
+          top: 20px;
           right: 20px;
           background: rgba(255,255,255,0.9);
-          padding: 10px 15px;
-          border-radius: 8px;
-          font-size: 12px;
+          padding: 8px 12px;
+          border-radius: 6px;
+          font-size: 10px;
           color: #64748b;
           backdrop-filter: blur(4px);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .template-id {
+          position: absolute;
+          bottom: 20px;
+          left: 20px;
+          background: rgba(255,255,255,0.9);
+          padding: 6px 10px;
+          border-radius: 4px;
+          font-size: 9px;
+          color: #6b7280;
+          font-family: monospace;
         }
       </style>
     </head>
     <body>
       <div class="card-front">
-        <div class="fallback-content">
-          <div class="template-name">${template.name}</div>
-          <div class="decorative-border"></div>
-          <div class="template-description">${template.description || 'Holiday Card Template'}</div>
-          <div style="font-size: 14px; color: #94a3b8; margin-top: 20px;">
-            Premium Holiday Card Design
+        <div class="template-preview">
+          <div class="template-overlay">
+            <div class="template-name">${template.name}</div>
+            <div class="template-description">${template.description || 'Holiday Card Template'}</div>
           </div>
         </div>
         <div class="card-info">
-          7" × 5.125" • Holiday Card Front
+          7" × 5.125" Card Front
+        </div>
+        <div class="template-id">
+          Template: ${template.id}
         </div>
       </div>
     </body>
