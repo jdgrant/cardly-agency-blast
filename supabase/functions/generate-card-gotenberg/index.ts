@@ -126,8 +126,8 @@ serve(async (req) => {
 
     let gotenbergResp: Response;
 
-    const paperWidth = only === 'inside' ? '5.125' : '7';
-    const paperHeight = only === 'inside' ? '7' : '5.125';
+    const paperWidth = '5.125';
+    const paperHeight = '7';
 
     if (mode === 'url') {
       // Render the live preview URL directly to PDF
@@ -226,8 +226,8 @@ function buildFrontHTML(template: any, previewDataUrl: string) {
   <head>
     <meta charset="utf-8" />
     <style>
-      @page { size: 7in 5.125in; margin: 0; }
-      html, body { margin: 0; padding: 0; width: 7in; height: 5.125in; }
+      @page { size: 5.125in 7in; margin: 0; }
+      html, body { margin: 0; padding: 0; width: 5.125in; height: 7in; }
       body { font-family: Arial, sans-serif; background: #ffffff; }
       .wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
       .frame { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
