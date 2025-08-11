@@ -140,12 +140,50 @@ export default function PreviewCard() {
     load();
   }, [orderId]);
 
+  // Business rule for splitting message at halfway point by character length (same as order processing preview)
+  const formatMessageWithLineBreak = (msg: string) => {
+    if (!msg) return '' as any;
+
+    const halfLength = Math.floor(msg.length / 2);
+    const words = msg.split(' ');
+
+    let characterCount = 0;
+    let splitIndex = 0;
+
+    for (let i = 0; i < words.length; i++) {
+      const wordLength = words[i].length + (i > 0 ? 1 : 0); // +1 for space
+      if (characterCount + wordLength >= halfLength) {
+        const beforeSplit = characterCount;
+        const afterSplit = characterCount + wordLength;
+        splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
+        break;
+      }
+      characterCount += wordLength;
+    }
+
+    if (splitIndex > 0 && splitIndex < words.length && msg.length > 30) {
+      const firstLine = words.slice(0, splitIndex).join(' ');
+      const secondLine = words.slice(splitIndex).join(' ');
+      return (
+        <>
+          {firstLine}
+          <br />
+          {secondLine}
+        </>
+      );
+    }
+
+    return msg as any;
+  };
+
   const message = useMemo(() => {
     return (
       order?.custom_message || order?.selected_message ||
       "Warmest wishes for a joyful and restful holiday season."
     );
   }, [order]);
+
+  const formattedMessage = useMemo(() => formatMessageWithLineBreak(message), [message]);
 
   if (!orderId) {
     return (
@@ -224,7 +262,7 @@ export default function PreviewCard() {
               <div className="row-start-1 row-end-2 flex items-center justify-center">
                 <div className="text-center max-w-[80%]">
                   <p className="text-lg leading-relaxed italic text-foreground/90">
-                    {message}
+                    {formattedMessage}
                   </p>
                 </div>
               </div>
