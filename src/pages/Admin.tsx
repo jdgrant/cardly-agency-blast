@@ -564,9 +564,11 @@ const Admin = () => {
 
             {/* Edit Template Modal */}
             {selectedTemplate && (
-              <Card className="border-2 border-blue-200">
-                <CardHeader>
-                  <CardTitle>Edit Template: {selectedTemplate.name}</CardTitle>
+              <Card className="border-2 border-blue-500 bg-blue-50">
+                <CardHeader className="bg-blue-100">
+                  <CardTitle className="text-blue-800">
+                    Editing Template: {selectedTemplate.name}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
