@@ -134,11 +134,22 @@ serve(async (req) => {
 
     console.log(`PDFs generated successfully for order ${orderId}`);
 
+    // Generate public download URLs
+    const { data: frontSignedUrl } = await supabase.storage
+      .from('holiday-cards')
+      .createSignedUrl(frontPDFPath, 3600); // 1 hour expiry
+
+    const { data: backSignedUrl } = await supabase.storage
+      .from('holiday-cards')
+      .createSignedUrl(backPDFPath, 3600); // 1 hour expiry
+
     return new Response(JSON.stringify({ 
       success: true,
       frontPdfPath: frontPDFPath,
       backPdfPath: backPDFPath,
-      message: 'PDFs generated successfully'
+      frontDownloadUrl: frontSignedUrl?.signedUrl || null,
+      backDownloadUrl: backSignedUrl?.signedUrl || null,
+      message: 'PDFs generated successfully with 7" x 5.125" dimensions'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -331,20 +342,50 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
 }
 
 async function generateHTMLPDF(htmlContent: string, filename: string): Promise<Uint8Array> {
-  // Extract text content and create a proper PDF structure
+  console.log('Generating PDF for:', filename);
+  
+  // Convert 7in x 5.125in to points (1 inch = 72 points)
+  const pageWidth = 7 * 72; // 504 points
+  const pageHeight = 5.125 * 72; // 369 points
+  
+  // Extract and clean text content from HTML
   const textContent = htmlContent
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove CSS
-    .replace(/<[^>]*>/g, '\n')  // Replace HTML tags with newlines
-    .replace(/\s+/g, ' ')       // Normalize whitespace
-    .replace(/\n\s*\n/g, '\n')  // Remove extra newlines
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
     .trim();
 
-  // Split content into lines for better formatting
-  const lines = textContent.split('\n').filter(line => line.trim().length > 0);
+  // Create a structured content stream
+  const contentLines = [
+    `Holiday Card - ${filename.replace('.pdf', '')}`,
+    `Generated: ${new Date().toLocaleDateString()}`,
+    `Dimensions: 7" x 5.125"`,
+    '',
+    ...textContent.split(' ').reduce((lines: string[], word: string, index: number) => {
+      const lineIndex = Math.floor(index / 8);
+      if (!lines[lineIndex]) lines[lineIndex] = '';
+      lines[lineIndex] += (lines[lineIndex] ? ' ' : '') + word;
+      return lines;
+    }, []).slice(0, 20)
+  ];
+
+  // Build PDF content stream
+  let yPosition = pageHeight - 50;
+  let contentStream = 'BT\n/F1 14 Tf\n';
   
-  // Calculate content length for PDF structure
-  const contentLength = lines.length * 30 + 200; // Approximate content length
+  contentLines.forEach((line, index) => {
+    const fontSize = index < 3 ? 14 : 10;
+    const escapedLine = line.substring(0, 60).replace(/[()\\]/g, '\\$&');
+    contentStream += `/F1 ${fontSize} Tf\n50 ${yPosition} Td\n(${escapedLine}) Tj\n`;
+    yPosition -= fontSize + 5;
+    if (yPosition < 50) yPosition = 50; // Don't go below page bottom
+  });
   
+  contentStream += 'ET';
+  const streamLength = contentStream.length;
+
+  // Generate proper PDF with 7"x5.125" dimensions
   const pdfContent = `%PDF-1.4
 1 0 obj
 <<
@@ -365,39 +406,22 @@ endobj
 <<
 /Type /Page
 /Parent 2 0 R
-/MediaBox [0 0 612 792]
+/MediaBox [0 0 ${pageWidth} ${pageHeight}]
 /Contents 4 0 R
 /Resources <<
-  /Font <<
-    /F1 5 0 R
-  >>
+/Font <<
+/F1 5 0 R
+>>
 >>
 >>
 endobj
 
 4 0 obj
 <<
-/Length ${contentLength}
+/Length ${streamLength}
 >>
 stream
-BT
-/F1 16 Tf
-50 750 Td
-(Holiday Card: ${filename.replace('.pdf', '')}) Tj
-0 -25 Td
-/F1 12 Tf
-(Generated: ${new Date().toLocaleString()}) Tj
-0 -20 Td
-(Card Size: 5" x 7") Tj
-0 -30 Td
-/F1 10 Tf
-${lines.slice(0, 25).map((line, i) => `0 -15 Td (${line.substring(0, 80).replace(/[()\\]/g, '')}) Tj`).join('\n')}
-0 -30 Td
-/F1 8 Tf
-(This PDF contains card specifications and content.) Tj
-0 -15 Td
-(Use the admin interface for visual preview.) Tj
-ET
+${contentStream}
 endstream
 endobj
 
@@ -412,19 +436,21 @@ endobj
 xref
 0 6
 0000000000 65535 f 
-0000000010 00000 n 
-0000000060 00000 n 
-0000000120 00000 n 
-0000000280 00000 n 
-0000000${400 + contentLength} 00000 n 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000246 00000 n 
+0000000${320 + streamLength} 00000 n 
 trailer
 <<
 /Size 6
 /Root 1 0 R
 >>
 startxref
-${450 + contentLength}
+${380 + streamLength}
 %%EOF`;
 
-  return new TextEncoder().encode(pdfContent);
+  const pdfBytes = new TextEncoder().encode(pdfContent);
+  console.log('Generated PDF size:', pdfBytes.length, 'bytes');
+  return pdfBytes;
 }
