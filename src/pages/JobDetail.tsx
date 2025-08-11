@@ -74,7 +74,8 @@ const JobDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showSignatureUpload, setShowSignatureUpload] = useState(false);
   const [generatingPDFs, setGeneratingPDFs] = useState(false);
-  const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string}>({});
+  const [generatingGotenberg, setGeneratingGotenberg] = useState(false);
+  const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string}>({});
 
   useEffect(() => {
     if (orderId) {
@@ -352,6 +353,41 @@ const JobDetail = () => {
       });
     } finally {
       setGeneratingPDFs(false);
+    }
+  };
+
+  const handleGenerateGotenberg = async () => {
+    if (!order?.id) return;
+
+    setGeneratingGotenberg(true);
+    try {
+      console.log('Generating Gotenberg PDF for order:', order.id);
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId: order.id }
+      });
+
+      console.log('Gotenberg response:', data, error);
+
+      if (error) throw error;
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Unknown error occurred');
+      }
+
+      setPdfDownloadUrls(prev => ({ ...prev, gotenberg: data.downloadUrl }));
+
+      toast({
+        title: 'Success',
+        description: 'Gotenberg PDF generated! Link available below.',
+      });
+    } catch (error) {
+      console.error('Error generating Gotenberg PDF:', error);
+      toast({
+        title: 'Gotenberg Generation Failed',
+        description: `Failed to generate PDF: ${error.message || 'Unknown error'}`,
+        variant: 'destructive'
+      });
+    } finally {
+      setGeneratingGotenberg(false);
     }
   };
 
@@ -682,6 +718,25 @@ const JobDetail = () => {
                         </div>
                       )}
                     </Button>
+
+                    <Button
+                      onClick={handleGenerateGotenberg}
+                      disabled={generatingGotenberg}
+                      variant="secondary"
+                      className="w-full"
+                    >
+                      {generatingGotenberg ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Generating via Gotenberg...</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <FileText className="w-4 h-4" />
+                          <span>Generate PDF via Gotenberg</span>
+                        </div>
+                      )}
+                    </Button>
                     
                     {template && (
                       <Button
@@ -696,7 +751,7 @@ const JobDetail = () => {
                   </div>
                   
                   {/* PDF Download Links */}
-                  {(pdfDownloadUrls.front || pdfDownloadUrls.back) && (
+                  {(pdfDownloadUrls.front || pdfDownloadUrls.back || pdfDownloadUrls.gotenberg) && (
                     <div className="space-y-2 pt-3 border-t">
                       <p className="text-sm font-medium text-gray-700">Download Links (Open in New Tab):</p>
                       {pdfDownloadUrls.front && (
@@ -704,7 +759,7 @@ const JobDetail = () => {
                           variant="outline"
                           size="sm"
                           className="w-full justify-start"
-                          onClick={() => window.open(pdfDownloadUrls.front, '_blank')}
+                          onClick={() => window.open(pdfDownloadUrls.front!, '_blank')}
                         >
                           <FileText className="w-4 h-4 mr-2" />
                           Front Card PDF (7" × 5.125")
@@ -715,10 +770,21 @@ const JobDetail = () => {
                           variant="outline"
                           size="sm"
                           className="w-full justify-start"
-                          onClick={() => window.open(pdfDownloadUrls.back, '_blank')}
+                          onClick={() => window.open(pdfDownloadUrls.back!, '_blank')}
                         >
                           <FileText className="w-4 h-4 mr-2" />
                           Back Card PDF (7" × 5.125")
+                        </Button>
+                      )}
+                      {pdfDownloadUrls.gotenberg && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start"
+                          onClick={() => window.open(pdfDownloadUrls.gotenberg!, '_blank')}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Combined PDF via Gotenberg (2 pages)
                         </Button>
                       )}
                     </div>
