@@ -743,13 +743,21 @@ const Admin = () => {
                       </Badge>
                     ))}
                   </div>
-                  <div className="pt-4">
+                  <div className="pt-4 space-y-2">
                     <Button 
                       onClick={() => generateTemplatePDF(previewTemplate.id)}
                       className="w-full flex items-center space-x-2"
                     >
                       <FileText className="w-4 h-4" />
                       <span>Generate Card PDF</span>
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="w-full flex items-center space-x-2"
+                      onClick={() => window.open(`/#/html2pdf?templateId=${previewTemplate.id}`, '_blank')}
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>View PDF Preview Page</span>
                     </Button>
                   </div>
                 </div>
