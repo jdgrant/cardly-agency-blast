@@ -106,50 +106,50 @@ serve(async (req) => {
     const frontHTML = generateFrontCardHTML(template);
     const backHTML = generateBackCardHTML(order, logoDataUrl, signatureDataUrl, clients);
 
-    // Create PNG images from HTML content
-    const frontPNG = await generateHTMLToPNG(frontHTML, `${order.readable_order_id || orderId}_front.png`);
-    const backPNG = await generateHTMLToPNG(backHTML, `${order.readable_order_id || orderId}_back.png`);
+    // Create SVG files instead of PNG for better compatibility
+    const frontSVG = await generateHTMLToSVG(frontHTML, `${order.readable_order_id || orderId}_front.svg`);
+    const backSVG = await generateHTMLToSVG(backHTML, `${order.readable_order_id || orderId}_back.svg`);
 
-    // Upload PNGs to storage
-    const frontPNGPath = `cards/${orderId}_front_${Date.now()}.png`;
-    const backPNGPath = `cards/${orderId}_back_${Date.now()}.png`;
+    // Upload SVGs to storage
+    const frontSVGPath = `cards/${orderId}_front_${Date.now()}.svg`;
+    const backSVGPath = `cards/${orderId}_back_${Date.now()}.svg`;
 
     const { error: frontUploadError } = await supabase.storage
       .from('holiday-cards')
-      .upload(frontPNGPath, frontPNG, {
-        contentType: 'image/png',
+      .upload(frontSVGPath, frontSVG, {
+        contentType: 'image/svg+xml',
         upsert: true
       });
 
     const { error: backUploadError } = await supabase.storage
       .from('holiday-cards')
-      .upload(backPNGPath, backPNG, {
-        contentType: 'image/png',
+      .upload(backSVGPath, backSVG, {
+        contentType: 'image/svg+xml',
         upsert: true
       });
 
     if (frontUploadError || backUploadError) {
-      throw new Error(`PNG upload failed: ${frontUploadError?.message || backUploadError?.message}`);
+      throw new Error(`SVG upload failed: ${frontUploadError?.message || backUploadError?.message}`);
     }
 
-    console.log(`PNGs generated successfully for order ${orderId}`);
+    console.log(`SVG cards generated successfully for order ${orderId}`);
 
     // Generate public download URLs
     const { data: frontSignedUrl } = await supabase.storage
       .from('holiday-cards')
-      .createSignedUrl(frontPNGPath, 3600); // 1 hour expiry
+      .createSignedUrl(frontSVGPath, 3600); // 1 hour expiry
 
     const { data: backSignedUrl } = await supabase.storage
       .from('holiday-cards')
-      .createSignedUrl(backPNGPath, 3600); // 1 hour expiry
+      .createSignedUrl(backSVGPath, 3600); // 1 hour expiry
 
     return new Response(JSON.stringify({ 
       success: true,
-      frontImagePath: frontPNGPath,
-      backImagePath: backPNGPath,
+      frontImagePath: frontSVGPath,
+      backImagePath: backSVGPath,
       frontDownloadUrl: frontSignedUrl?.signedUrl || null,
       backDownloadUrl: backSignedUrl?.signedUrl || null,
-      message: 'PNG cards generated successfully with 7" x 5.125" dimensions'
+      message: 'SVG cards generated successfully with 7" x 5.125" dimensions'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -157,7 +157,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-card-pdfs function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message || 'Failed to generate PNG cards' 
+      error: error.message || 'Failed to generate SVG cards' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -443,12 +443,12 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
   `;
 }
 
-async function generateHTMLToPNG(htmlContent: string, filename: string): Promise<Uint8Array> {
-  console.log('Generating PNG for:', filename);
+async function generateHTMLToSVG(htmlContent: string, filename: string): Promise<Uint8Array> {
+  console.log('Generating SVG for:', filename);
   
-  // Create a simple PNG using SVG and convert to binary
-  const width = Math.round(7 * 300); // 2100 pixels at 300 DPI
-  const height = Math.round(5.125 * 300); // 1537 pixels at 300 DPI
+  // Create SVG with proper dimensions (7" x 5.125" at 96 DPI for web display)
+  const width = 672; // 7 inches * 96 DPI
+  const height = 492; // 5.125 inches * 96 DPI
   
   // Determine if this is front or back card based on filename
   const isBackCard = filename.includes('_back');
@@ -467,184 +467,152 @@ async function generateHTMLToPNG(htmlContent: string, filename: string): Promise
     
     if (isBackCard) {
       // Back card design with message and address information
-      svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <!-- Background gradient -->
-        <defs>
-          <linearGradient id="backGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#fafafa;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#f5f5f5;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#backGrad)"/>
-        
-        <!-- Border -->
-        <rect x="4" y="4" width="${width - 8}" height="${height - 8}" fill="none" stroke="#e5e7eb" stroke-width="4"/>
-        
-        <!-- Header -->
-        <text x="${width / 2}" y="100" text-anchor="middle" font-family="Georgia, serif" font-size="48" font-weight="bold" fill="#1e293b">Holiday Card - Back</text>
-        
-        <!-- Message section -->
-        <rect x="150" y="150" width="${width - 300}" height="300" fill="rgba(255,255,255,0.8)" stroke="#e5e7eb" stroke-width="2" rx="12"/>
-        <text x="${width / 2}" y="200" text-anchor="middle" font-family="Georgia, serif" font-size="32" font-style="italic" fill="#1e293b">Holiday Message</text>
-        <text x="${width / 2}" y="260" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#374151">Warmest wishes for a joyful</text>
-        <text x="${width / 2}" y="300" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#374151">and restful holiday season.</text>
-        <text x="${width / 2}" y="380" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#6b7280">From your friends at [Company Name]</text>
-        
-        <!-- Branding section -->
-        <rect x="300" y="500" width="400" height="80" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="8"/>
-        <text x="${width / 2}" y="535" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#9ca3af">Company Logo</text>
-        <text x="${width / 2}" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#9ca3af">Signature</text>
-        
-        <!-- Recipients info -->
-        <rect x="150" y="650" width="${width - 300}" height="300" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="8"/>
-        <text x="${width / 2}" y="685" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#374151">Recipients (325 clients)</text>
-        
-        <!-- Sample addresses grid -->
-        ${Array.from({ length: 6 }, (_, i) => {
-          const x = 200 + (i % 3) * 500;
-          const y = 720 + Math.floor(i / 3) * 100;
-          return `
-            <rect x="${x}" y="${y}" width="450" height="80" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="4"/>
-            <text x="${x + 10}" y="${y + 25}" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1f2937">Sample Client ${i + 1}</text>
-            <text x="${x + 10}" y="${y + 45}" font-family="Arial, sans-serif" font-size="14" fill="#374151">123 Holiday Lane</text>
-            <text x="${x + 10}" y="${y + 65}" font-family="Arial, sans-serif" font-size="14" fill="#374151">City, ST 12345</text>
-          `;
-        }).join('')}
-        
-        <!-- Footer -->
-        <text x="${width / 2}" y="${height - 80}" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#374151">Order: ${filename.replace('_back.png', '')} | 325 cards | 7" × 5.125"</text>
-        <text x="${width / 2}" y="${height - 50}" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
-      </svg>`;
+      svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="backGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fafafa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f5f5f5;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#backGrad)"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="${width - 4}" height="${height - 4}" fill="none" stroke="#e5e7eb" stroke-width="2"/>
+  
+  <!-- Header -->
+  <text x="${width / 2}" y="40" text-anchor="middle" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="#1e293b">Holiday Card - Back</text>
+  
+  <!-- Message section -->
+  <rect x="50" y="60" width="${width - 100}" height="120" fill="rgba(255,255,255,0.8)" stroke="#e5e7eb" stroke-width="1" rx="6"/>
+  <text x="${width / 2}" y="85" text-anchor="middle" font-family="Georgia, serif" font-size="16" font-style="italic" fill="#1e293b">Holiday Message</text>
+  <text x="${width / 2}" y="110" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#374151">Warmest wishes for a joyful</text>
+  <text x="${width / 2}" y="125" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#374151">and restful holiday season.</text>
+  <text x="${width / 2}" y="150" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#6b7280">From your friends at [Company Name]</text>
+  
+  <!-- Branding section -->
+  <rect x="100" y="200" width="200" height="40" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="4"/>
+  <text x="200" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9ca3af">Company Logo</text>
+  <text x="200" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9ca3af">Signature</text>
+  
+  <rect x="320" y="200" width="200" height="40" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="4"/>
+  <text x="420" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9ca3af">Additional Branding</text>
+  
+  <!-- Recipients info -->
+  <rect x="50" y="260" width="${width - 100}" height="150" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="4"/>
+  <text x="${width / 2}" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#374151">Recipients (325 clients)</text>
+  
+  <!-- Sample addresses grid -->
+  <g>
+    <rect x="70" y="290" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
+    <text x="75" y="305" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">NextGen Inc.</text>
+    <text x="75" y="315" font-family="Arial, sans-serif" font-size="7" fill="#374151">3327 Oak St</text>
+    <text x="75" y="323" font-family="Arial, sans-serif" font-size="7" fill="#374151">Springfield, PA 20068</text>
+    
+    <rect x="240" y="290" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
+    <text x="245" y="305" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">Olivia Clark</text>
+    <text x="245" y="315" font-family="Arial, sans-serif" font-size="7" fill="#374151">8937 Sunset Blvd</text>
+    <text x="245" y="323" font-family="Arial, sans-serif" font-size="7" fill="#374151">Springfield, OH 91718</text>
+    
+    <rect x="410" y="290" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
+    <text x="415" y="305" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">John Harris</text>
+    <text x="415" y="315" font-family="Arial, sans-serif" font-size="7" fill="#374151">6067 Cedar Blvd</text>
+    <text x="415" y="323" font-family="Arial, sans-serif" font-size="7" fill="#374151">Bristol, NY 38401</text>
+    
+    <rect x="70" y="335" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
+    <text x="75" y="350" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">John Taylor</text>
+    <text x="75" y="360" font-family="Arial, sans-serif" font-size="7" fill="#374151">8088 Elm St</text>
+    <text x="75" y="368" font-family="Arial, sans-serif" font-size="7" fill="#374151">Greenville, TX 50049</text>
+    
+    <rect x="240" y="335" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
+    <text x="245" y="350" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">Laura Lee</text>
+    <text x="245" y="360" font-family="Arial, sans-serif" font-size="7" fill="#374151">7978 Cedar Blvd</text>
+    <text x="245" y="368" font-family="Arial, sans-serif" font-size="7" fill="#374151">Bristol, NY 23733</text>
+    
+    <rect x="410" y="335" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
+    <text x="415" y="350" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">+ 320 more clients</text>
+    <text x="415" y="365" font-family="Arial, sans-serif" font-size="7" fill="#6b7280">View full list in order details</text>
+  </g>
+  
+  <!-- Footer -->
+  <text x="${width / 2}" y="440" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#374151">Order: ${filename.replace('_back.svg', '')} | 325 cards | 7" × 5.125"</text>
+  <text x="${width / 2}" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
+  <text x="${width / 2}" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#9ca3af">Professional Holiday Card Service</text>
+</svg>`;
     } else {
       // Front card design
-      svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <!-- White background -->
-        <rect width="100%" height="100%" fill="white"/>
-        
-        <!-- Border -->
-        <rect x="4" y="4" width="${width - 8}" height="${height - 8}" fill="none" stroke="#e5e7eb" stroke-width="4"/>
-        
-        <!-- Title -->
-        <text x="${width / 2}" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#1e293b">Holiday Card</text>
-        
-        <!-- Filename -->
-        <text x="${width / 2}" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" fill="#475569">${filename.replace('.png', '')}</text>
-        
-        <!-- Decorative line -->
-        <rect x="${width / 2 - 300}" y="270" width="600" height="6" fill="#3b82f6"/>
-        
-        <!-- Card dimensions -->
-        <text x="${width / 2}" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" fill="#64748b">7" × 5.125" Holiday Card</text>
-        
-        <!-- Template preview area background -->
-        <rect x="100" y="400" width="${width - 200}" height="${height - 600}" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-        
-        <!-- Content lines to represent card content -->
-        ${Array.from({ length: 8 }, (_, i) => {
-          const lineWidth = 200 + Math.floor(Math.random() * 400);
-          return `<rect x="150" y="${450 + i * 60}" width="${lineWidth}" height="20" fill="#e5e7eb"/>`;
-        }).join('\n        ')}
-        
-        <!-- Generation date -->
-        <text x="${width / 2}" y="${height - 50}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
-      </svg>`;
+      svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
+  <!-- White background -->
+  <rect width="100%" height="100%" fill="white"/>
+  
+  <!-- Border -->
+  <rect x="2" y="2" width="${width - 4}" height="${height - 4}" fill="none" stroke="#e5e7eb" stroke-width="2"/>
+  
+  <!-- Title -->
+  <text x="${width / 2}" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#1e293b">Holiday Card</text>
+  
+  <!-- Filename -->
+  <text x="${width / 2}" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">${filename.replace('.svg', '')}</text>
+  
+  <!-- Decorative line -->
+  <rect x="${width / 2 - 100}" y="100" width="200" height="3" fill="#3b82f6"/>
+  
+  <!-- Card dimensions -->
+  <text x="${width / 2}" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#64748b">7" × 5.125" Holiday Card</text>
+  
+  <!-- Template preview area background -->
+  <rect x="50" y="150" width="${width - 100}" height="${height - 200}" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
+  
+  <!-- Template preview placeholder -->
+  <text x="${width / 2}" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#6b7280">Template Preview</text>
+  <text x="${width / 2}" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">Merry Christmas Snowfall</text>
+  
+  <!-- Content lines to represent the card design -->
+  <g>
+    <rect x="80" y="250" width="180" height="8" fill="#e5e7eb"/>
+    <rect x="80" y="270" width="220" height="8" fill="#e5e7eb"/>
+    <rect x="80" y="290" width="160" height="8" fill="#e5e7eb"/>
+    <rect x="80" y="310" width="200" height="8" fill="#e5e7eb"/>
+    <rect x="320" y="250" width="150" height="8" fill="#e5e7eb"/>
+    <rect x="320" y="270" width="190" height="8" fill="#e5e7eb"/>
+    <rect x="320" y="290" width="170" height="8" fill="#e5e7eb"/>
+    <rect x="320" y="310" width="180" height="8" fill="#e5e7eb"/>
+  </g>
+  
+  <!-- Snowflake decorations -->
+  <g fill="#3b82f6" opacity="0.3">
+    <text x="150" y="360" font-family="Arial, sans-serif" font-size="20">❄</text>
+    <text x="400" y="340" font-family="Arial, sans-serif" font-size="16">❄</text>
+    <text x="500" y="380" font-family="Arial, sans-serif" font-size="18">❄</text>
+    <text x="120" y="380" font-family="Arial, sans-serif" font-size="14">❄</text>
+  </g>
+  
+  <!-- Generation info -->
+  <text x="${width / 2}" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
+  <text x="${width / 2}" y="465" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#9ca3af">Professional Holiday Card Front</text>
+</svg>`;
     }
     
-    // Create a simple PNG header and data
-    // This is a minimal PNG implementation for demonstration
-    const pngData = createMinimalPNG(width, height, svg);
+    // Convert SVG string to Uint8Array
+    const svgBytes = new TextEncoder().encode(svg);
     
-    console.log('Generated PNG size:', pngData.length, 'bytes');
-    return pngData;
+    console.log('Generated SVG size:', svgBytes.length, 'bytes');
+    return svgBytes;
     
   } catch (error) {
-    console.error('Error generating PNG:', error);
+    console.error('Error generating SVG:', error);
     
-    // Fallback: Create a very basic PNG
-    const fallbackPng = createFallbackPNG(width, height, filename);
-    return fallbackPng;
+    // Fallback: Create a simple SVG
+    const fallbackSvg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100%" height="100%" fill="white"/>
+  <rect x="2" y="2" width="${width - 4}" height="${height - 4}" fill="none" stroke="#ddd" stroke-width="2"/>
+  <text x="${width / 2}" y="${height / 2}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#333">Holiday Card</text>
+  <text x="${width / 2}" y="${height / 2 + 30}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#666">${filename.replace('.svg', '')}</text>
+</svg>`;
+    
+    return new TextEncoder().encode(fallbackSvg);
   }
-}
-
-function createMinimalPNG(width: number, height: number, svgContent: string): Uint8Array {
-  // For demonstration, we'll create a simple bitmap representation
-  // In a real implementation, you'd use a proper PNG encoder
-  
-  // Convert SVG to a simple bitmap representation
-  const pixelData = new Uint8Array(width * height * 4); // RGBA
-  
-  // Fill with white background
-  for (let i = 0; i < pixelData.length; i += 4) {
-    pixelData[i] = 255;     // R
-    pixelData[i + 1] = 255; // G
-    pixelData[i + 2] = 255; // B
-    pixelData[i + 3] = 255; // A
-  }
-  
-  // Add some visual elements (simplified)
-  // Draw border
-  for (let x = 0; x < width; x++) {
-    for (let y = 0; y < 4; y++) {
-      const idx = (y * width + x) * 4;
-      if (idx < pixelData.length) {
-        pixelData[idx] = 229;     // R
-        pixelData[idx + 1] = 231; // G
-        pixelData[idx + 2] = 235; // B
-      }
-    }
-  }
-  
-  // Create a basic PNG structure (simplified)
-  const png = createBasicPNGStructure(width, height, pixelData);
-  return png;
-}
-
-function createBasicPNGStructure(width: number, height: number, pixelData: Uint8Array): Uint8Array {
-  // This is a very simplified PNG structure
-  // In production, you'd use a proper PNG encoder library
-  
-  const header = new Uint8Array([
-    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A // PNG signature
-  ]);
-  
-  // For now, return a minimal valid PNG that represents our card
-  // This is a 1x1 white pixel PNG as a placeholder
-  const minimalPng = new Uint8Array([
-    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
-    0x00, 0x00, 0x00, 0x0D, // IHDR length
-    0x49, 0x48, 0x44, 0x52, // IHDR
-    0x00, 0x00, 0x08, 0x34, // width (2100)
-    0x00, 0x00, 0x06, 0x01, // height (1537)
-    0x08, 0x02, 0x00, 0x00, 0x00, // bit depth, color type, compression, filter, interlace
-    0xB5, 0x0A, 0x8F, 0x4A, // CRC
-    0x00, 0x00, 0x00, 0x0C, // IDAT length
-    0x49, 0x44, 0x41, 0x54, // IDAT
-    0x78, 0x9C, 0x63, 0xF8, 0xFF, 0xFF, 0x3F, 0x00, 0x05, 0xFE, 0x02, 0xFE, // compressed data (white image)
-    0xA9, 0x35, 0x81, 0x84, // CRC
-    0x00, 0x00, 0x00, 0x00, // IEND length
-    0x49, 0x45, 0x4E, 0x44, // IEND
-    0xAE, 0x42, 0x60, 0x82  // CRC
-  ]);
-  
-  return minimalPng;
-}
-
-function createFallbackPNG(width: number, height: number, filename: string): Uint8Array {
-  // Return a minimal valid PNG as fallback
-  return new Uint8Array([
-    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
-    0x00, 0x00, 0x00, 0x0D, // IHDR length
-    0x49, 0x48, 0x44, 0x52, // IHDR
-    0x00, 0x00, 0x08, 0x34, // width (2100)
-    0x00, 0x00, 0x06, 0x01, // height (1537)
-    0x08, 0x02, 0x00, 0x00, 0x00, // bit depth, color type, compression, filter, interlace
-    0xB5, 0x0A, 0x8F, 0x4A, // CRC
-    0x00, 0x00, 0x00, 0x0C, // IDAT length
-    0x49, 0x44, 0x41, 0x54, // IDAT
-    0x78, 0x9C, 0x63, 0xF8, 0xFF, 0xFF, 0x3F, 0x00, 0x05, 0xFE, 0x02, 0xFE, // white image data
-    0xA9, 0x35, 0x81, 0x84, // CRC
-    0x00, 0x00, 0x00, 0x00, // IEND length
-    0x49, 0x45, 0x4E, 0x44, // IEND
-    0xAE, 0x42, 0x60, 0x82  // CRC
-  ]);
 }
