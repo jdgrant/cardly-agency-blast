@@ -32,6 +32,9 @@ serve(async (req) => {
     const GOTENBERG_URL = Deno.env.get('GOTENBERG_URL') || 'https://pdf.sendyourcards.io';
     const GOTENBERG_API_KEY = Deno.env.get('GOTENBERG_API_KEY');
 
+    console.log('Gotenberg URL:', GOTENBERG_URL);
+    console.log('API Key configured:', !!GOTENBERG_API_KEY);
+
     if (!GOTENBERG_URL || !GOTENBERG_API_KEY) {
       return new Response(JSON.stringify({ error: 'Gotenberg URL/API key not configured' }), {
         status: 500,
@@ -88,16 +91,26 @@ serve(async (req) => {
     let previewDataUrl = '';
     try {
       if (template.preview_url) {
-        const resp = await fetch(template.preview_url);
+        // Handle both relative and absolute URLs
+        let fullUrl = template.preview_url;
+        if (template.preview_url.startsWith('/')) {
+          fullUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/storage/v1/object/public/holiday-cards${template.preview_url}`;
+        }
+        
+        console.log('Fetching preview from:', fullUrl);
+        const resp = await fetch(fullUrl);
         if (resp.ok) {
           const ct = resp.headers.get('content-type') || 'image/png';
           const buf = await resp.arrayBuffer();
           const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
           previewDataUrl = `data:${ct};base64,${base64}`;
+          console.log('Preview image fetched successfully');
+        } else {
+          console.log('Preview fetch failed with status:', resp.status);
         }
       }
     } catch (e) {
-      console.log('Preview image fetch failed, falling back to direct URL:', (e as any)?.message);
+      console.log('Preview image fetch failed:', (e as any)?.message);
     }
 
     // Build HTML for two pages
@@ -120,6 +133,7 @@ serve(async (req) => {
     form.append('preferCssPageSize', 'true');
 
     const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
+    console.log('Calling Gotenberg at:', url);
 
     const headers: Record<string, string> = {};
     // Send both Authorization and X-Api-Key for compatibility
@@ -132,8 +146,11 @@ serve(async (req) => {
       body: form as any,
     });
 
+    console.log('Gotenberg response status:', gotenbergResp.status);
+
     if (!gotenbergResp.ok) {
       const errText = await gotenbergResp.text();
+      console.error('Gotenberg error response:', errText);
       throw new Error(`Gotenberg error (${gotenbergResp.status}): ${errText}`);
     }
 
