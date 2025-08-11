@@ -173,21 +173,43 @@ const JobDetail = () => {
 
   const downloadFile = async (filePath: string, fileName: string) => {
     try {
+      console.log('Attempting to download file:', filePath, 'as:', fileName);
+      
       const { data, error } = await supabase.storage
         .from('holiday-cards')
         .download(filePath);
 
-      if (error) throw error;
+      console.log('Download response:', { data, error });
 
+      if (error) {
+        console.error('Storage download error:', error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error('No file data received');
+      }
+
+      console.log('Creating blob URL for download...');
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
       a.download = fileName;
+      a.style.display = 'none';
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
+      
+      // Clean up the object URL after a short delay
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      
+      console.log('Download initiated successfully');
+      
     } catch (error) {
+      console.error('Download error details:', error);
       toast({
         title: "Download Failed",
-        description: "Unable to download file",
+        description: `Unable to download file: ${error.message}`,
         variant: "destructive"
       });
     }
