@@ -673,48 +673,6 @@ const Admin = () => {
                                </SelectContent>
                              </Select>
                            </div>
-                           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                             <Button
-                               size="sm"
-                               variant="outline"
-                               onClick={() => generateOrderPDF(order.id)}
-                               disabled={generating[order.id]}
-                               className="text-xs px-2 py-1"
-                             >
-                               {generating[order.id] ? <RefreshCw className="w-3 h-3 animate-spin" /> : 'Preview PDF'}
-                             </Button>
-                             {downloadUrls[order.id] && (
-                               <Button
-                                 size="sm"
-                                 variant="secondary"
-                                 onClick={() => window.open(downloadUrls[order.id], '_blank')}
-                                 className="text-xs px-2 py-1"
-                               >
-                                 Download
-                               </Button>
-                             )}
-                           </div>
-                           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
-                             <Button
-                               size="sm"
-                               variant="default"
-                               onClick={() => generateProductionPDF(order.id)}
-                               disabled={generating[`${order.id}-prod`]}
-                               className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700"
-                             >
-                               {generating[`${order.id}-prod`] ? <RefreshCw className="w-3 h-3 animate-spin" /> : 'Production PDF'}
-                             </Button>
-                             {downloadUrls[`${order.id}-prod`] && (
-                               <Button
-                                 size="sm"
-                                 variant="secondary"
-                                 onClick={() => window.open(downloadUrls[`${order.id}-prod`], '_blank')}
-                                 className="text-xs px-2 py-1"
-                               >
-                                 Download
-                               </Button>
-                             )}
-                           </div>
                          </div>
                        </TableCell>
                     </TableRow>

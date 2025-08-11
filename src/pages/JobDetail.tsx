@@ -76,7 +76,8 @@ const JobDetail = () => {
   const [generatingPDFs, setGeneratingPDFs] = useState(false);
   const [generatingFront, setGeneratingFront] = useState(false);
   const [generatingGotenberg, setGeneratingGotenberg] = useState(false);
-  const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string}>({});
+  const [generatingProduction, setGeneratingProduction] = useState(false);
+  const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string, production?: string}>({});
 
   useEffect(() => {
     if (orderId) {
@@ -440,6 +441,40 @@ const JobDetail = () => {
     }
   };
 
+  const handleGenerateProductionPDF = async () => {
+    if (!order?.id) return;
+    setGeneratingProduction(true);
+    try {
+      console.log('Generating Production PDF for order:', order.id);
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId: order.id, format: 'production' }
+      });
+
+      console.log('Production PDF response:', data, error);
+
+      if (error) throw error;
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Unknown error occurred');
+      }
+
+      setPdfDownloadUrls(prev => ({ ...prev, production: data.downloadUrl }));
+
+      toast({
+        title: 'Production PDF Ready',
+        description: '7" x 10.25" production format generated! Link available below.',
+      });
+    } catch (error: any) {
+      console.error('Error generating Production PDF:', error);
+      toast({
+        title: 'Production PDF Generation Failed',
+        description: error?.message || 'Could not generate production PDF.',
+        variant: 'destructive'
+      });
+    } finally {
+      setGeneratingProduction(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -799,6 +834,50 @@ const JobDetail = () => {
                       </div>
                     )}
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Production PDF */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5" />
+                  <span>Production PDF</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Generate production-ready PDF at 7" × 10.25" with front/back layout for printing.
+                  </p>
+                  <Button
+                    onClick={handleGenerateProductionPDF}
+                    disabled={generatingProduction}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    {generatingProduction ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating Production PDF...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4" />
+                        <span>Generate Production PDF</span>
+                      </div>
+                    )}
+                  </Button>
+                  {pdfDownloadUrls.production && (
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(pdfDownloadUrls.production, '_blank')}
+                      className="w-full"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Production PDF
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
