@@ -65,8 +65,8 @@ const Admin = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'templates'>('orders');
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [editingOccasions, setEditingOccasions] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string>('');
+  const [templatesForTag, setTemplatesForTag] = useState<string[]>([]);
   const { toast } = useToast();
 
   const handleLogin = () => {
@@ -237,48 +237,75 @@ const Admin = () => {
     'thanksgiving'
   ];
 
-  const updateTemplateOccasions = async (templateId: string, occasions: string[]) => {
-    try {
-      const { error } = await supabase
-        .from('templates')
-        .update({ occasions })
-        .eq('id', templateId);
-
-      if (error) throw error;
-
-      setTemplates(templates.map(template => 
-        template.id === templateId 
-          ? { ...template, occasions }
-          : template
-      ));
-
-      toast({
-        title: "Template Updated",
-        description: "Template occasions have been updated successfully",
-      });
-      
-      setSelectedTemplate(null);
-      setEditingOccasions([]);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update template occasions",
-        variant: "destructive"
-      });
+  // Handle tag selection and find templates with that tag
+  const handleTagSelection = (tag: string) => {
+    setSelectedTag(tag);
+    if (tag) {
+      const templatesWithTag = templates
+        .filter(template => template.occasions.includes(tag))
+        .map(template => template.id);
+      setTemplatesForTag(templatesWithTag);
+    } else {
+      setTemplatesForTag([]);
     }
   };
 
-  const handleTemplateEdit = (template: Template) => {
-    setSelectedTemplate(template);
-    setEditingOccasions([...template.occasions]);
+  // Toggle template assignment to selected tag
+  const toggleTemplateForTag = (templateId: string) => {
+    setTemplatesForTag(prev => 
+      prev.includes(templateId)
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId]
+    );
   };
 
-  const toggleOccasion = (occasion: string) => {
-    setEditingOccasions(prev => 
-      prev.includes(occasion)
-        ? prev.filter(o => o !== occasion)
-        : [...prev, occasion]
-    );
+  // Save bulk tag changes
+  const saveBulkTagChanges = async () => {
+    if (!selectedTag) return;
+
+    try {
+      // Update all templates
+      for (const template of templates) {
+        const shouldHaveTag = templatesForTag.includes(template.id);
+        const currentlyHasTag = template.occasions.includes(selectedTag);
+        
+        if (shouldHaveTag !== currentlyHasTag) {
+          let newOccasions;
+          if (shouldHaveTag) {
+            // Add tag if not present
+            newOccasions = [...template.occasions, selectedTag];
+          } else {
+            // Remove tag if present
+            newOccasions = template.occasions.filter(o => o !== selectedTag);
+          }
+
+          const { error } = await supabase
+            .from('templates')
+            .update({ occasions: newOccasions })
+            .eq('id', template.id);
+
+          if (error) throw error;
+
+          // Update local state
+          setTemplates(prev => prev.map(t => 
+            t.id === template.id 
+              ? { ...t, occasions: newOccasions }
+              : t
+          ));
+        }
+      }
+
+      toast({
+        title: "Bulk Update Complete",
+        description: `Templates updated for tag: ${selectedTag}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update templates",
+        variant: "destructive"
+      });
+    }
   };
 
   if (!isAuthenticated) {
@@ -520,105 +547,95 @@ const Admin = () => {
 
         {activeTab === 'templates' && (
           <div className="space-y-6">
-            {/* Template Management */}
+            {/* Bulk Tag Management */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Tags className="w-5 h-5" />
-                  <span>Template Management</span>
+                  <span>Bulk Tag Management</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {templates.map((template) => (
-                    <Card key={template.id} className="border">
-                      <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <img 
-                            src={template.preview_url} 
-                            alt={template.name}
-                            className="w-full h-32 object-cover rounded"
-                          />
-                          <h3 className="font-semibold">{template.name}</h3>
-                          <div className="flex flex-wrap gap-1">
-                            {template.occasions.map((occasion) => (
-                              <Badge key={occasion} variant="secondary" className="text-xs">
-                                {occasion}
-                              </Badge>
-                            ))}
-                          </div>
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleTemplateEdit(template)}
-                            className="w-full"
-                          >
-                            Edit Tags
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+              <CardContent className="space-y-6">
+                {/* Tag Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Select Tag to Manage:</label>
+                  <Select value={selectedTag} onValueChange={handleTagSelection}>
+                    <SelectTrigger className="w-full max-w-md">
+                      <SelectValue placeholder="Choose a tag to edit..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableOccasions.map((occasion) => (
+                        <SelectItem key={occasion} value={occasion}>
+                          {occasion.replace('-', ' ').split(' ').map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                          ).join(' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Edit Template Modal */}
-            {selectedTemplate && (
-              <Card className="border-2 border-blue-500 bg-blue-50">
-                <CardHeader className="bg-blue-100">
-                  <CardTitle className="text-blue-800">
-                    Editing Template: {selectedTemplate.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <img 
-                        src={selectedTemplate.preview_url} 
-                        alt={selectedTemplate.name}
-                        className="w-full h-40 object-cover rounded"
-                      />
+                {/* Template Grid */}
+                {selectedTag && (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium">
+                        Assign templates to: <Badge variant="secondary">{selectedTag}</Badge>
+                      </h3>
+                      <Button onClick={saveBulkTagChanges} className="flex items-center space-x-2">
+                        <Tags className="w-4 h-4" />
+                        <span>Save Changes</span>
+                      </Button>
                     </div>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-sm font-medium">Select Occasions:</label>
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          {availableOccasions.map((occasion) => (
-                            <label key={occasion} className="flex items-center space-x-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={editingOccasions.includes(occasion)}
-                                onChange={() => toggleOccasion(occasion)}
-                                className="rounded"
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {templates.map((template) => (
+                        <Card key={template.id} className="border">
+                          <CardContent className="p-4">
+                            <div className="space-y-3">
+                              <img 
+                                src={template.preview_url} 
+                                alt={template.name}
+                                className="w-full h-24 object-cover rounded"
                               />
-                              <span className="text-sm capitalize">{occasion.replace('-', ' ')}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button 
-                          onClick={() => updateTemplateOccasions(selectedTemplate.id, editingOccasions)}
-                          className="flex-1"
-                        >
-                          Save Changes
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedTemplate(null);
-                            setEditingOccasions([]);
-                          }}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
+                              <div className="space-y-2">
+                                <h4 className="font-medium text-sm">{template.name}</h4>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`template-${template.id}`}
+                                    checked={templatesForTag.includes(template.id)}
+                                    onChange={() => toggleTemplateForTag(template.id)}
+                                    className="rounded"
+                                  />
+                                  <label 
+                                    htmlFor={`template-${template.id}`}
+                                    className="text-sm cursor-pointer"
+                                  >
+                                    Has {selectedTag} tag
+                                  </label>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {template.occasions.map((occasion) => (
+                                    <Badge 
+                                      key={occasion} 
+                                      variant={occasion === selectedTag ? "default" : "secondary"} 
+                                      className="text-xs"
+                                    >
+                                      {occasion}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
