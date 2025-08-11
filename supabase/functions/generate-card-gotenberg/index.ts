@@ -284,7 +284,6 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
     </body>
     </html>`;
   }
-  }
   
   // Preview format (original)
   return `<!DOCTYPE html>
