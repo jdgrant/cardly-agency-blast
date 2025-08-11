@@ -93,7 +93,7 @@ export const fetchTemplates = async (): Promise<Template[]> => {
       name: template.name,
       description: template.description || '',
       preview_url: template.preview_url,
-      occasions: ['christmas', 'holidays'] // Default occasions for backward compatibility
+      occasions: template.occasions || ['christmas', 'holidays'] // Use database occasions or fallback
     }));
 
     return transformedTemplates;
