@@ -395,14 +395,14 @@ const JobDetail = () => {
     if (!order?.id) return;
     setGeneratingPDFs(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-card-pdfs', {
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
         body: { orderId: order.id }
       });
       if (error) throw error;
-      const url = data?.backDownloadUrl;
-      if (!url) throw new Error('No inside PDF returned');
+      const url = data?.downloadUrl;
+      if (!url) throw new Error('No PDF URL returned');
       window.open(url, '_blank');
-      toast({ title: 'Inside PDF Ready', description: 'Opened inside PDF in a new tab.' });
+      toast({ title: 'Inside PDF Ready', description: 'Opened inside-style PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating inside PDF:', error);
       toast({
