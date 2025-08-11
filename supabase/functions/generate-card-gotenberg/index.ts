@@ -318,10 +318,9 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
         body { font-family: Georgia, serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
+        .blank-half { width: 5.125in; height: 7in; background: #ffffff; }
         .inside-half { width: 5.125in; height: 7in; }
-        .outside-half { width: 5.125in; height: 7in; }
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
-        .outside-content { width: 100%; height: 100%; background: #ffffff; }
         .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
         .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
         .msg { text-align: center; max-width: 85%; font-size: 16px; line-height: 1.5; color: #111827; font-style: italic; margin: 0 auto; }
@@ -333,6 +332,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
     </head>
     <body>
       <div class="production-layout">
+        <div class="blank-half"></div>
         <div class="inside-half">
           <div class="inside-content">
             <div class="grid">
@@ -345,9 +345,6 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
               </div>
             </div>
           </div>
-        </div>
-        <div class="outside-half">
-          <div class="outside-content"></div>
         </div>
       </div>
     </body>
