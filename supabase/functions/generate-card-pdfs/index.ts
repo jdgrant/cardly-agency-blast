@@ -172,54 +172,95 @@ function generateFrontCardHTML(template: any): string {
     <head>
       <meta charset="utf-8">
       <style>
+        @page {
+          size: 7in 5.125in;
+          margin: 0;
+        }
         body {
           margin: 0;
           padding: 0;
-          width: 360px;
-          height: 504px;
+          width: 7in;
+          height: 5.125in;
           display: flex;
           align-items: center;
           justify-content: center;
           background: white;
           font-family: Arial, sans-serif;
+          overflow: hidden;
         }
-        .card-container {
+        .card-front {
           width: 100%;
           height: 100%;
-          border: 2px solid #ccc;
+          background-image: url('${template.preview_url}');
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        .fallback-content {
+          width: 100%;
+          height: 100%;
+          border: 3px solid #e5e7eb;
+          border-radius: 12px;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           text-align: center;
-          padding: 20px;
+          padding: 40px;
           box-sizing: border-box;
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
-        .template-info {
-          font-size: 24px;
+        .template-name {
+          font-size: 36px;
           font-weight: bold;
-          color: #333;
+          color: #1e293b;
           margin-bottom: 20px;
+          text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
         .template-description {
-          font-size: 16px;
-          color: #666;
+          font-size: 18px;
+          color: #475569;
           margin-bottom: 30px;
+          line-height: 1.4;
         }
-        .template-preview {
+        .decorative-border {
           width: 200px;
-          height: 200px;
-          border: 1px solid #ddd;
-          background: url('${template.preview_url}') center/cover;
+          height: 3px;
+          background: linear-gradient(90deg, #3b82f6, #8b5cf6, #3b82f6);
+          border-radius: 2px;
+          margin: 20px 0;
+        }
+        .card-info {
+          position: absolute;
+          bottom: 20px;
+          right: 20px;
+          background: rgba(255,255,255,0.9);
+          padding: 10px 15px;
           border-radius: 8px;
+          font-size: 12px;
+          color: #64748b;
+          backdrop-filter: blur(4px);
         }
       </style>
     </head>
     <body>
-      <div class="card-container">
-        <div class="template-info">${template.name}</div>
-        <div class="template-description">${template.description || 'Holiday Card Template'}</div>
-        <div class="template-preview"></div>
+      <div class="card-front">
+        <div class="fallback-content">
+          <div class="template-name">${template.name}</div>
+          <div class="decorative-border"></div>
+          <div class="template-description">${template.description || 'Holiday Card Template'}</div>
+          <div style="font-size: 14px; color: #94a3b8; margin-top: 20px;">
+            Premium Holiday Card Design
+          </div>
+        </div>
+        <div class="card-info">
+          7" × 5.125" • Holiday Card Front
+        </div>
       </div>
     </body>
     </html>
@@ -235,13 +276,18 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
     <head>
       <meta charset="utf-8">
       <style>
+        @page {
+          size: 7in 5.125in;
+          margin: 0;
+        }
         body {
           margin: 0;
           padding: 0;
-          width: 360px;
-          height: 504px;
+          width: 7in;
+          height: 5.125in;
           font-family: 'Georgia', serif;
           background: white;
+          overflow: hidden;
         }
         .card-back {
           width: 100%;
@@ -251,59 +297,87 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
           flex-direction: column;
           justify-content: space-between;
           box-sizing: border-box;
-          border: 2px solid #ccc;
+          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+          border: 2px solid #e5e7eb;
         }
         .message-section {
           text-align: center;
           margin-bottom: 30px;
+          flex-grow: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .message {
-          font-size: 18px;
+          font-size: 22px;
           line-height: 1.6;
-          color: #333;
+          color: #1e293b;
           font-style: italic;
+          max-width: 80%;
+          padding: 20px;
+          background: rgba(255,255,255,0.8);
+          border-radius: 12px;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
         .bottom-section {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 15px;
+          gap: 20px;
           margin-bottom: 20px;
         }
+        .branding-row {
+          display: flex;
+          align-items: center;
+          gap: 40px;
+        }
         .logo {
-          max-width: 150px;
-          max-height: 50px;
+          max-width: 180px;
+          max-height: 60px;
           object-fit: contain;
         }
         .signature {
-          max-width: 100px;
-          max-height: 30px;
+          max-width: 120px;
+          max-height: 40px;
           object-fit: contain;
         }
         .address-section {
-          font-size: 10px;
-          line-height: 1.3;
-          border: 1px solid #ccc;
-          padding: 12px;
-          background: #f9f9f9;
-          border-radius: 4px;
+          font-size: 11px;
+          line-height: 1.4;
+          border: 1px solid #d1d5db;
+          padding: 15px;
+          background: rgba(255,255,255,0.9);
+          border-radius: 8px;
+          width: 100%;
+          box-sizing: border-box;
         }
         .address-section h4 {
-          margin: 0 0 8px 0;
-          font-size: 11px;
-          color: #333;
+          margin: 0 0 12px 0;
+          font-size: 12px;
+          color: #374151;
           font-weight: bold;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 8px;
+        }
+        .address-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 10px;
         }
         .address-item {
-          margin-bottom: 6px;
-          padding-bottom: 3px;
-          border-bottom: 1px dotted #ccc;
+          padding: 8px;
+          background: #f9fafb;
+          border-radius: 4px;
+          border: 1px solid #e5e7eb;
         }
         .order-info {
-          font-size: 8px;
-          color: #888;
+          font-size: 10px;
+          color: #6b7280;
           text-align: center;
-          margin-top: 10px;
+          margin-top: 15px;
+          padding: 10px;
+          background: rgba(255,255,255,0.7);
+          border-radius: 6px;
         }
       </style>
     </head>
@@ -314,26 +388,30 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
         </div>
         
         <div class="bottom-section">
-          ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="logo" />` : '<div style="height: 50px; display: flex; align-items: center; color: #999;">Company Logo</div>'}
-          ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : '<div style="height: 30px; display: flex; align-items: center; color: #999;">Signature</div>'}
+          <div class="branding-row">
+            ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="logo" />` : '<div style="height: 60px; display: flex; align-items: center; color: #9ca3af; font-size: 14px;">Company Logo</div>'}
+            ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : '<div style="height: 40px; display: flex; align-items: center; color: #9ca3af; font-size: 14px;">Signature</div>'}
+          </div>
         </div>
 
         ${clients.length > 0 ? `
         <div class="address-section">
           <h4>Recipients (${clients.length} clients):</h4>
-          ${clients.slice(0, 6).map(client => `
-            <div class="address-item">
-              ${client.first_name} ${client.last_name}<br>
-              ${client.address}<br>
-              ${client.city}, ${client.state} ${client.zip}
-            </div>
-          `).join('')}
-          ${clients.length > 6 ? `<div class="address-item"><strong>... and ${clients.length - 6} more recipients</strong></div>` : ''}
+          <div class="address-grid">
+            ${clients.slice(0, 9).map(client => `
+              <div class="address-item">
+                <strong>${client.first_name} ${client.last_name}</strong><br>
+                ${client.address}<br>
+                ${client.city}, ${client.state} ${client.zip}
+              </div>
+            `).join('')}
+            ${clients.length > 9 ? `<div class="address-item" style="display: flex; align-items: center; justify-content: center; font-weight: bold; color: #6b7280;">... and ${clients.length - 9} more recipients</div>` : ''}
+          </div>
         </div>
         ` : ''}
         
         <div class="order-info">
-          Order: ${order.readable_order_id || order.id} | ${order.card_quantity} cards | Generated: ${new Date().toLocaleDateString()}
+          <strong>Order:</strong> ${order.readable_order_id || order.id} | <strong>Quantity:</strong> ${order.card_quantity} cards | <strong>Generated:</strong> ${new Date().toLocaleDateString()} | <strong>Size:</strong> 7" × 5.125"
         </div>
       </div>
     </body>
