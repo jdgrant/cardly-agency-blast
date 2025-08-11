@@ -268,6 +268,36 @@ const Admin = () => {
     }
   };
 
+  // Update template name
+  const updateTemplateName = async (templateId: string, newName: string) => {
+    try {
+      const { error } = await supabase
+        .from('templates')
+        .update({ name: newName })
+        .eq('id', templateId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTemplates(prev => prev.map(t => 
+        t.id === templateId 
+          ? { ...t, name: newName }
+          : t
+      ));
+
+      toast({
+        title: "Template Updated",
+        description: "Template name updated successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update template name",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -538,6 +568,15 @@ const Admin = () => {
                             </Button>
                           </div>
                           <div className="space-y-2">
+                            <div className="space-y-2">
+                              <label className="text-xs font-medium text-gray-600">Name:</label>
+                              <Input
+                                value={template.name}
+                                onChange={(e) => updateTemplateName(template.id, e.target.value)}
+                                className="h-8 text-xs"
+                                placeholder="Template name..."
+                              />
+                            </div>
                             <div className="space-y-2">
                               <label className="text-xs font-medium text-gray-600">Tag:</label>
                               <Select 
