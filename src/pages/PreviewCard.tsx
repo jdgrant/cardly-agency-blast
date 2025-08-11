@@ -207,16 +207,18 @@ export default function PreviewCard() {
 
   return (
     <div className="min-h-screen bg-white">
-      <AspectRatio ratio={56/41}>
+      <AspectRatio ratio={41/56}>
         {isFront ? (
-          <img
-            src={template.preview_url}
-                      alt={`${template.name} card front preview`}
-                      className="w-full h-full object-contain bg-white"
-                      loading="lazy"
-          />
+          <div className="w-full h-full border-2 border-border rounded-md overflow-hidden bg-card">
+            <img
+              src={template.preview_url}
+              alt={`${template.name} card front preview`}
+              className="w-full h-full object-contain"
+              loading="lazy"
+            />
+          </div>
         ) : (
-          <div className="w-full h-full bg-background">
+          <div className="w-full h-full bg-background border-2 border-border rounded-md overflow-hidden">
             <div className="w-full h-full flex flex-col items-center justify-center p-8 gap-8">
               <div className="text-center max-w-[80%]">
                 <p className="text-lg leading-relaxed italic text-foreground/90">
