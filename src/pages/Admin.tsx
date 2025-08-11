@@ -612,9 +612,8 @@ const Admin = () => {
                                    <Eye className="w-3 h-3" />
                                  </Button>
                                </div>
-                              <div className="space-y-2">
-                                <h4 className="font-medium text-sm">{template.name}</h4>
-                                <div className="flex items-center space-x-2">
+                               <div className="space-y-2">
+                                 <div className="flex items-center space-x-2">
                                   <input
                                     type="checkbox"
                                     id={`template-${template.id}`}
