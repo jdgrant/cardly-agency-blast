@@ -211,9 +211,9 @@ export default function PreviewCard() {
         {isFront ? (
           <img
             src={template.preview_url}
-            alt={`${template.name} card front preview`}
-            className="w-full h-full object-cover"
-            loading="lazy"
+                      alt={`${template.name} card front preview`}
+                      className="w-full h-full object-contain bg-white"
+                      loading="lazy"
           />
         ) : (
           <div className="w-full h-full bg-background">
