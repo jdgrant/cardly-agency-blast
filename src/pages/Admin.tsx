@@ -648,29 +648,6 @@ const Admin = () => {
                             >
                               <Eye className="w-3 h-3 mr-1" /> Inside
                             </Button>
-                            <Button
-                              size="sm"
-                              onClick={(e) => { e.stopPropagation(); generateOrderPDF(order.id); }}
-                              disabled={!!generating[order.id]}
-                              className="flex items-center"
-                            >
-                              {generating[order.id] ? (
-                                <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
-                              ) : (
-                                <FileText className="w-3 h-3 mr-1" />
-                              )}
-                              Generate PDF
-                            </Button>
-                            {downloadUrls[order.id] && (
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={(e) => { e.stopPropagation(); window.open(downloadUrls[order.id], '_blank'); }}
-                                className="flex items-center"
-                              >
-                                <Download className="w-3 h-3 mr-1" /> Download
-                              </Button>
-                            )}
                           </div>
                           <div onClick={(e) => e.stopPropagation()}>
                             <Select
