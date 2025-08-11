@@ -84,8 +84,24 @@ serve(async (req) => {
       }
     }
 
+    // Inline template preview image for reliable rendering in Gotenberg
+    let previewDataUrl = '';
+    try {
+      if (template.preview_url) {
+        const resp = await fetch(template.preview_url);
+        if (resp.ok) {
+          const ct = resp.headers.get('content-type') || 'image/png';
+          const buf = await resp.arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          previewDataUrl = `data:${ct};base64,${base64}`;
+        }
+      }
+    } catch (e) {
+      console.log('Preview image fetch failed, falling back to direct URL:', (e as any)?.message);
+    }
+
     // Build HTML for two pages
-    const frontHTML = buildFrontHTML(template);
+    const frontHTML = buildFrontHTML(template, previewDataUrl);
     const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl);
 
     // Prepare multipart form for Gotenberg
@@ -152,7 +168,8 @@ serve(async (req) => {
   }
 });
 
-function buildFrontHTML(template: any) {
+function buildFrontHTML(template: any, previewDataUrl: string) {
+  const imgSrc = previewDataUrl || template.preview_url || '';
   return `<!DOCTYPE html>
   <html>
   <head>
@@ -160,16 +177,16 @@ function buildFrontHTML(template: any) {
     <style>
       @page { size: 7in 5.125in; margin: 0; }
       html, body { margin: 0; padding: 0; width: 7in; height: 5.125in; }
-      body { font-family: Arial, sans-serif; }
-      .wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #ffffff; }
-      .preview { position: relative; width: calc(100% - 40px); height: calc(100% - 40px); border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
-      .title { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 20px; color: #fff; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.75) 100%); font-weight: 700; font-size: 20px; }
+      body { font-family: Arial, sans-serif; background: #ffffff; }
+      .wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+      .frame { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
+      .img { width: 100%; height: 100%; object-fit: contain; display: block; background: #ffffff; }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <div class="preview">
-        <div class="title">${template.name || 'Holiday Card Front'}</div>
+      <div class="frame">
+        ${imgSrc ? `<img class="img" src="${imgSrc}" alt="${escapeHtml(template.name || 'Card front preview')}"/>` : ''}
       </div>
     </div>
   </body>
@@ -185,24 +202,28 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
     <style>
       @page { size: 7in 5.125in; margin: 0; }
       html, body { margin: 0; padding: 0; width: 7in; height: 5.125in; }
-      body { font-family: Georgia, serif; }
-      .wrap { width: 100%; height: 100%; box-sizing: border-box; padding: 28px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%); border: 2px solid #e5e7eb; }
-      .message { text-align: center; font-size: 22px; line-height: 1.6; color: #1e293b; font-style: italic; background: rgba(255,255,255,0.8); padding: 16px 20px; border-radius: 12px; margin: 8px auto; max-width: 80%; }
-      .brand { display: flex; align-items: center; justify-content: center; gap: 40px; }
-      .logo { max-width: 180px; max-height: 60px; object-fit: contain; }
-      .sig { max-width: 140px; max-height: 44px; object-fit: contain; }
-      .placeholder { color: #9ca3af; font-size: 12px; }
-      .meta { font-size: 10px; color: #6b7280; text-align: center; padding-top: 8px; }
+      body { font-family: Georgia, serif; background: #ffffff; }
+      .wrap { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
+      .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 32px; box-sizing: border-box; }
+      .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
+      .msg { text-align: center; max-width: 80%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
+      .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; padding: 0 32px; box-sizing: border-box; }
+      .logo { max-width: 180px; max-height: 56px; object-fit: contain; }
+      .sig { max-width: 160px; max-height: 48px; object-fit: contain; }
+      .ph { color: #9ca3af; font-size: 12px; }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <div class="message">${escapeHtml(message)}</div>
-      <div class="brand">
-        ${logoDataUrl ? `<img class="logo" src="${logoDataUrl}" alt="Logo"/>` : `<div class="placeholder">Company Logo</div>`}
-        ${signatureDataUrl ? `<img class="sig" src="${signatureDataUrl}" alt="Signature"/>` : `<div class="placeholder">Signature</div>`}
+      <div class="grid">
+        <div class="top">
+          <p class="msg">${escapeHtml(message)}</p>
+        </div>
+        <div class="brand">
+          ${logoDataUrl ? `<img class="logo" src="${logoDataUrl}" alt="Logo"/>` : `<div class="ph">Company Logo</div>`}
+          ${signatureDataUrl ? `<img class="sig" src="${signatureDataUrl}" alt="Signature"/>` : `<div class="ph">Signature</div>`}
+        </div>
       </div>
-      <div class="meta">Order ${order?.readable_order_id || order?.id} • Quantity ${order?.card_quantity} • Size 7&quot; × 5.125&quot;</div>
     </div>
   </body>
   </html>`;
