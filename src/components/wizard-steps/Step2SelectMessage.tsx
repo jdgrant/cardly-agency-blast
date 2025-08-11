@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Edit3, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { mockTemplates } from './Step1ChooseTemplate';
+import { getTemplateById } from '@/services/templatesService';
 
 // Message data organized by occasion
 const messagesByOccasion = {
@@ -74,13 +74,16 @@ const Step2SelectMessage = () => {
 
   // Get the selected template and its occasions
   useEffect(() => {
-    if (state.selectedTemplate) {
-      // Find the template and get its occasions
-      const template = mockTemplates.find(t => t.id === state.selectedTemplate);
-      if (template) {
-        setAvailableOccasions(template.occasions || ['holidays']);
+    const loadTemplate = async () => {
+      if (state.selectedTemplate) {
+        // Find the template and get its occasions
+        const template = await getTemplateById(state.selectedTemplate);
+        if (template) {
+          setAvailableOccasions(template.occasions || ['holidays']);
+        }
       }
-    }
+    };
+    loadTemplate();
   }, [state.selectedTemplate]);
 
   const handleMessageSelect = (message: string) => {
@@ -118,7 +121,17 @@ const Step2SelectMessage = () => {
   };
 
   // Get selected template for preview
-  const selectedTemplate = mockTemplates.find(t => t.id === state.selectedTemplate);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  
+  useEffect(() => {
+    const loadSelectedTemplate = async () => {
+      if (state.selectedTemplate) {
+        const template = await getTemplateById(state.selectedTemplate);
+        setSelectedTemplate(template);
+      }
+    };
+    loadSelectedTemplate();
+  }, [state.selectedTemplate]);
 
   return (
     <div className="space-y-6">

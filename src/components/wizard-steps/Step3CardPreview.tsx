@@ -1,17 +1,27 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Upload, ImageIcon } from 'lucide-react';
-import { mockTemplates } from './Step1ChooseTemplate';
+import { getTemplateById } from '@/services/templatesService';
 
 const Step3CardPreview = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
   // Get selected template and message for preview
-  const selectedTemplate = mockTemplates.find(t => t.id === state.selectedTemplate);
+  useEffect(() => {
+    const loadTemplate = async () => {
+      if (state.selectedTemplate) {
+        const template = await getTemplateById(state.selectedTemplate);
+        setSelectedTemplate(template);
+      }
+    };
+    loadTemplate();
+  }, [state.selectedTemplate]);
+
   const currentMessage = state.customMessage || state.selectedMessage;
 
   // Business rule for splitting message at halfway point by character length
