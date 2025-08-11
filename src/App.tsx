@@ -12,6 +12,7 @@ import OrderConfirmation from "./pages/OrderConfirmation";
 import OrderStatus from "./pages/OrderStatus";
 import Html2Pdf from "./pages/Html2Pdf";
 import NotFound from "./pages/NotFound";
+import PreviewCard from "./pages/PreviewCard";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/html2pdf" element={<Html2Pdf />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/order-status" element={<OrderStatus />} />
+          <Route path="/preview/:which/:orderId" element={<PreviewCard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
