@@ -71,6 +71,8 @@ const Admin = () => {
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [originalNames, setOriginalNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const [generating, setGenerating] = useState<Record<string, boolean>>({});
+  const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
 
   const handleLogin = () => {
     if (password === 'admin123') {
@@ -261,6 +263,30 @@ const Admin = () => {
     }
   };
 
+  const generateOrderPDF = async (orderId: string) => {
+    try {
+      setGenerating(prev => ({ ...prev, [orderId]: true }));
+      toast({ title: "Building PDF", description: `Generating card for ${orderId.slice(0,8)}…` });
+
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId }
+      });
+
+      if (error) throw error;
+
+      if (data?.downloadUrl) {
+        setDownloadUrls(prev => ({ ...prev, [orderId]: data.downloadUrl }));
+        toast({ title: "PDF Ready", description: "Click Download to open the file." });
+      } else {
+        toast({ title: "No URL returned", description: "PDF generated but no link was provided.", variant: 'destructive' });
+      }
+    } catch (err) {
+      console.error('generateOrderPDF error', err);
+      toast({ title: "Generation failed", description: "Could not generate the PDF.", variant: 'destructive' });
+    } finally {
+      setGenerating(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
   const availableOccasions = [
     'christmas',
     'hanukkah', 
@@ -588,20 +614,65 @@ const Admin = () => {
                         {new Date(order.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <Select
-                          value={order.status}
-                          onValueChange={(value) => updateOrderStatus(order.id, value)}
-                        >
-                          <SelectTrigger className="w-24">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="blocked">Blocked</SelectItem>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="sent">Sent</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); window.open(`/#/preview/front/${order.id}`, '_blank'); }}
+                              className="flex items-center"
+                            >
+                              <Eye className="w-3 h-3 mr-1" /> Front
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => { e.stopPropagation(); window.open(`/#/preview/inside/${order.id}`, '_blank'); }}
+                              className="flex items-center"
+                            >
+                              <Eye className="w-3 h-3 mr-1" /> Inside
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={(e) => { e.stopPropagation(); generateOrderPDF(order.id); }}
+                              disabled={!!generating[order.id]}
+                              className="flex items-center"
+                            >
+                              {generating[order.id] ? (
+                                <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                              ) : (
+                                <FileText className="w-3 h-3 mr-1" />
+                              )}
+                              Generate PDF
+                            </Button>
+                            {downloadUrls[order.id] && (
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={(e) => { e.stopPropagation(); window.open(downloadUrls[order.id], '_blank'); }}
+                                className="flex items-center"
+                              >
+                                <Download className="w-3 h-3 mr-1" /> Download
+                              </Button>
+                            )}
+                          </div>
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <Select
+                              value={order.status}
+                              onValueChange={(value) => updateOrderStatus(order.id, value)}
+                            >
+                              <SelectTrigger className="w-24">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="blocked">Blocked</SelectItem>
+                                <SelectItem value="approved">Approved</SelectItem>
+                                <SelectItem value="sent">Sent</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
