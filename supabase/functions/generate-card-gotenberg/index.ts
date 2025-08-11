@@ -121,10 +121,16 @@ serve(async (req) => {
     // Prepare multipart form for Gotenberg
     const form = new FormData();
     const includeFront = (only !== 'inside');
-    if (includeFront) {
+
+    if (only === 'inside') {
+      // Gotenberg requires an entry file named index.html
+      form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
+    } else {
+      // Default: still provide an index.html (inside) to satisfy Gotenberg
+      form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
+      // Optionally include front.html as an asset (not used by entrypoint)
       form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
     }
-    form.append('files', new File([insideHTML], 'inside.html', { type: 'text/html' }));
 
     // Page size: 7in x 5.125in, small margins
     form.append('paperWidth', '7');
