@@ -67,8 +67,6 @@ const Admin = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'templates'>('orders');
-  const [selectedTag, setSelectedTag] = useState<string>('');
-  const [templatesForTag, setTemplatesForTag] = useState<string[]>([]);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const { toast } = useToast();
 
@@ -240,72 +238,31 @@ const Admin = () => {
     'thanksgiving'
   ];
 
-  // Handle tag selection and find templates with that tag
-  const handleTagSelection = (tag: string) => {
-    setSelectedTag(tag);
-    if (tag) {
-      const templatesWithTag = templates
-        .filter(template => template.occasions.includes(tag))
-        .map(template => template.id);
-      setTemplatesForTag(templatesWithTag);
-    } else {
-      setTemplatesForTag([]);
-    }
-  };
-
-  // Toggle template assignment to selected tag
-  const toggleTemplateForTag = (templateId: string) => {
-    setTemplatesForTag(prev => 
-      prev.includes(templateId)
-        ? prev.filter(id => id !== templateId)
-        : [...prev, templateId]
-    );
-  };
-
-  // Save bulk tag changes
-  const saveBulkTagChanges = async () => {
-    if (!selectedTag) return;
-
+  // Update single template tag
+  const updateTemplateTag = async (templateId: string, newTag: string) => {
     try {
-      // Update all templates
-      for (const template of templates) {
-        const shouldHaveTag = templatesForTag.includes(template.id);
-        const currentlyHasTag = template.occasions.includes(selectedTag);
-        
-        if (shouldHaveTag !== currentlyHasTag) {
-          let newOccasions;
-          if (shouldHaveTag) {
-            // Add tag if not present
-            newOccasions = [...template.occasions, selectedTag];
-          } else {
-            // Remove tag if present
-            newOccasions = template.occasions.filter(o => o !== selectedTag);
-          }
+      const { error } = await supabase
+        .from('templates')
+        .update({ occasions: [newTag] }) // Single tag only
+        .eq('id', templateId);
 
-          const { error } = await supabase
-            .from('templates')
-            .update({ occasions: newOccasions })
-            .eq('id', template.id);
+      if (error) throw error;
 
-          if (error) throw error;
-
-          // Update local state
-          setTemplates(prev => prev.map(t => 
-            t.id === template.id 
-              ? { ...t, occasions: newOccasions }
-              : t
-          ));
-        }
-      }
+      // Update local state
+      setTemplates(prev => prev.map(t => 
+        t.id === templateId 
+          ? { ...t, occasions: [newTag] }
+          : t
+      ));
 
       toast({
-        title: "Bulk Update Complete",
-        description: `Templates updated for tag: ${selectedTag}`,
+        title: "Template Updated",
+        description: "Template tag updated successfully",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update templates",
+        description: "Failed to update template tag",
         variant: "destructive"
       });
     }
@@ -550,103 +507,78 @@ const Admin = () => {
 
         {activeTab === 'templates' && (
           <div className="space-y-6">
-            {/* Bulk Tag Management */}
+            {/* Template Management */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Tags className="w-5 h-5" />
-                  <span>Bulk Tag Management</span>
+                  <span>Template Management</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Tag Selection */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Select Tag to Manage:</label>
-                  <Select value={selectedTag} onValueChange={handleTagSelection}>
-                    <SelectTrigger className="w-full max-w-md">
-                      <SelectValue placeholder="Choose a tag to edit..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableOccasions.map((occasion) => (
-                        <SelectItem key={occasion} value={occasion}>
-                          {occasion.replace('-', ' ').split(' ').map(word => 
-                            word.charAt(0).toUpperCase() + word.slice(1)
-                          ).join(' ')}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Template Grid */}
-                {selectedTag && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-medium">
-                        Assign templates to: <Badge variant="secondary">{selectedTag}</Badge>
-                      </h3>
-                      <Button onClick={saveBulkTagChanges} className="flex items-center space-x-2">
-                        <Tags className="w-4 h-4" />
-                        <span>Save Changes</span>
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                      {templates.map((template) => (
-                        <Card key={template.id} className="border">
-                          <CardContent className="p-4">
-                             <div className="space-y-3">
-                               <div className="relative group">
-                                 <img 
-                                   src={template.preview_url} 
-                                   alt={template.name}
-                                   className="w-full h-24 object-cover rounded cursor-pointer"
-                                   onClick={() => setPreviewTemplate(template)}
-                                 />
-                                 <Button
-                                   size="sm"
-                                   variant="secondary"
-                                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                                   onClick={() => setPreviewTemplate(template)}
-                                 >
-                                   <Eye className="w-3 h-3" />
-                                 </Button>
-                               </div>
-                               <div className="space-y-2">
-                                 <div className="flex items-center space-x-2">
-                                  <input
-                                    type="checkbox"
-                                    id={`template-${template.id}`}
-                                    checked={templatesForTag.includes(template.id)}
-                                    onChange={() => toggleTemplateForTag(template.id)}
-                                    className="rounded"
-                                  />
-                                  <label 
-                                    htmlFor={`template-${template.id}`}
-                                    className="text-sm cursor-pointer"
-                                  >
-                                    Has {selectedTag} tag
-                                  </label>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {template.occasions.map((occasion) => (
-                                    <Badge 
-                                      key={occasion} 
-                                      variant={occasion === selectedTag ? "default" : "secondary"} 
-                                      className="text-xs"
-                                    >
-                                      {occasion}
-                                    </Badge>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {templates.map((template) => (
+                    <Card key={template.id} className="border">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <div className="relative group">
+                            <img 
+                              src={template.preview_url} 
+                              alt={template.name}
+                              className="w-full h-24 object-cover rounded cursor-pointer"
+                              onClick={() => setPreviewTemplate(template)}
+                            />
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => setPreviewTemplate(template)}
+                            >
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="space-y-2">
+                              <label className="text-xs font-medium text-gray-600">Tag:</label>
+                              <Select 
+                                value={template.occasions[0] || ''} 
+                                onValueChange={(value) => updateTemplateTag(template.id, value)}
+                              >
+                                <SelectTrigger className="w-full h-8 text-xs">
+                                  <SelectValue placeholder="Select tag..." />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white border shadow-lg z-50">
+                                  {availableOccasions.map((occasion) => (
+                                    <SelectItem key={occasion} value={occasion} className="text-xs">
+                                      {occasion.replace('-', ' ').split(' ').map(word => 
+                                        word.charAt(0).toUpperCase() + word.slice(1)
+                                      ).join(' ')}
+                                    </SelectItem>
                                   ))}
-                                </div>
-                              </div>
+                                </SelectContent>
+                              </Select>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                            {template.occasions.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {template.occasions.map((occasion) => (
+                                  <Badge 
+                                    key={occasion} 
+                                    variant="secondary" 
+                                    className="text-xs"
+                                  >
+                                    {occasion.replace('-', ' ').split(' ').map(word => 
+                                      word.charAt(0).toUpperCase() + word.slice(1)
+                                    ).join(' ')}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </div>
