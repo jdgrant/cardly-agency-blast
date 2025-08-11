@@ -331,13 +331,19 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
 }
 
 async function generateHTMLPDF(htmlContent: string, filename: string): Promise<Uint8Array> {
-  // Create a more detailed PDF that includes the HTML structure as text
-  // This is a simplified approach but completely free
-  
+  // Extract text content and create a proper PDF structure
   const textContent = htmlContent
-    .replace(/<[^>]*>/g, ' ')  // Remove HTML tags
-    .replace(/\s+/g, ' ')      // Normalize whitespace
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove CSS
+    .replace(/<[^>]*>/g, '\n')  // Replace HTML tags with newlines
+    .replace(/\s+/g, ' ')       // Normalize whitespace
+    .replace(/\n\s*\n/g, '\n')  // Remove extra newlines
     .trim();
+
+  // Split content into lines for better formatting
+  const lines = textContent.split('\n').filter(line => line.trim().length > 0);
+  
+  // Calculate content length for PDF structure
+  const contentLength = lines.length * 30 + 200; // Approximate content length
   
   const pdfContent = `%PDF-1.4
 1 0 obj
@@ -371,26 +377,26 @@ endobj
 
 4 0 obj
 <<
-/Length ${500 + textContent.length}
+/Length ${contentLength}
 >>
 stream
 BT
-/F1 12 Tf
+/F1 16 Tf
 50 750 Td
-(Holiday Card: ${filename}) Tj
+(Holiday Card: ${filename.replace('.pdf', '')}) Tj
+0 -25 Td
+/F1 12 Tf
+(Generated: ${new Date().toLocaleString()}) Tj
+0 -20 Td
+(Card Size: 5" x 7") Tj
 0 -30 Td
 /F1 10 Tf
-(Generated on: ${new Date().toLocaleString()}) Tj
+${lines.slice(0, 25).map((line, i) => `0 -15 Td (${line.substring(0, 80).replace(/[()\\]/g, '')}) Tj`).join('\n')}
 0 -30 Td
-(Card Dimensions: 5" x 7" (360x504 pixels)) Tj
-0 -40 Td
 /F1 8 Tf
-${textContent.substring(0, 500).split(' ').map((word, i) => {
-  if (i % 10 === 0) return `0 -15 Td (${word}) Tj`;
-  return `(${word}) Tj `;
-}).join(' ')}
-0 -30 Td
-(--- Visit the admin panel to see full card preview ---) Tj
+(This PDF contains card specifications and content.) Tj
+0 -15 Td
+(Use the admin interface for visual preview.) Tj
 ET
 endstream
 endobj
@@ -409,15 +415,15 @@ xref
 0000000010 00000 n 
 0000000060 00000 n 
 0000000120 00000 n 
-0000000250 00000 n 
-0000000${800 + textContent.length} 00000 n 
+0000000280 00000 n 
+0000000${400 + contentLength} 00000 n 
 trailer
 <<
 /Size 6
 /Root 1 0 R
 >>
 startxref
-${850 + textContent.length}
+${450 + contentLength}
 %%EOF`;
 
   return new TextEncoder().encode(pdfContent);

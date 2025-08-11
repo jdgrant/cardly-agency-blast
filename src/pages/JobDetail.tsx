@@ -292,22 +292,35 @@ const JobDetail = () => {
     setGeneratingPDFs(true);
     
     try {
+      console.log('Generating PDFs for order:', order.id);
+      
       const { data, error } = await supabase.functions.invoke('generate-card-pdfs', {
         body: { orderId: order.id }
       });
 
-      if (error) throw error;
+      console.log('PDF generation response:', data, error);
+
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Unknown error occurred');
+      }
 
       toast({
         title: "Success",
-        description: "PDFs generated successfully! You can now download them.",
+        description: "PDFs generated successfully! Downloading now...",
       });
 
-      // Optionally, you could download the PDFs automatically here
+      // Download the PDFs automatically
       if (data.frontPdfPath) {
+        console.log('Downloading front PDF:', data.frontPdfPath);
         await downloadFile(data.frontPdfPath, `${order.readable_order_id || order.id}_front.pdf`);
       }
       if (data.backPdfPath) {
+        console.log('Downloading back PDF:', data.backPdfPath);
         await downloadFile(data.backPdfPath, `${order.readable_order_id || order.id}_back.pdf`);
       }
 
@@ -315,7 +328,7 @@ const JobDetail = () => {
       console.error('Error generating PDFs:', error);
       toast({
         title: "PDF Generation Failed",
-        description: "Failed to generate PDFs. Please try again.",
+        description: `Failed to generate PDFs: ${error.message || 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
