@@ -206,84 +206,45 @@ export default function PreviewCard() {
   const isFront = whichSafe === "front";
 
   return (
-    <div>
-      <header className="px-6 pt-6">
-        <h1 className="text-2xl font-semibold text-foreground">
-          {isFront ? "Card Front Preview" : "Card Inside Preview"}
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Order {order.readable_order_id || order.id} • Template {template.name}
-        </p>
-      </header>
-
-      <main className="p-6">
-        <div className="mb-4 flex gap-3">
-          <Link className="underline" to={`/preview/front/${orderId}`}>View Front</Link>
-          <Link className="underline" to={`/preview/inside/${orderId}`}>View Inside</Link>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">7" × 5.125" Preview</CardTitle>
-            <CardDescription>Screen preview approximates print area.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AspectRatio ratio={56/41}>
-              {isFront ? (
-                <div className="w-full h-full rounded-md overflow-hidden border bg-card">
-                  {template.preview_url ? (
-                    <img
-                      src={template.preview_url}
-                      alt={`${template.name} card front preview`}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full grid place-items-center text-muted-foreground">
-                      No front preview available
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="w-full h-full rounded-md overflow-hidden border bg-background">
-                  <div className="w-full h-full flex flex-col justify-between p-6">
-                    <div className="text-center">
-                      <p className="text-lg leading-relaxed italic text-foreground/90">
-                        {message}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-center gap-10">
-                      {logoUrl ? (
-                        <img
-                          src={logoUrl}
-                          alt="Company logo"
-                          className="max-h-14 max-w-[180px] object-contain"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Company Logo</span>
-                      )}
-                      {sigUrl ? (
-                        <img
-                          src={sigUrl}
-                          alt="Signature"
-                          className="max-h-12 max-w-[160px] object-contain"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Signature</span>
-                      )}
-                    </div>
-                    <p className="text-center text-xs text-muted-foreground">
-                      Order {order.readable_order_id || order.id} • Quantity {order.card_quantity || 0}
-                    </p>
-                  </div>
-                </div>
-              )}
-            </AspectRatio>
-          </CardContent>
-        </Card>
-      </main>
+    <div className="min-h-screen bg-white">
+      <AspectRatio ratio={56/41}>
+        {isFront ? (
+          <img
+            src={template.preview_url}
+            alt={`${template.name} card front preview`}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full bg-background">
+            <div className="w-full h-full flex flex-col justify-between p-6">
+              <div className="text-center">
+                <p className="text-lg leading-relaxed italic text-foreground/90">
+                  {message}
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-10">
+                {logoUrl && (
+                  <img
+                    src={logoUrl}
+                    alt="Company logo"
+                    className="max-h-14 max-w-[180px] object-contain"
+                    loading="lazy"
+                  />
+                )}
+                {sigUrl && (
+                  <img
+                    src={sigUrl}
+                    alt="Signature"
+                    className="max-h-12 max-w-[160px] object-contain"
+                    loading="lazy"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </AspectRatio>
     </div>
   );
 }
