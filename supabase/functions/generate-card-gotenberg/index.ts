@@ -186,9 +186,38 @@ serve(async (req) => {
       } else if (includeInside && !includeFront) {
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
       } else {
-        // both pages, ensure order: front then inside
-        form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
-        form.append('files', new File([insideHTML], 'page2.html', { type: 'text/html' }));
+        // both pages, build a single HTML with two pages (front then inside)
+        const extract = (html: string, tag: 'style' | 'body') => {
+          const m = html.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+          return m ? m[1] : '';
+        };
+        const frontStyle = extract(frontHTML, 'style');
+        const insideStyle = extract(insideHTML, 'style');
+        const frontBody = extract(frontHTML, 'body');
+        const insideBody = extract(insideHTML, 'body');
+
+        const combinedHTML = `<!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+            html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+            body { background: #ffffff; }
+            .page { width: ${paperWidth}in; height: ${paperHeight}in; }
+            .page { page-break-after: always; }
+            .page:last-child { page-break-after: auto; }
+          </style>
+          <style>${frontStyle}</style>
+          <style>${insideStyle}</style>
+        </head>
+        <body>
+          <div class="page">${frontBody}</div>
+          <div class="page">${insideBody}</div>
+        </body>
+        </html>`;
+
+        form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
       }
 
       form.append('paperWidth', paperWidth);
