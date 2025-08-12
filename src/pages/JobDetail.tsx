@@ -769,11 +769,14 @@ const JobDetail = () => {
           <div className="space-y-6">
             {/* Card Preview */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex items-center justify-between">
                 <CardTitle className="flex items-center space-x-2">
                   <ImageIcon className="w-5 h-5" />
                   <span>Card Preview</span>
                 </CardTitle>
+                <Button variant="outline" size="sm" onClick={handleGeneratePreviews}>
+                  Regenerate Previews
+                </Button>
               </CardHeader>
               <CardContent className="space-y-6">
                 {template ? (

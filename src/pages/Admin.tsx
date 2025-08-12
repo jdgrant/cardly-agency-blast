@@ -713,14 +713,6 @@ const Admin = () => {
                                 </SelectContent>
                               </Select>
                             </div>
-                            <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
-                              <Button size="sm" variant="outline" onClick={() => generateOrderFrontPDF(order.id)}>
-                                Front PDF
-                              </Button>
-                              <Button size="sm" variant="outline" onClick={() => generateOrderInsidePDF(order.id)}>
-                                Inside PDF
-                              </Button>
-                            </div>
                           </div>
                         </TableCell>
                     </TableRow>
