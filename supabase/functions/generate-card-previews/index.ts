@@ -131,51 +131,39 @@ serve(async (req) => {
 </html>`;
     };
 
-    // Build HTML for portrait inside (5.125" x 7") mirroring production layout
+    // Build HTML for portrait inside (5.125" x 7") mirroring PDF preview rules
     const buildInsidePortraitHTML = () => {
-      // Split message similar to production function
       const message: string = order?.custom_message || order?.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
-      const text = String(message || '');
-      const halfLength = Math.floor(text.length / 2);
-      const words = text.split(' ');
-      let characterCount = 0;
-      let splitIndex = 0;
-      for (let i = 0; i < words.length; i++) {
-        const wordLength = words[i].length + (i > 0 ? 1 : 0);
-        if (characterCount + wordLength >= halfLength) {
-          const beforeSplit = characterCount;
-          const afterSplit = characterCount + wordLength;
-          splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
-          break;
-        }
-        characterCount += wordLength;
-      }
-      let first = text;
-      let second = '';
-      if (splitIndex > 0 && splitIndex < words.length && text.length > 30) {
-        first = words.slice(0, splitIndex).join(' ');
-        second = words.slice(splitIndex).join(' ');
-      }
-
       return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
   <style>
+    @page { size: 5.125in 7in; margin: 0; }
     html, body { margin: 0; padding: 0; width: 5.125in; height: 7in; }
-    body { font-family: Georgia, serif; background: #ffffff; position: relative; }
-    .msg { text-align: center; max-width: 85%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
-    .msgRow { position: absolute; left: 50%; transform: translateX(-50%); top: 28%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
-    .logoRow { position: absolute; left: 50%; transform: translateX(-50%); top: 60%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
-    .logo { max-width: 220px; max-height: 72px; object-fit: contain; }
-    .sigRow { position: absolute; left: 50%; transform: translateX(-50%); top: 80%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
-    .sig { max-width: 220px; max-height: 70px; object-fit: contain; }
+    body { font-family: Georgia, serif; background: #ffffff; }
+    .wrap { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
+    .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 32px; box-sizing: border-box; }
+    .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
+    .msg { text-align: center; max-width: 80%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
+    .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; padding: 0 32px; box-sizing: border-box; }
+    .logo { max-width: 180px; max-height: 56px; object-fit: contain; }
+    .sig { max-width: 160px; max-height: 48px; object-fit: contain; }
+    .ph { color: #9ca3af; font-size: 12px; }
   </style>
 </head>
 <body>
-  <div class="msgRow"><p class="msg">${escapeHtml(first)}${second ? '<br />' + escapeHtml(second) : ''}</p></div>
-  ${logoDataUrl ? `<div class="logoRow"><img class="logo" src="${logoDataUrl}" alt="Logo"/></div>` : ''}
-  ${signatureDataUrl ? `<div class="sigRow"><img class="sig" src="${signatureDataUrl}" alt="Signature"/></div>` : ''}
+  <div class="wrap">
+    <div class="grid">
+      <div class="top">
+        <p class="msg">${escapeHtml(message)}</p>
+      </div>
+      <div class="brand">
+        ${logoDataUrl ? `<img class="logo" src="${logoDataUrl}" alt="Logo"/>` : `<div class="ph">Company Logo</div>`}
+        ${signatureDataUrl ? `<img class="sig" src="${signatureDataUrl}" alt="Signature"/>` : `<div class="ph">Signature</div>`}
+      </div>
+    </div>
+  </div>
 </body>
 </html>`;
     };
