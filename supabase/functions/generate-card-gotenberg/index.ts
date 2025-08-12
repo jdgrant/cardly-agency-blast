@@ -260,6 +260,20 @@ serve(async (req) => {
       .from('holiday-cards')
       .getPublicUrl(pdfPath);
 
+    // Persist URL on the order when generating the combined production PDF
+    if (format === 'production' && includeFront && includeInside) {
+      const { error: updErr } = await supabase
+        .from('orders')
+        .update({
+          production_combined_pdf_path: pdfPath,
+          production_combined_pdf_public_url: publicData?.publicUrl || null,
+          production_combined_pdf_generated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', orderId);
+      if (updErr) console.log('Failed to store production combined PDF URL:', updErr.message);
+    }
+
     return new Response(JSON.stringify({
       success: true,
       pdfPath,

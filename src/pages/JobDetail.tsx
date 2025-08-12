@@ -45,7 +45,12 @@ interface Order {
   custom_message?: string;
   front_preview_base64?: string | null;
   inside_preview_base64?: string | null;
+  // Production combined PDF storage
+  production_combined_pdf_public_url?: string | null;
+  production_combined_pdf_path?: string | null;
+  production_combined_pdf_generated_at?: string | null;
 }
+
 
 interface Template {
   id: string;
@@ -539,10 +544,11 @@ const JobDetail = () => {
         body: { orderId: order.id, format: 'production', mode: 'html', origin: window.location.origin }
       });
       if (error) throw error;
-      const url = data?.downloadUrl;
-      if (!url) throw new Error('No PDF URL returned');
-      window.open(url, '_blank');
-      toast({ title: 'Production Combined PDF Ready', description: 'Opened combined front+inside production PDF in a new tab.' });
+      const publicUrl = data?.publicUrl as string | undefined;
+      if (!publicUrl) throw new Error('No public URL returned');
+      setOrder(prev => prev ? { ...prev, production_combined_pdf_public_url: publicUrl, production_combined_pdf_generated_at: new Date().toISOString() } : prev);
+      window.open(publicUrl, '_blank');
+      toast({ title: 'Production Combined PDF Ready', description: 'Public URL copied and opened in a new tab.' });
     } catch (error: any) {
       console.error('Error generating Production Combined PDF:', error);
       toast({
@@ -991,10 +997,43 @@ const JobDetail = () => {
                     ) : (
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
-                        <span>View Combined Production PDF</span>
+                        <span>Generate / Open Combined Production PDF</span>
                       </div>
                     )}
                   </Button>
+
+                  {order.production_combined_pdf_public_url && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-600">Public URL</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          readOnly
+                          value={order.production_combined_pdf_public_url}
+                          className="flex-1 px-3 py-2 text-sm border rounded"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(order.production_combined_pdf_public_url!);
+                            toast({ title: 'Copied', description: 'Public URL copied to clipboard.' });
+                          }}
+                        >
+                          Copy URL
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => window.open(order.production_combined_pdf_public_url!, '_blank')}
+                        >
+                          Open
+                        </Button>
+                      </div>
+                      {order.production_combined_pdf_generated_at && (
+                        <p className="text-xs text-gray-500">Generated {new Date(order.production_combined_pdf_generated_at).toLocaleString()}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

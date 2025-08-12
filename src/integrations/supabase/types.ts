@@ -75,6 +75,9 @@ export type Database = {
           postage_cost: number | null
           postage_option: string
           previews_updated_at: string | null
+          production_combined_pdf_generated_at: string | null
+          production_combined_pdf_path: string | null
+          production_combined_pdf_public_url: string | null
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
@@ -100,6 +103,9 @@ export type Database = {
           postage_cost?: number | null
           postage_option?: string
           previews_updated_at?: string | null
+          production_combined_pdf_generated_at?: string | null
+          production_combined_pdf_path?: string | null
+          production_combined_pdf_public_url?: string | null
           readable_order_id?: string | null
           regular_price: number
           selected_message?: string | null
@@ -125,6 +131,9 @@ export type Database = {
           postage_cost?: number | null
           postage_option?: string
           previews_updated_at?: string | null
+          production_combined_pdf_generated_at?: string | null
+          production_combined_pdf_path?: string | null
+          production_combined_pdf_public_url?: string | null
           readable_order_id?: string | null
           regular_price?: number
           selected_message?: string | null
@@ -186,6 +195,9 @@ export type Database = {
           postage_cost: number | null
           postage_option: string
           previews_updated_at: string | null
+          production_combined_pdf_generated_at: string | null
+          production_combined_pdf_path: string | null
+          production_combined_pdf_public_url: string | null
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
