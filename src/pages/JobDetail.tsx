@@ -43,6 +43,8 @@ interface Order {
   postage_option: string;
   selected_message?: string;
   custom_message?: string;
+  front_preview_base64?: string | null;
+  inside_preview_base64?: string | null;
 }
 
 interface Template {
@@ -84,6 +86,12 @@ const JobDetail = () => {
       fetchOrderDetails();
     }
   }, [orderId]);
+
+  useEffect(() => {
+    if (order && (!order.front_preview_base64 || !order.inside_preview_base64)) {
+      handleGeneratePreviews();
+    }
+  }, [order?.id, order?.front_preview_base64, order?.inside_preview_base64]);
 
   const fetchOrderDetails = async () => {
     try {
@@ -547,6 +555,21 @@ const JobDetail = () => {
     }
   };
 
+  const handleGeneratePreviews = async () => {
+    if (!order?.id) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-card-previews', {
+        body: { orderId: order.id }
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Failed to generate previews');
+      setOrder(prev => prev ? { ...prev, front_preview_base64: data.frontBase64, inside_preview_base64: data.insideBase64 } : prev);
+      toast({ title: 'Previews Ready', description: 'Front and inside previews updated to match production.' });
+    } catch (err: any) {
+      console.error('Preview generation failed:', err);
+      toast({ title: 'Preview Generation Failed', description: err?.message || 'Unknown error', variant: 'destructive' });
+    }
+  };
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -767,7 +790,7 @@ const JobDetail = () => {
                         <p className="text-sm font-medium text-gray-700 mb-3 text-center">Card Front</p>
                         <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border bg-gray-50">
                           <img 
-                            src={template.preview_url} 
+                            src={order?.front_preview_base64 || template.preview_url}
                             alt={`${template.name} - Front`}
                             className="w-full h-full object-cover"
                           />
@@ -777,57 +800,18 @@ const JobDetail = () => {
                       {/* Back/Inside Side with Message, Logo, and Signature */}
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-3 text-center">Card Inside</p>
-                        <div className="aspect-[3/4] w-full bg-white rounded-lg border p-4 relative flex flex-col">
-                          {/* Message in top 1/3 */}
-                          <div className="h-1/3 flex items-center justify-center mb-4">
-                            <div className="text-center">
-                              {getCurrentMessage() ? (
-                                <p className="font-playfair text-gray-800 text-sm leading-relaxed">
-                                  {formatMessageWithLineBreak(getCurrentMessage())}
-                                </p>
-                              ) : (
-                                <p className="text-gray-400 text-xs">
-                                  Warmest wishes for a joyful<br />and restful holiday season.
-                                </p>
-                              )}
+                        <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border bg-white">
+                          {order?.inside_preview_base64 ? (
+                            <img
+                              src={order.inside_preview_base64}
+                              alt={`${template.name} - Inside`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                              Inside preview will appear here
                             </div>
-                          </div>
-                          
-                          {/* Bottom half with logo and signature */}
-                          <div className="flex-1 flex flex-col justify-center space-y-4">
-                            {/* Logo */}
-                            <div className="flex justify-center">
-                              {logoBlob ? (
-                                <img 
-                                  src={logoBlob} 
-                                  alt="Company logo"
-                                  className="w-32 h-20 object-contain"
-                                />
-                              ) : (
-                                <div className="w-32 h-20 bg-gray-50 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                                  <div className="text-center">
-                                    <ImageIcon className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                                    <span className="text-gray-500 text-xs">No logo</span>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Signature */}
-                            <div className="flex justify-center">
-                              {signatureBlob ? (
-                                <img 
-                                  src={signatureBlob} 
-                                  alt="Signature"
-                                  className="w-24 h-12 object-contain"
-                                />
-                              ) : (
-                                <div className="w-20 h-6 border border-gray-300 rounded flex items-center justify-center">
-                                  <span className="text-gray-500 text-xs">No signature</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          )}
                         </div>
                       </div>
                     </div>

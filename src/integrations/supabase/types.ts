@@ -67,11 +67,14 @@ export type Database = {
           custom_message: string | null
           early_bird_discount: boolean | null
           final_price: number
+          front_preview_base64: string | null
           id: string
+          inside_preview_base64: string | null
           logo_url: string | null
           mailing_window: string
           postage_cost: number | null
           postage_option: string
+          previews_updated_at: string | null
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
@@ -89,11 +92,14 @@ export type Database = {
           custom_message?: string | null
           early_bird_discount?: boolean | null
           final_price: number
+          front_preview_base64?: string | null
           id?: string
+          inside_preview_base64?: string | null
           logo_url?: string | null
           mailing_window: string
           postage_cost?: number | null
           postage_option?: string
+          previews_updated_at?: string | null
           readable_order_id?: string | null
           regular_price: number
           selected_message?: string | null
@@ -111,11 +117,14 @@ export type Database = {
           custom_message?: string | null
           early_bird_discount?: boolean | null
           final_price?: number
+          front_preview_base64?: string | null
           id?: string
+          inside_preview_base64?: string | null
           logo_url?: string | null
           mailing_window?: string
           postage_cost?: number | null
           postage_option?: string
+          previews_updated_at?: string | null
           readable_order_id?: string | null
           regular_price?: number
           selected_message?: string | null
@@ -169,11 +178,14 @@ export type Database = {
           custom_message: string | null
           early_bird_discount: boolean | null
           final_price: number
+          front_preview_base64: string | null
           id: string
+          inside_preview_base64: string | null
           logo_url: string | null
           mailing_window: string
           postage_cost: number | null
           postage_option: string
+          previews_updated_at: string | null
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
