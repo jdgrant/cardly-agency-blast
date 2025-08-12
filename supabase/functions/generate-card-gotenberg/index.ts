@@ -308,7 +308,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
   const message = order?.custom_message || order?.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
   
   if (format === 'production') {
-    // Production format: 10.25" x 7" landscape with inside on left half, outside back on right half
+    // Production format: 10.25" x 7" landscape with left half blank, inside content on right half
     return `<!DOCTYPE html>
     <html>
     <head>
