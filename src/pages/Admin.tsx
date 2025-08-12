@@ -329,6 +329,46 @@ const Admin = () => {
       setGenerating(prev => ({ ...prev, [key]: false }));
     }
   };
+  const generateOrderFrontPDF = async (orderId: string) => {
+    setGenerating(prev => ({ ...prev, [orderId + '-front']: true }));
+    try {
+      toast({ title: 'Building Front PDF', description: `Generating front cover for ${orderId.slice(0,8)}…` });
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId, only: 'front', mode: 'html', origin: window.location.origin }
+      });
+      if (error) throw error;
+      const url = data?.downloadUrl;
+      if (!url) throw new Error('No downloadUrl returned');
+      window.open(url, '_blank');
+      toast({ title: 'Front PDF Ready', description: 'Opened front PDF in a new tab.' });
+    } catch (err) {
+      console.error('generateOrderFrontPDF error', err);
+      toast({ title: 'Front PDF failed', description: 'Could not generate the front PDF.', variant: 'destructive' });
+    } finally {
+      setGenerating(prev => ({ ...prev, [orderId + '-front']: false }));
+    }
+  };
+
+  const generateOrderInsidePDF = async (orderId: string) => {
+    setGenerating(prev => ({ ...prev, [orderId + '-inside']: true }));
+    try {
+      toast({ title: 'Building Inside PDF', description: `Generating inside page for ${orderId.slice(0,8)}…` });
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId, only: 'inside', mode: 'html', origin: window.location.origin }
+      });
+      if (error) throw error;
+      const url = data?.downloadUrl;
+      if (!url) throw new Error('No downloadUrl returned');
+      window.open(url, '_blank');
+      toast({ title: 'Inside PDF Ready', description: 'Opened inside PDF in a new tab.' });
+    } catch (err) {
+      console.error('generateOrderInsidePDF error', err);
+      toast({ title: 'Inside PDF failed', description: 'Could not generate the inside PDF.', variant: 'destructive' });
+    } finally {
+      setGenerating(prev => ({ ...prev, [orderId + '-inside']: false }));
+    }
+  };
+
   const availableOccasions = [
     'christmas',
     'hanukkah', 
@@ -655,26 +695,34 @@ const Admin = () => {
                       <TableCell className="text-xs">
                         {new Date(order.created_at).toLocaleDateString()}
                       </TableCell>
-                       <TableCell>
-                         <div className="flex flex-col gap-2">
-                           <div onClick={(e) => e.stopPropagation()}>
-                             <Select
-                               value={order.status}
-                               onValueChange={(value) => updateOrderStatus(order.id, value)}
-                             >
-                               <SelectTrigger className="w-24">
-                                 <SelectValue />
-                               </SelectTrigger>
-                               <SelectContent>
-                                 <SelectItem value="pending">Pending</SelectItem>
-                                 <SelectItem value="blocked">Blocked</SelectItem>
-                                 <SelectItem value="approved">Approved</SelectItem>
-                                 <SelectItem value="sent">Sent</SelectItem>
-                               </SelectContent>
-                             </Select>
-                           </div>
-                         </div>
-                       </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-2">
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <Select
+                                value={order.status}
+                                onValueChange={(value) => updateOrderStatus(order.id, value)}
+                              >
+                                <SelectTrigger className="w-24">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="blocked">Blocked</SelectItem>
+                                  <SelectItem value="approved">Approved</SelectItem>
+                                  <SelectItem value="sent">Sent</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="flex gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
+                              <Button size="sm" variant="outline" onClick={() => generateOrderFrontPDF(order.id)}>
+                                Front PDF
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => generateOrderInsidePDF(order.id)}>
+                                Inside PDF
+                              </Button>
+                            </div>
+                          </div>
+                        </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
