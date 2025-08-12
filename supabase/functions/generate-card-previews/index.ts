@@ -7,6 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+function toBase64(u8: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < u8.length; i++) {
+    binary += String.fromCharCode(u8[i]);
+  }
+  return btoa(binary);
+}
+
 interface GeneratePreviewsRequest {
   orderId: string;
   regenerate?: boolean;
@@ -60,7 +68,7 @@ serve(async (req) => {
         const { data } = await supabase.storage.from('holiday-cards').download(path);
         if (!data) return '';
         const buf = await data.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+        const base64 = toBase64(new Uint8Array(buf));
         return `data:image/png;base64,${base64}`;
       } catch (e) {
         console.log('Failed to inline asset', path, e?.message);
@@ -80,7 +88,7 @@ serve(async (req) => {
         if (resp.ok) {
           const ct = resp.headers.get('content-type') || 'image/png';
           const buf = await resp.arrayBuffer();
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          const base64 = toBase64(new Uint8Array(buf));
           previewDataUrl = `data:${ct};base64,${base64}`;
         }
       } else if (src.startsWith('/lovable-uploads/')) {
@@ -92,7 +100,7 @@ serve(async (req) => {
           if (resp.ok) {
             const ct = resp.headers.get('content-type') || 'image/png';
             const buf = await resp.arrayBuffer();
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+            const base64 = toBase64(new Uint8Array(buf));
             previewDataUrl = `data:${ct};base64,${base64}`;
           }
         }
@@ -200,7 +208,7 @@ serve(async (req) => {
           // Viewport close to 5.125 x 7 at ~200 dpi
           form.append('width', '1024');
           form.append('height', '1400');
-          const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/screenshots/html`;
+          const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/screenshot/html`;
           const resp = await fetch(url, { method: 'POST', headers, body: form as any });
           if (!resp.ok) {
             const t = await resp.text();
@@ -230,13 +238,14 @@ serve(async (req) => {
               }
               if (end > start) {
                 const pngBytes = u8.slice(start, end);
-                return `data:image/png;base64,${btoa(String.fromCharCode(...pngBytes))}`;
+                const base64 = toBase64(pngBytes);
+                return `data:image/png;base64,${base64}`;
               }
             }
             throw new Error('Could not extract PNG from ZIP');
           } else {
             // Assume PNG directly
-            const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+            const base64 = toBase64(new Uint8Array(buf));
             return `data:image/png;base64,${base64}`;
           }
         };
@@ -248,12 +257,8 @@ serve(async (req) => {
       }
     }
 
-    // Fallback: draw with OffscreenCanvas (ensures consistent previews)
-    if (!frontB64) {
-      frontB64 = await drawFrontCanvas(previewDataUrl || template.preview_url || '');
-    }
-    if (!insideB64) {
-      insideB64 = await drawInsideCanvas(order, logoDataUrl, signatureDataUrl);
+    if (!frontB64 || !insideB64) {
+      throw new Error('Preview generation failed. Check Gotenberg configuration.');
     }
 
     // Save in DB
@@ -279,116 +284,3 @@ serve(async (req) => {
     });
   }
 });
-
-// ========== Canvas fallback helpers ==========
-async function drawFrontCanvas(imgSrc: string): Promise<string> {
-  const width = 768; // ~5.125in at ~150dpi
-  const height = 1050; // ~7in at ~150dpi
-  const canvas = new OffscreenCanvas(width, height);
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
-
-  if (imgSrc) {
-    try {
-      const resp = await fetch(imgSrc);
-      const blob = await resp.blob();
-      const bmp = await createImageBitmap(blob);
-      // object-fit: cover
-      const imgW = bmp.width, imgH = bmp.height;
-      const scale = Math.max(width / imgW, height / imgH);
-      const dw = imgW * scale;
-      const dh = imgH * scale;
-      const dx = (width - dw) / 2;
-      const dy = (height - dh) / 2;
-      ctx.drawImage(bmp, dx, dy, dw, dh);
-    } catch (e) {
-      console.log('Front image draw failed:', (e as any)?.message);
-    }
-  }
-
-  const out = await canvas.convertToBlob({ type: 'image/png' });
-  const buf = new Uint8Array(await out.arrayBuffer());
-  return `data:image/png;base64,${btoa(String.fromCharCode(...buf))}`;
-}
-
-async function drawInsideCanvas(order: any, logoDataUrl: string, signatureDataUrl: string): Promise<string> {
-  const width = 768;
-  const height = 1050;
-  const canvas = new OffscreenCanvas(width, height);
-  const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
-
-  // Message
-  const message: string = order?.custom_message || order?.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
-  const text = String(message || '');
-  const halfLength = Math.floor(text.length / 2);
-  const words = text.split(' ');
-  let characterCount = 0;
-  let splitIndex = 0;
-  for (let i = 0; i < words.length; i++) {
-    const wordLength = words[i].length + (i > 0 ? 1 : 0);
-    if (characterCount + wordLength >= halfLength) {
-      const beforeSplit = characterCount;
-      const afterSplit = characterCount + wordLength;
-      splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
-      break;
-    }
-    characterCount += wordLength;
-  }
-  let first = text;
-  let second = '';
-  if (splitIndex > 0 && splitIndex < words.length && text.length > 30) {
-    first = words.slice(0, splitIndex).join(' ');
-    second = words.slice(splitIndex).join(' ');
-  }
-
-  ctx.fillStyle = '#111827';
-  ctx.textAlign = 'center';
-  ctx.font = 'italic 28px Georgia';
-  const msgY = Math.floor(height * 0.28);
-  const maxWidth = Math.floor(width * 0.85);
-  ctx.fillText(first, width / 2, msgY, maxWidth);
-  if (second) ctx.fillText(second, width / 2, msgY + 34, maxWidth);
-
-  // Logo at ~60%
-  if (logoDataUrl) {
-    try {
-      const resp = await fetch(logoDataUrl);
-      const blob = await resp.blob();
-      const bmp = await createImageBitmap(blob);
-      const maxW = Math.min(220, Math.floor(width * 0.6));
-      const maxH = Math.min(72, Math.floor(height * 0.12));
-      const ratio = Math.min(maxW / bmp.width, maxH / bmp.height);
-      const dw = bmp.width * ratio;
-      const dh = bmp.height * ratio;
-      const y = Math.floor(height * 0.60) - Math.floor(dh / 2);
-      ctx.drawImage(bmp, Math.floor(width / 2 - dw / 2), y, dw, dh);
-    } catch (e) {
-      console.log('Logo draw failed:', (e as any)?.message);
-    }
-  }
-
-  // Signature at ~80%
-  if (signatureDataUrl) {
-    try {
-      const resp = await fetch(signatureDataUrl);
-      const blob = await resp.blob();
-      const bmp = await createImageBitmap(blob);
-      const maxW = Math.min(220, Math.floor(width * 0.6));
-      const maxH = Math.min(70, Math.floor(height * 0.10));
-      const ratio = Math.min(maxW / bmp.width, maxH / bmp.height);
-      const dw = bmp.width * ratio;
-      const dh = bmp.height * ratio;
-      const y = Math.floor(height * 0.80) - Math.floor(dh / 2);
-      ctx.drawImage(bmp, Math.floor(width / 2 - dw / 2), y, dw, dh);
-    } catch (e) {
-      console.log('Signature draw failed:', (e as any)?.message);
-    }
-  }
-
-  const out = await canvas.convertToBlob({ type: 'image/png' });
-  const buf = new Uint8Array(await out.arrayBuffer());
-  return `data:image/png;base64,${btoa(String.fromCharCode(...buf))}`;
-}
