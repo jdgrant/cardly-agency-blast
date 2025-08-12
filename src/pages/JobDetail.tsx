@@ -835,6 +835,52 @@ const JobDetail = () => {
               </CardContent>
             </Card>
 
+            {/* Production Combined PDF URL */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5" />
+                  <span>Production Combined PDF URL</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {order.production_combined_pdf_public_url ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">Public URL</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        readOnly
+                        value={order.production_combined_pdf_public_url}
+                        className="flex-1 px-3 py-2 text-sm border rounded"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(order.production_combined_pdf_public_url!);
+                          toast({ title: 'Copied', description: 'Public URL copied to clipboard.' });
+                        }}
+                      >
+                        Copy URL
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => window.open(order.production_combined_pdf_public_url!, '_blank')}
+                      >
+                        Open
+                      </Button>
+                    </div>
+                    {order.production_combined_pdf_generated_at && (
+                      <p className="text-xs text-gray-500">Generated {new Date(order.production_combined_pdf_generated_at).toLocaleString()}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-600">No combined production PDF generated yet.</p>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Inside PDF */}
             <Card>
               <CardHeader>
