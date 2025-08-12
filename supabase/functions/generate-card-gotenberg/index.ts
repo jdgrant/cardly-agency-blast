@@ -375,6 +375,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
         .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
         .msg { text-align: center; max-width: 85%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
+        .msgRow { position: absolute; left: 50%; transform: translateX(-50%); top: 28%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
         .logoRow { position: absolute; left: 50%; transform: translateX(-50%); top: 60%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
         .logo { max-width: 220px; max-height: 72px; object-fit: contain; }
         .sigRow { position: absolute; left: 50%; transform: translateX(-50%); top: 80%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
@@ -387,7 +388,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         <div class="inside-half">
           <div class="inside-content">
             <div class="grid">
-              <div class="top">
+              <div class="msgRow">
                 <p class="msg">${first}${second ? '<br />' + second : ''}</p>
               </div>
               ${logoDataUrl ? `<div class=\"logoRow\"><img class=\"logo\" src=\"${logoDataUrl}\" alt=\"Logo\"/></div>` : ``}
