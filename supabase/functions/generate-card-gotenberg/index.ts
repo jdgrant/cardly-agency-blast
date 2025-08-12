@@ -309,6 +309,28 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
   
   if (format === 'production') {
     // Production format: 10.25" x 7" landscape with left half blank, inside content on right half
+    // Match Inside Preview: split message into two lines by halfway point
+    const text = String(message || '');
+    const halfLength = Math.floor(text.length / 2);
+    const words = text.split(' ');
+    let characterCount = 0;
+    let splitIndex = 0;
+    for (let i = 0; i < words.length; i++) {
+      const wordLength = words[i].length + (i > 0 ? 1 : 0);
+      if (characterCount + wordLength >= halfLength) {
+        const beforeSplit = characterCount;
+        const afterSplit = characterCount + wordLength;
+        splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
+        break;
+      }
+      characterCount += wordLength;
+    }
+    let first = escapeHtml(text);
+    let second = '';
+    if (splitIndex > 0 && splitIndex < words.length && text.length > 30) {
+      first = escapeHtml(words.slice(0, splitIndex).join(' '));
+      second = escapeHtml(words.slice(splitIndex).join(' '));
+    }
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -319,15 +341,15 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         body { font-family: Georgia, serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
         .blank-half { width: 5.125in; height: 7in; background: #ffffff; }
-        .inside-half { width: 5.125in; height: 7in; }
+        .inside-half { width: 5.125in; height: 7in; position: relative; }
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
         .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
         .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
-        .msg { text-align: center; max-width: 85%; font-size: 16px; line-height: 1.5; color: #111827; font-style: italic; margin: 0 auto; }
-        .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 58%; display: flex; align-items: center; justify-content: center; gap: 20px; width: 100%; padding: 0 20px; box-sizing: border-box; }
-        .logo { max-width: 120px; max-height: 40px; object-fit: contain; }
-        .sig { max-width: 100px; max-height: 32px; object-fit: contain; }
-        .ph { color: #9ca3af; font-size: 10px; }
+        .msg { text-align: center; max-width: 85%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
+        .logoRow { position: absolute; left: 50%; transform: translateX(-50%); top: 60%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
+        .logo { max-width: 280px; max-height: 90px; object-fit: contain; }
+        .sigRow { position: absolute; left: 50%; transform: translateX(-50%); top: 80%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
+        .sig { max-width: 220px; max-height: 70px; object-fit: contain; }
       </style>
     </head>
     <body>
@@ -337,12 +359,10 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
           <div class="inside-content">
             <div class="grid">
               <div class="top">
-                <p class="msg">${escapeHtml(message)}</p>
+                <p class="msg">${first}${second ? '<br />' + second : ''}</p>
               </div>
-              <div class="brand">
-                ${logoDataUrl ? `<img class="logo" src="${logoDataUrl}" alt="Logo"/>` : `<div class="ph">Company Logo</div>`}
-                ${signatureDataUrl ? `<img class="sig" src="${signatureDataUrl}" alt="Signature"/>` : `<div class="ph">Signature</div>`}
-              </div>
+              ${logoDataUrl ? `<div class=\"logoRow\"><img class=\"logo\" src=\"${logoDataUrl}\" alt=\"Logo\"/></div>` : ``}
+              ${signatureDataUrl ? `<div class=\"sigRow\"><img class=\"sig\" src=\"${signatureDataUrl}\" alt=\"Signature\"/></div>` : ``}
             </div>
           </div>
         </div>
