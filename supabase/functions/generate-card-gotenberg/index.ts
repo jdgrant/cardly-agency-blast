@@ -347,7 +347,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
         .msg { text-align: center; max-width: 85%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
         .logoRow { position: absolute; left: 50%; transform: translateX(-50%); top: 60%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
-        .logo { max-width: 240px; max-height: 80px; object-fit: contain; }
+        .logo { max-width: 220px; max-height: 72px; object-fit: contain; }
         .sigRow { position: absolute; left: 50%; transform: translateX(-50%); top: 80%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
         .sig { max-width: 220px; max-height: 70px; object-fit: contain; }
       </style>
