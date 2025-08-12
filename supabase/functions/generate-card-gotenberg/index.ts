@@ -255,10 +255,16 @@ serve(async (req) => {
       .from('holiday-cards')
       .createSignedUrl(pdfPath, 60 * 60); // 1 hour
 
+    // Also provide a permanent public URL (bucket is public)
+    const { data: publicData } = supabase.storage
+      .from('holiday-cards')
+      .getPublicUrl(pdfPath);
+
     return new Response(JSON.stringify({
       success: true,
       pdfPath,
       downloadUrl: signed?.signedUrl || null,
+      publicUrl: publicData?.publicUrl || null,
       message: (includeFront && includeInside)
         ? 'Gotenberg PDF generated successfully (2 pages: front + inside)'
         : includeFront
