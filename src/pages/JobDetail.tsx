@@ -523,6 +523,30 @@ const JobDetail = () => {
     }
   };
 
+  const handleGenerateProductionCombinedPDF = async () => {
+    if (!order?.id) return;
+    setGeneratingProduction(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId: order.id, format: 'production', mode: 'html', origin: window.location.origin }
+      });
+      if (error) throw error;
+      const url = data?.downloadUrl;
+      if (!url) throw new Error('No PDF URL returned');
+      window.open(url, '_blank');
+      toast({ title: 'Production Combined PDF Ready', description: 'Opened combined front+inside production PDF in a new tab.' });
+    } catch (error: any) {
+      console.error('Error generating Production Combined PDF:', error);
+      toast({
+        title: 'PDF Generation Failed',
+        description: error?.message || 'Could not generate combined production PDF.',
+        variant: 'destructive'
+      });
+    } finally {
+      setGeneratingProduction(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -947,6 +971,40 @@ const JobDetail = () => {
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
                         <span>View Inside Production PDF</span>
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Production Combined PDF */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5" />
+                  <span>Production Combined PDF</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Generate and open a combined PDF with Front then Inside at 7" × 10.25" production format.
+                  </p>
+                  <Button
+                    onClick={handleGenerateProductionCombinedPDF}
+                    disabled={generatingProduction}
+                    className="w-full"
+                  >
+                    {generatingProduction ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating Combined Production PDF...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4" />
+                        <span>View Combined Production PDF</span>
                       </div>
                     )}
                   </Button>
