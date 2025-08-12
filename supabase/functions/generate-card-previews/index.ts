@@ -188,14 +188,16 @@ serve(async (req) => {
           'X-Api-Key': GOTENBERG_API_KEY,
         };
 
-        const screenshot = async (html: string) => {
+        const screenshot = async (html: string, selector: string) => {
           const form = new FormData();
           form.append('files', new File([html], 'index.html', { type: 'text/html' }));
           form.append('emulatedMediaType', 'print');
           form.append('waitDelay', '1000ms');
-          // Viewport close to 5.125 x 7 at ~200 dpi
-          form.append('width', '1024');
-          form.append('height', '1400');
+          // Match exact 5.125in x 7in at 96 CSS px/in to avoid whitespace
+          form.append('width', String(Math.round(5.125 * 96)));
+          form.append('height', String(Math.round(7 * 96)));
+          // Crop to the card element so no extra canvas space is captured
+          form.append('selector', selector);
           const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/screenshot/html`;
           const resp = await fetch(url, { method: 'POST', headers, body: form as any });
           if (!resp.ok) {
@@ -204,10 +206,8 @@ serve(async (req) => {
           }
           const ct = resp.headers.get('content-type') || '';
           const buf = await resp.arrayBuffer();
-          // If zip, try to parse minimal Zip (very naive: look for PNG header and slice)
           if (ct.includes('zip')) {
             const u8 = new Uint8Array(buf);
-            // Search for PNG signature 89 50 4E 47 0D 0A 1A 0A
             const sig = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
             let start = -1;
             for (let i = 0; i < u8.length - sig.length; i++) {
@@ -216,7 +216,6 @@ serve(async (req) => {
               if (match) { start = i; break; }
             }
             if (start >= 0) {
-              // Find IEND chunk signature 49 45 4E 44 AE 42 60 82
               const endSig = [0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82];
               let end = -1;
               for (let i = start + 8; i < u8.length - endSig.length; i++) {
@@ -232,14 +231,13 @@ serve(async (req) => {
             }
             throw new Error('Could not extract PNG from ZIP');
           } else {
-            // Assume PNG directly
             const base64 = toBase64(new Uint8Array(buf));
             return `data:image/png;base64,${base64}`;
           }
         };
 
-        frontB64 = await screenshot(buildFrontPortraitHTML());
-        insideB64 = await screenshot(buildInsidePortraitHTML());
+        frontB64 = await screenshot(buildFrontPortraitHTML(), '.frame');
+        insideB64 = await screenshot(buildInsidePortraitHTML(), '.wrap');
       } catch (e) {
         console.log('Gotenberg screenshot failed, will fallback to canvas:', (e as any)?.message);
       }
