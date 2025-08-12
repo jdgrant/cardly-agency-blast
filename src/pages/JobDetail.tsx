@@ -480,7 +480,7 @@ const JobDetail = () => {
     setGeneratingProduction(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, format: 'production', only: 'front' }
+        body: { orderId: order.id, format: 'production', only: 'front', mode: 'url', origin: window.location.origin }
       });
       if (error) throw error;
       const url = data?.downloadUrl;
@@ -504,7 +504,7 @@ const JobDetail = () => {
     setGeneratingProduction(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, format: 'production', only: 'inside' }
+        body: { orderId: order.id, format: 'production', only: 'inside', mode: 'url', origin: window.location.origin }
       });
       if (error) throw error;
       const url = data?.downloadUrl;
