@@ -479,26 +479,18 @@ const JobDetail = () => {
     if (!order?.id) return;
     setGeneratingProduction(true);
     try {
-      console.log('Generating Production Front PDF for order:', order.id);
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
         body: { orderId: order.id, format: 'production', only: 'front' }
       });
-
       if (error) throw error;
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Unknown error occurred');
-      }
-
-      setPdfDownloadUrls(prev => ({ ...prev, productionFront: data.downloadUrl }));
-
-      toast({
-        title: 'Production Front PDF Ready',
-        description: '7" x 10.25" front production PDF generated!',
-      });
+      const url = data?.downloadUrl;
+      if (!url) throw new Error('No PDF URL returned');
+      window.open(url, '_blank');
+      toast({ title: 'Production Front PDF Ready', description: 'Opened production front PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating Production Front PDF:', error);
       toast({
-        title: 'Production Front PDF Generation Failed',
+        title: 'PDF Generation Failed',
         description: error?.message || 'Could not generate production front PDF.',
         variant: 'destructive'
       });
@@ -511,26 +503,18 @@ const JobDetail = () => {
     if (!order?.id) return;
     setGeneratingProduction(true);
     try {
-      console.log('Generating Production Inside PDF for order:', order.id);
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
         body: { orderId: order.id, format: 'production', only: 'inside' }
       });
-
       if (error) throw error;
-      if (!data || !data.success) {
-        throw new Error(data?.error || 'Unknown error occurred');
-      }
-
-      setPdfDownloadUrls(prev => ({ ...prev, productionInside: data.downloadUrl }));
-
-      toast({
-        title: 'Production Inside PDF Ready',
-        description: '7" x 10.25" inside production PDF generated!',
-      });
+      const url = data?.downloadUrl;
+      if (!url) throw new Error('No PDF URL returned');
+      window.open(url, '_blank');
+      toast({ title: 'Production Inside PDF Ready', description: 'Opened production inside PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating Production Inside PDF:', error);
       toast({
-        title: 'Production Inside PDF Generation Failed',
+        title: 'PDF Generation Failed',
         description: error?.message || 'Could not generate production inside PDF.',
         variant: 'destructive'
       });
@@ -907,72 +891,65 @@ const JobDetail = () => {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="w-5 h-5" />
-                  <span>Production PDF</span>
+                  <span>Production Front PDF</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600">
-                    Generate production-ready PDFs at 7" × 10.25" format for printing.
+                    Generate and open a printable PDF of the front cover at 7" × 10.25" production format.
                   </p>
-                  
-                  {/* Front Production PDF */}
                   <Button
                     onClick={handleGenerateProductionFrontPDF}
                     disabled={generatingProduction}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full"
                   >
                     {generatingProduction ? (
                       <div className="flex items-center space-x-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Generating...</span>
+                        <span>Generating Front Production PDF...</span>
                       </div>
                     ) : (
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
-                        <span>Generate Front Production PDF</span>
+                        <span>View Front Production PDF</span>
                       </div>
                     )}
                   </Button>
-                  {pdfDownloadUrls.productionFront && (
-                    <Button
-                      variant="outline"
-                      onClick={() => window.open(pdfDownloadUrls.productionFront, '_blank')}
-                      className="w-full"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Front Production PDF
-                    </Button>
-                  )}
-                  
-                  {/* Inside Production PDF */}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Production Inside PDF */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5" />
+                  <span>Production Inside PDF</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600">
+                    Generate and open a printable PDF of the inside page at 7" × 10.25" production format.
+                  </p>
                   <Button
                     onClick={handleGenerateProductionInsidePDF}
                     disabled={generatingProduction}
-                    className="w-full bg-green-600 hover:bg-green-700"
+                    className="w-full"
                   >
                     {generatingProduction ? (
                       <div className="flex items-center space-x-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Generating...</span>
+                        <span>Generating Inside Production PDF...</span>
                       </div>
                     ) : (
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
-                        <span>Generate Inside Production PDF</span>
+                        <span>View Inside Production PDF</span>
                       </div>
                     )}
                   </Button>
-                  {pdfDownloadUrls.productionInside && (
-                    <Button
-                      variant="outline"
-                      onClick={() => window.open(pdfDownloadUrls.productionInside, '_blank')}
-                      className="w-full"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Inside Production PDF
-                    </Button>
-                  )}
                 </div>
               </CardContent>
             </Card>
