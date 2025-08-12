@@ -371,7 +371,7 @@ function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: stri
         .production-layout { width: 100%; height: 100%; display: flex; }
         .blank-half { width: 5.125in; height: 7in; background: #ffffff; }
         .inside-half { width: 5.125in; height: 7in; position: relative; }
-        .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
+        .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: none; border-radius: 0; overflow: hidden; background: #ffffff; }
         .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
         .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
         .msg { text-align: center; max-width: 85%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
