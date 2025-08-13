@@ -74,8 +74,28 @@ const Admin = () => {
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
 
+  // Persist admin access for the current browser session
+  useEffect(() => {
+    const authed = sessionStorage.getItem('adminAuth') === 'true';
+    if (authed) {
+      setIsAuthenticated(true);
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('adminAuth');
+    setIsAuthenticated(false);
+    setPassword('');
+    setOrders([]);
+    setTemplates([]);
+    toast({ title: 'Logged out', description: 'Admin session cleared.' });
+  };
+
   const handleLogin = () => {
     if (password === 'admin123') {
+      sessionStorage.setItem('adminAuth', 'true');
       setIsAuthenticated(true);
       fetchData();
     } else {
@@ -86,7 +106,6 @@ const Admin = () => {
       });
     }
   };
-
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -560,6 +579,14 @@ const Admin = () => {
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleLogout}
+              className="flex items-center space-x-2"
+            >
+              <X className="w-4 h-4" />
+              <span>Logout</span>
             </Button>
           </div>
         </div>
