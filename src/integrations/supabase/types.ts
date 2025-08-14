@@ -201,19 +201,19 @@ export type Database = {
       }
       create_order: {
         Args: {
-          template_id: string
-          tier_name: string
-          card_quantity: number
-          regular_price: number
-          final_price: number
-          mailing_window: string
-          postage_option?: string
-          postage_cost?: number
-          custom_message?: string
-          selected_message?: string
-          logo_url?: string
-          signature_url?: string
-          csv_file_url?: string
+          p_template_id: string
+          p_tier_name: string
+          p_card_quantity: number
+          p_regular_price: number
+          p_final_price: number
+          p_mailing_window: string
+          p_postage_option?: string
+          p_postage_cost?: number
+          p_custom_message?: string
+          p_selected_message?: string
+          p_logo_url?: string
+          p_signature_url?: string
+          p_csv_file_url?: string
         }
         Returns: string
       }
