@@ -150,12 +150,11 @@ const Step5ReviewSubmit = () => {
         description: `Your order for ${state.clientList.length} holiday cards has been submitted.`,
       });
       
-      // Get the latest order data with readable ID
-      const { data: finalOrder } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', order.id)
-        .single();
+      // Get the latest order data with readable ID using secure function
+      const { data: orderDetails, error: detailsError } = await supabase
+        .rpc('get_order_by_id', { order_id: order.id });
+
+      const finalOrder = orderDetails && orderDetails.length > 0 ? orderDetails[0] : null;
 
       resetWizard();
       navigate('/order-confirmation', { 

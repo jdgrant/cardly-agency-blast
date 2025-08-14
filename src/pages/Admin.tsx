@@ -93,8 +93,13 @@ const Admin = () => {
     toast({ title: 'Logged out', description: 'Admin session cleared.' });
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (password === 'admin123') {
+      // Set admin session in database
+      await supabase.rpc('set_admin_session', { 
+        session_id: 'admin_' + Date.now() 
+      });
+      
       sessionStorage.setItem('adminAuth', 'true');
       setIsAuthenticated(true);
       fetchData();
@@ -109,7 +114,7 @@ const Admin = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch orders
+      // Fetch orders (admin access established via session)
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*')
@@ -128,7 +133,7 @@ const Admin = () => {
       setTemplates(templatesData || []);
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Error", 
         description: "Failed to fetch data",
         variant: "destructive"
       });
@@ -154,6 +159,7 @@ const Admin = () => {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      // Note: This will work because admin session is established, allowing admin policies to take effect
       const { error } = await supabase
         .from('orders')
         .update({ status: newStatus, updated_at: new Date().toISOString() })

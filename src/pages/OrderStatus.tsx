@@ -39,13 +39,28 @@ const OrderStatus = () => {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('readable_order_id', orderId.trim())
-        .maybeSingle();
+      // First try to find by readable order ID using the find_order_by_short_id function
+      const { data: orders, error: searchError } = await supabase
+        .rpc('find_order_by_short_id', { short_id: orderId.trim() });
 
-      if (error || !data) {
+      let foundOrder = null;
+      if (!searchError && orders && orders.length > 0) {
+        foundOrder = orders[0];
+      } else {
+        // If not found by short ID, try finding by UUID using the secure function
+        try {
+          const { data: orderByUuid, error: uuidError } = await supabase
+            .rpc('get_order_by_id', { order_id: orderId.trim() });
+          
+          if (!uuidError && orderByUuid && orderByUuid.length > 0) {
+            foundOrder = orderByUuid[0];
+          }
+        } catch (uuidError) {
+          // Continue to not found handling
+        }
+      }
+
+      if (!foundOrder) {
         toast({
           title: "Order not found",
           description: "Please check your order ID and try again.",
@@ -53,7 +68,7 @@ const OrderStatus = () => {
         });
         setOrderData(null);
       } else {
-        setOrderData(data);
+        setOrderData(foundOrder);
         toast({
           title: "Order found",
           description: "Order details loaded successfully."

@@ -100,14 +100,15 @@ const JobDetail = () => {
 
   const fetchOrderDetails = async () => {
     try {
-      // Fetch order details
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .single();
+      // Fetch order details using secure function
+      const { data: orderDetails, error: orderError } = await supabase
+        .rpc('get_order_by_id', { order_id: orderId });
 
-      if (orderError) throw orderError;
+      if (orderError || !orderDetails || orderDetails.length === 0) {
+        throw new Error('Order not found');
+      }
+      
+      const orderData = orderDetails[0];
       setOrder(orderData);
 
       // Fetch template details
@@ -296,6 +297,7 @@ const JobDetail = () => {
       if (uploadError) throw uploadError;
 
       // Update order record with signature URL
+      // Note: Admin session should allow this update
       const { error: updateError } = await supabase
         .from('orders')
         .update({ signature_url: fileName })
