@@ -179,11 +179,18 @@ const Admin = () => {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      // Note: This will work because admin session is established, allowing admin policies to take effect
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
+      // Use admin function to update status
       const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq('id', orderId);
+        .rpc('update_admin_order_status', { 
+          session_id_param: sessionId,
+          order_id_param: orderId,
+          new_status_param: newStatus
+        });
 
       if (error) throw error;
 
@@ -198,9 +205,10 @@ const Admin = () => {
         description: `Order status changed to ${newStatus}`,
       });
     } catch (error) {
+      console.error('Update order status error:', error);
       toast({
         title: "Error",
-        description: "Failed to update order status",
+        description: "Failed to update order status. Please re-login to admin.",
         variant: "destructive"
       });
     }
