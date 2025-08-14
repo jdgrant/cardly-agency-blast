@@ -128,6 +128,13 @@ const Admin = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Set admin session context before fetching data
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (sessionId) {
+        // Set the session context for this request
+        await supabase.rpc('set_admin_session', { session_id: sessionId });
+      }
+
       // Fetch orders (admin access established via session)
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
@@ -146,9 +153,10 @@ const Admin = () => {
       setOrders(ordersData || []);
       setTemplates(templatesData || []);
     } catch (error) {
+      console.error('Fetch data error:', error);
       toast({
         title: "Error", 
-        description: "Failed to fetch data",
+        description: "Failed to fetch data. Please check admin access.",
         variant: "destructive"
       });
     } finally {
