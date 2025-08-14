@@ -195,6 +195,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      clear_admin_session: {
+        Args: { session_id: string }
+        Returns: undefined
+      }
       create_order: {
         Args: {
           template_id: string
