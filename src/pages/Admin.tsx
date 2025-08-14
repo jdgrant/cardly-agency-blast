@@ -128,22 +128,18 @@ const Admin = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Set admin session context before fetching data
       const sessionId = sessionStorage.getItem('adminSessionId');
-      if (sessionId) {
-        // Set the session context for this request
-        await supabase.rpc('set_admin_session', { session_id: sessionId });
+      if (!sessionId) {
+        throw new Error('No admin session found');
       }
 
-      // Fetch orders (admin access established via session)
+      // Fetch orders using admin-specific function
       const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_admin_orders', { session_id_param: sessionId });
 
       if (ordersError) throw ordersError;
 
-      // Fetch templates
+      // Fetch templates (already publicly accessible)
       const { data: templatesData, error: templatesError } = await supabase
         .from('templates')
         .select('*');
@@ -156,9 +152,11 @@ const Admin = () => {
       console.error('Fetch data error:', error);
       toast({
         title: "Error", 
-        description: "Failed to fetch data. Please check admin access.",
+        description: "Failed to fetch orders. Please re-login to admin panel.",
         variant: "destructive"
       });
+      // Force logout on auth errors
+      handleLogout();
     } finally {
       setLoading(false);
     }

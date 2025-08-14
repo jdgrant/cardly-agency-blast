@@ -252,6 +252,37 @@ export type Database = {
         Args: { uuid_val: string }
         Returns: string
       }
+      get_admin_orders: {
+        Args: { session_id_param: string }
+        Returns: {
+          card_quantity: number
+          client_count: number | null
+          created_at: string
+          csv_file_url: string | null
+          custom_message: string | null
+          early_bird_discount: boolean | null
+          final_price: number
+          front_preview_base64: string | null
+          id: string
+          inside_preview_base64: string | null
+          logo_url: string | null
+          mailing_window: string
+          postage_cost: number | null
+          postage_option: string
+          previews_updated_at: string | null
+          production_combined_pdf_generated_at: string | null
+          production_combined_pdf_path: string | null
+          production_combined_pdf_public_url: string | null
+          readable_order_id: string | null
+          regular_price: number
+          selected_message: string | null
+          signature_url: string | null
+          status: string | null
+          template_id: string
+          tier_name: string
+          updated_at: string
+        }[]
+      }
       get_order_by_id: {
         Args: { order_id: string }
         Returns: {
@@ -293,6 +324,10 @@ export type Database = {
       set_admin_session: {
         Args: { session_id: string }
         Returns: undefined
+      }
+      set_and_check_admin_session: {
+        Args: { session_id_param: string }
+        Returns: boolean
       }
     }
     Enums: {
