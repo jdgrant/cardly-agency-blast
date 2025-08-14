@@ -150,10 +150,10 @@ serve(async (req) => {
 
     if (mode === 'url') {
       // Render the live preview URL directly to PDF (single page)
-      const shortId = String(order.id).replace(/-/g, '').slice(0, 8).toLowerCase();
+      // Use full order ID instead of shortened version
       const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
       const route = only === 'inside' ? 'inside' : 'front';
-      const targetUrl = fullUrl || (base ? `${base}/#/preview/${route}/${shortId}` : '');
+      const targetUrl = fullUrl || (base ? `${base}/#/preview/${route}/${orderId}` : '');
 
       if (!targetUrl) {
         throw new Error('No target URL provided; pass origin or fullUrl');
