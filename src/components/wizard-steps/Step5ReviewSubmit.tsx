@@ -126,10 +126,9 @@ const Step5ReviewSubmit = () => {
           .eq('id', order.id);
       }
 
-      // Insert client records
+      // Insert client records using secure function
       if (state.clientList.length > 0 && order) {
-        const clientRecords = state.clientList.map(client => ({
-          order_id: order.id,
+        const clientData = state.clientList.map(client => ({
           first_name: client.firstName,
           last_name: client.lastName,
           address: client.address,
@@ -139,8 +138,10 @@ const Step5ReviewSubmit = () => {
         }));
 
         const { error: clientError } = await supabase
-          .from('client_records')
-          .insert(clientRecords);
+          .rpc('insert_client_records', { 
+            order_id: order.id, 
+            client_data: clientData 
+          });
 
         if (clientError) throw clientError;
       }

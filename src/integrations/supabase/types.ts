@@ -278,6 +278,10 @@ export type Database = {
           production_combined_pdf_generated_at: string
         }[]
       }
+      insert_client_records: {
+        Args: { order_id: string; client_data: Json[] }
+        Returns: undefined
+      }
       is_admin_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean
