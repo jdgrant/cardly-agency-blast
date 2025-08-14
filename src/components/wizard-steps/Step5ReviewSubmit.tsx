@@ -91,40 +91,29 @@ const Step5ReviewSubmit = () => {
         }
       }
 
-      // Insert order into database
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({
+      // Create order using secure function with validation
+      const { data: orderId, error: orderError } = await supabase
+        .rpc('create_order', {
           template_id: state.selectedTemplate || '',
           tier_name: 'Standard',
           card_quantity: state.clientList.length,
-          client_count: state.clientList.length,
           regular_price: subtotal,
           final_price: total,
-          postage_cost: 0,
           mailing_window: state.mailingWindow || '',
           postage_option: state.postageOption,
+          postage_cost: 0,
+          custom_message: state.customMessage,
+          selected_message: state.selectedMessage,
           logo_url: logoUrl,
           signature_url: signatureUrl,
-          csv_file_url: csvFileUrl,
-          status: 'pending'
-        })
-        .select()
-        .single();
+          csv_file_url: csvFileUrl
+        });
 
       if (orderError) throw orderError;
+      if (!orderId) throw new Error('Failed to create order');
 
-      // Generate readable order ID
-      const { data: updatedOrder, error: updateError } = await supabase
-        .rpc('generate_readable_order_id', { uuid_val: order.id })
-        .single();
-
-      if (!updateError && updatedOrder) {
-        await supabase
-          .from('orders')
-          .update({ readable_order_id: updatedOrder })
-          .eq('id', order.id);
-      }
+      // The order object for further processing
+      const order = { id: orderId };
 
       // Insert client records using secure function
       if (state.clientList.length > 0 && order) {
