@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_sessions: {
+        Row: {
+          created_at: string | null
+          session_id: string
+          value: boolean
+        }
+        Insert: {
+          created_at?: string | null
+          session_id: string
+          value?: boolean
+        }
+        Update: {
+          created_at?: string | null
+          session_id?: string
+          value?: boolean
+        }
+        Relationships: []
+      }
       client_records: {
         Row: {
           address: string
@@ -211,6 +229,14 @@ export type Database = {
       generate_readable_order_id: {
         Args: { uuid_val: string }
         Returns: string
+      }
+      is_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      set_admin_session: {
+        Args: { session_id: string }
+        Returns: undefined
       }
     }
     Enums: {
