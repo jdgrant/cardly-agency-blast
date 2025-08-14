@@ -94,19 +94,19 @@ const Step5ReviewSubmit = () => {
       // Create order using secure function with validation
       const { data: orderId, error: orderError } = await supabase
         .rpc('create_order', {
-          template_id: state.selectedTemplate || '',
-          tier_name: 'Standard',
-          card_quantity: state.clientList.length,
-          regular_price: subtotal,
-          final_price: total,
-          mailing_window: state.mailingWindow || '',
-          postage_option: state.postageOption,
-          postage_cost: 0,
-          custom_message: state.customMessage,
-          selected_message: state.selectedMessage,
-          logo_url: logoUrl,
-          signature_url: signatureUrl,
-          csv_file_url: csvFileUrl
+          p_template_id: state.selectedTemplate || '',
+          p_tier_name: 'Standard',
+          p_card_quantity: state.clientList.length,
+          p_regular_price: subtotal,
+          p_final_price: total,
+          p_mailing_window: state.mailingWindow || '',
+          p_postage_option: state.postageOption,
+          p_postage_cost: 0,
+          p_custom_message: state.customMessage,
+          p_selected_message: state.selectedMessage,
+          p_logo_url: logoUrl,
+          p_signature_url: signatureUrl,
+          p_csv_file_url: csvFileUrl
         });
 
       if (orderError) throw orderError;
