@@ -84,23 +84,37 @@ const Admin = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Clear admin session from database if we have a session ID
+    const sessionId = sessionStorage.getItem('adminSessionId');
+    if (sessionId) {
+      try {
+        await supabase.rpc('clear_admin_session', { session_id: sessionId });
+      } catch (error) {
+        console.error('Error clearing admin session:', error);
+      }
+    }
+    
     sessionStorage.removeItem('adminAuth');
+    sessionStorage.removeItem('adminSessionId');
     setIsAuthenticated(false);
     setPassword('');
     setOrders([]);
     setTemplates([]);
-    toast({ title: 'Logged out', description: 'Admin session cleared.' });
+    toast({ title: 'Logged out', description: 'Admin session cleared securely.' });
   };
 
   const handleLogin = async () => {
     if (password === 'admin123') {
+      const sessionId = 'admin_' + Date.now();
+      
       // Set admin session in database
       await supabase.rpc('set_admin_session', { 
-        session_id: 'admin_' + Date.now() 
+        session_id: sessionId 
       });
       
       sessionStorage.setItem('adminAuth', 'true');
+      sessionStorage.setItem('adminSessionId', sessionId);
       setIsAuthenticated(true);
       fetchData();
     } else {
