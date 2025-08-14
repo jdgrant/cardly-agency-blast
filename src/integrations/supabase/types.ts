@@ -195,6 +195,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_order: {
+        Args: {
+          template_id: string
+          tier_name: string
+          card_quantity: number
+          regular_price: number
+          final_price: number
+          mailing_window: string
+          postage_option?: string
+          postage_cost?: number
+          custom_message?: string
+          selected_message?: string
+          logo_url?: string
+          signature_url?: string
+          csv_file_url?: string
+        }
+        Returns: string
+      }
       find_order_by_short_id: {
         Args: { short_id: string }
         Returns: {
@@ -229,6 +247,24 @@ export type Database = {
       generate_readable_order_id: {
         Args: { uuid_val: string }
         Returns: string
+      }
+      get_order_by_id: {
+        Args: { order_id: string }
+        Returns: {
+          id: string
+          readable_order_id: string
+          status: string
+          card_quantity: number
+          final_price: number
+          mailing_window: string
+          created_at: string
+          updated_at: string
+          template_id: string
+          tier_name: string
+          client_count: number
+          postage_option: string
+          postage_cost: number
+        }[]
       }
       is_admin_user: {
         Args: Record<PropertyKey, never>
