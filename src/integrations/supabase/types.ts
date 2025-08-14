@@ -264,6 +264,18 @@ export type Database = {
           client_count: number
           postage_option: string
           postage_cost: number
+          regular_price: number
+          logo_url: string
+          signature_url: string
+          csv_file_url: string
+          early_bird_discount: boolean
+          selected_message: string
+          custom_message: string
+          front_preview_base64: string
+          inside_preview_base64: string
+          production_combined_pdf_public_url: string
+          production_combined_pdf_path: string
+          production_combined_pdf_generated_at: string
         }[]
       }
       is_admin_user: {
