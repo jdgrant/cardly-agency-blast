@@ -73,6 +73,8 @@ const Admin = () => {
   const { toast } = useToast();
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [clientRecords, setClientRecords] = useState<any[]>([]);
 
   // Persist admin access for the current browser session
   useEffect(() => {
@@ -160,6 +162,30 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchClientRecords = async (orderId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('client_records')
+        .select('*')
+        .eq('order_id', orderId);
+
+      if (error) throw error;
+      setClientRecords(data || []);
+    } catch (error) {
+      console.error('Error fetching client records:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch client records',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    fetchClientRecords(order.id);
   };
 
   const getTemplateName = (templateId: string) => {
@@ -699,8 +725,8 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => window.location.href = `/#/admin/job/${order.id}`}>
+                   {orders.map((order) => (
+                     <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
                       <TableCell className="font-mono text-xs">
                         {order.id.slice(0, 8)}...
                       </TableCell>
@@ -933,6 +959,95 @@ const Admin = () => {
                       <span>View PDF Preview Page</span>
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Order Details Modal */}
+        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+          <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Order Details - {selectedOrder?.id.slice(0, 8)}</DialogTitle>
+            </DialogHeader>
+            
+            {selectedOrder && (
+              <div className="space-y-6">
+                {/* Order Information */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Order Information</h3>
+                    <p><strong>Order ID:</strong> {selectedOrder.id.slice(0, 8)}...</p>
+                    <p><strong>Status:</strong> 
+                      <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                        selectedOrder.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        selectedOrder.status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                        selectedOrder.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {selectedOrder.status}
+                      </span>
+                    </p>
+                    <p><strong>Template:</strong> {getTemplateName(selectedOrder.template_id)}</p>
+                    <p><strong>Quantity:</strong> {selectedOrder.card_quantity}</p>
+                    <p><strong>Price:</strong> ${selectedOrder.final_price}</p>
+                    <p><strong>Created:</strong> {new Date(selectedOrder.created_at).toLocaleDateString()}</p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="font-semibold mb-2">Details</h3>
+                    <p><strong>Tier:</strong> {selectedOrder.tier_name}</p>
+                    <p><strong>Mailing Window:</strong> {formatMailingWindow(selectedOrder.mailing_window)}</p>
+                  </div>
+                </div>
+
+                {/* Client Records */}
+                {clientRecords.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold mb-2">Client List ({clientRecords.length} records)</h3>
+                    <div className="max-h-60 overflow-y-auto border rounded">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 sticky top-0">
+                          <tr>
+                            <th className="text-left p-2 border-b">Name</th>
+                            <th className="text-left p-2 border-b">Address</th>
+                            <th className="text-left p-2 border-b">City</th>
+                            <th className="text-left p-2 border-b">State</th>
+                            <th className="text-left p-2 border-b">ZIP</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {clientRecords.map((client, index) => (
+                            <tr key={client.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                              <td className="p-2 border-b">{client.first_name} {client.last_name}</td>
+                              <td className="p-2 border-b">{client.address}</td>
+                              <td className="p-2 border-b">{client.city}</td>
+                              <td className="p-2 border-b">{client.state}</td>
+                              <td className="p-2 border-b">{client.zip}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => generateProductionPDF(selectedOrder.id)}
+                    className="flex-1"
+                  >
+                    Generate Production PDF
+                  </Button>
+                  <Button 
+                    onClick={() => generateOrderPDF(selectedOrder.id)}
+                    variant="outline"
+                    className="flex-1"
+                  >
+                    Generate Preview PDF
+                  </Button>
                 </div>
               </div>
             )}
