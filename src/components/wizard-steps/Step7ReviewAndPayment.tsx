@@ -394,32 +394,18 @@ const Step7ReviewAndPayment = () => {
           {/* Payment Options */}
           <Card>
             <CardHeader>
-              <CardTitle>Payment Options</CardTitle>
+              <CardTitle>Complete Payment</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <Button
-                  onClick={handleStripePayment}
-                  disabled={isSubmitting || !isFormValid}
-                  className="w-full flex items-center justify-center space-x-2"
-                  size="lg"
-                >
-                  <Lock className="w-4 h-4" />
-                  <span>{isSubmitting ? 'Processing...' : `Pay $${total.toFixed(2)} with Stripe`}</span>
-                </Button>
-                
-                <div className="text-center text-sm text-gray-500">or</div>
-                
-                <Button
-                  variant="outline"
-                  onClick={handleDirectSubmit}
-                  disabled={isSubmitting || !isFormValid}
-                  className="w-full"
-                  size="lg"
-                >
-                  Submit Order for Manual Processing
-                </Button>
-              </div>
+              <Button
+                onClick={handleStripePayment}
+                disabled={isSubmitting || !isFormValid}
+                className="w-full flex items-center justify-center space-x-2"
+                size="lg"
+              >
+                <Lock className="w-4 h-4" />
+                <span>{isSubmitting ? 'Processing...' : `Pay $${total.toFixed(2)} with Stripe`}</span>
+              </Button>
               
               {!isFormValid && (
                 <p className="text-sm text-red-600 text-center">
