@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, Calendar, Upload, File, Image, CreditCard, Lock, Shield } from 'lucide-react';
+import { Check, Calendar, Upload, File, Image, FileText, Mail } from 'lucide-react';
 
 const templates = [
   { id: 'winter-wonderland', name: 'Winter Wonderland' },
@@ -26,10 +26,9 @@ const shippingWindows = [
   { value: 'dec-16-20', label: 'December 16-20' },
 ];
 
-const Step7ReviewAndPayment = () => {
+const Step7ReviewAndSubmit = () => {
   const { state, updateState, prevStep, resetWizard } = useWizard();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'submit'>('stripe');
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -49,49 +48,7 @@ const Step7ReviewAndPayment = () => {
     updateState({ promoCode: value });
   };
 
-  const handleStripePayment = async () => {
-    setIsSubmitting(true);
-    
-    try {
-      // Call Stripe checkout edge function
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          amount: Math.round(total * 100), // Convert to cents
-          description: `Holiday Cards Order - ${clientCount || 'TBD'} cards`,
-          metadata: {
-            template: state.selectedTemplate,
-            clientCount: clientCount.toString(),
-            mailingWindow: state.mailingWindow,
-          }
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data?.url) {
-        // Open Stripe checkout in a new tab
-        window.open(data.url, '_blank');
-        
-        toast({
-          title: "Payment Initiated",
-          description: "Please complete your payment in the new tab that opened.",
-        });
-      }
-    } catch (error: any) {
-      console.error('Payment error:', error);
-      toast({
-        title: "Payment Error",
-        description: error.message || "Failed to initialize payment. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDirectSubmit = async () => {
+  const handleSubmitOrder = async () => {
     setIsSubmitting(true);
     
     try {
@@ -198,7 +155,7 @@ const Step7ReviewAndPayment = () => {
 
       toast({
         title: "Order Submitted Successfully!",
-        description: "Your holiday card order has been submitted for processing.",
+        description: "Your holiday card order has been submitted. An invoice will be sent to your email.",
       });
 
       // Reset wizard and navigate
@@ -224,8 +181,8 @@ const Step7ReviewAndPayment = () => {
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Review & Payment</h2>
-        <p className="text-gray-600">Review your order details and complete payment</p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Review & Submit Order</h2>
+        <p className="text-gray-600">Review your order details and submit for processing</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -327,14 +284,14 @@ const Step7ReviewAndPayment = () => {
           </Card>
         </div>
 
-        {/* Right Column - Payment */}
+        {/* Right Column - Order Summary */}
         <div className="space-y-6">
-          {/* Pricing Breakdown */}
+          {/* Order Total */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <CreditCard className="w-5 h-5" />
-                <span>Pricing Breakdown</span>
+                <FileText className="w-5 h-5" />
+                <span>Order Summary</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -352,28 +309,10 @@ const Step7ReviewAndPayment = () => {
                     </div>
                   )}
                   
-                  <div className="flex justify-between">
-                    <Label htmlFor="promoCode">Promo Code</Label>
-                    <Input
-                      id="promoCode"
-                      value={state.promoCode}
-                      onChange={(e) => handlePromoCodeChange(e.target.value)}
-                      placeholder="Enter code"
-                      className="w-32"
-                    />
-                  </div>
-                  
-                  {discount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount (10%)</span>
-                      <span>-${discount.toFixed(2)}</span>
-                    </div>
-                  )}
-                  
                   <Separator />
                   
                   <div className="flex justify-between text-xl font-bold">
-                    <span>Total</span>
+                    <span>Estimated Total</span>
                     <span>${total.toFixed(2)}</span>
                   </div>
                 </>
@@ -388,38 +327,35 @@ const Step7ReviewAndPayment = () => {
             </CardContent>
           </Card>
 
-          {/* Security Notice */}
+          {/* Invoice Notice */}
           <Card className="bg-blue-50 border-blue-200">
             <CardContent className="pt-6">
               <div className="flex items-start space-x-3">
-                <Shield className="w-5 h-5 text-blue-600 mt-0.5" />
+                <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div>
-                  <h3 className="font-semibold text-blue-900">Secure Payment</h3>
+                  <h3 className="font-semibold text-blue-900">Invoice to Follow</h3>
                   <p className="text-sm text-blue-700 mt-1">
-                    Choose secure Stripe payment or submit order for manual processing.
+                    After order review, we'll send an invoice to your email address for payment processing.
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Payment Options */}
+          {/* Submit Order */}
           <Card>
             <CardHeader>
-              <CardTitle>Complete Payment</CardTitle>
+              <CardTitle>Submit Order</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button
-                onClick={clientCount > 0 ? handleStripePayment : handleDirectSubmit}
+                onClick={handleSubmitOrder}
                 disabled={isSubmitting || !isFormValid}
-                className="w-full flex items-center justify-center space-x-2"
+                className="w-full bg-green-600 hover:bg-green-700"
                 size="lg"
               >
-                <Lock className="w-4 h-4" />
                 <span>
-                  {isSubmitting ? 'Processing...' : 
-                   clientCount > 0 ? `Pay $${total.toFixed(2)} with Stripe` : 
-                   'Submit Order for Quote'}
+                  {isSubmitting ? 'Submitting Order...' : 'Submit Order'}
                 </span>
               </Button>
               
@@ -437,9 +373,9 @@ const Step7ReviewAndPayment = () => {
               <h3 className="font-semibold text-green-900 mb-2">What happens next?</h3>
               <ul className="text-sm text-green-700 space-y-1">
                 <li>• We'll review your order within 24 hours</li>
-                <li>• You'll receive a confirmation email</li>
+                <li>• You'll receive an invoice via email for payment</li>
                 <li>• Cards will be printed and mailed during your selected window</li>
-                <li>• Track your order status in your account</li>
+                <li>• Track your order status updates via email</li>
               </ul>
             </CardContent>
           </Card>
@@ -456,4 +392,4 @@ const Step7ReviewAndPayment = () => {
   );
 };
 
-export default Step7ReviewAndPayment;
+export default Step7ReviewAndSubmit;
