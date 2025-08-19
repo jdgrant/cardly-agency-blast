@@ -178,12 +178,13 @@ const Step3CardPreview = () => {
           
           {state.logo ? (
             <div className="space-y-3">
-              <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 text-green-700 mb-2">
-                  <ImageIcon className="w-5 h-5" />
-                  <span className="font-medium">Logo uploaded</span>
-                </div>
-                <p className="text-sm text-green-600">{state.logo.name}</p>
+              <div className="text-center">
+                <img 
+                  src={URL.createObjectURL(state.logo)} 
+                  alt="Company logo preview"
+                  className="w-40 h-24 object-contain mx-auto border border-gray-200 rounded"
+                />
+                <p className="text-sm text-gray-600 mt-2">{state.logo.name}</p>
               </div>
               <div className="flex space-x-2">
                 <Label
