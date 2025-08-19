@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,16 @@ import { getTemplateById } from '@/services/templatesService';
 const Step3CardPreview = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [logoPreview, setLogoPreview] = useState<string>('/lovable-uploads/d94d5cf7-af6f-47be-8b08-00fe9dc27a60.png');
+
+  // Simulate uploaded logo state
+  useEffect(() => {
+    // Set the logo state to show uploaded state with VisionWealthMarketing.png
+    if (!state.logo) {
+      const mockFile = new File([''], 'VisionWealthMarketing.png', { type: 'image/png' });
+      updateState({ logo: mockFile });
+    }
+  }, []);
 
   // Get selected template and message for preview
   useEffect(() => {
@@ -127,22 +136,13 @@ const Step3CardPreview = () => {
               
               {/* Bottom half with logo and signature */}
               <div className="flex-1 flex flex-col justify-center space-y-6">
-                {/* Logo - show uploaded logo, placeholder, or no logo message */}
+                {/* Logo - show uploaded logo */}
                 <div className="flex justify-center">
-                  {state.logo ? (
-                    <img 
-                      src={URL.createObjectURL(state.logo)} 
-                      alt="Company logo"
-                      className="w-40 h-24 object-contain"
-                    />
-                  ) : (
-                    <div className="w-40 h-24 bg-gray-50 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
-                      <div className="text-center">
-                        <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-1" />
-                        <span className="text-gray-500 text-xs">No logo</span>
-                      </div>
-                    </div>
-                  )}
+                  <img 
+                    src={logoPreview} 
+                    alt="VisionWealthMarketing logo"
+                    className="w-40 h-24 object-contain"
+                  />
                 </div>
                 
                 {/* Signature - show if signature service is selected */}
@@ -163,70 +163,20 @@ const Step3CardPreview = () => {
         </div>
       </div>
 
-      {/* Upload Logo Section - Now Optional */}
+      {/* Upload Logo Section - Show uploaded state */}
       <div className="space-y-6 max-w-md mx-auto">
         <div className="text-center">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Company Logo (Optional)</h3>
-          <p className="text-gray-600">Add your company logo to personalize your cards</p>
         </div>
 
         <div className="space-y-4">
-          <Label htmlFor="logo-upload" className="text-base font-medium text-gray-700">
-            Company Logo
-            <span className="text-sm text-gray-500 font-normal ml-2">(Optional)</span>
-          </Label>
-          
-          {state.logo ? (
-            <div className="space-y-3">
-              <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4 text-center">
-                <div className="flex items-center justify-center space-x-2 text-green-700 mb-2">
-                  <ImageIcon className="w-5 h-5" />
-                  <span className="font-medium">Logo uploaded</span>
-                </div>
-                <p className="text-sm text-green-600">{state.logo.name}</p>
-              </div>
-              <div className="flex space-x-2">
-                <Label
-                  htmlFor="logo-upload"
-                  className="cursor-pointer flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Replace Logo
-                </Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleRemoveLogo}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
-                >
-                  Remove
-                </Button>
-              </div>
+          <div className="border-2 border-green-200 bg-green-50 rounded-lg p-6 text-center">
+            <div className="flex items-center justify-center space-x-2 text-green-700 mb-2">
+              <ImageIcon className="w-5 h-5" />
+              <span className="font-medium">Logo uploaded</span>
             </div>
-          ) : (
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <div className="space-y-2">
-                <p className="text-sm text-gray-600">
-                  Click to upload your logo (optional)
-                </p>
-                <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
-              </div>
-              <Label
-                htmlFor="logo-upload"
-                className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
-              >
-                Choose File
-              </Label>
-            </div>
-          )}
-          
-          <Input
-            id="logo-upload"
-            type="file"
-            accept="image/*"
-            onChange={handleLogoUpload}
-            className="hidden"
-          />
+            <p className="text-sm text-green-600">VisionWealthMarketing.png</p>
+          </div>
         </div>
       </div>
 
