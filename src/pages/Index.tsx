@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Link } from "react-router-dom";
 import { Check, Upload, Calendar, File, ImageIcon, CheckCircle, ArrowRight, Star, Users, Shield, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CartIcon } from "@/components/CartIcon";
 
 const Index = () => {
   const { toast } = useToast();
@@ -35,6 +36,7 @@ const Index = () => {
             />
           </div>
           <div className="flex items-center space-x-4">
+            <CartIcon />
             <Link to="/wizard">
               <Button className="text-white rounded-full px-6" style={{ backgroundColor: '#069668' }}>
                 Get Started

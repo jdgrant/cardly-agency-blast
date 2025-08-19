@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface ClientRecord {
   firstName: string;
@@ -52,6 +52,7 @@ interface WizardContextType {
   nextStep: () => void;
   prevStep: () => void;
   resetWizard: () => void;
+  clearSession: () => void;
   pricingTiers: PricingTier[];
 }
 
@@ -84,10 +85,76 @@ const initialState: WizardState = {
   billingAddress: '',
 };
 
+const STORAGE_KEY = 'sendyourcards-wizard-session';
+
+// Helper functions for session persistence
+const saveSessionToStorage = (state: WizardState) => {
+  try {
+    // Only save if user has made meaningful progress (past step 1 or has selections)
+    if (state.step > 1 || state.selectedTemplate || state.selectedMessage || state.logo || state.signature) {
+      const sessionData = {
+        ...state,
+        // Don't persist file objects, only file names/flags
+        logo: state.logo ? 'uploaded' : null,
+        signature: state.signature ? 'uploaded' : null,
+        csvFile: state.csvFile ? 'uploaded' : null,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+    }
+  } catch (error) {
+    console.warn('Failed to save wizard session:', error);
+  }
+};
+
+const loadSessionFromStorage = (): WizardState | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const sessionData = JSON.parse(stored);
+      // Check if session is less than 7 days old
+      const daysSinceCreation = (Date.now() - sessionData.timestamp) / (1000 * 60 * 60 * 24);
+      if (daysSinceCreation < 7) {
+        // Convert back file flags to null since actual files can't be persisted
+        return {
+          ...sessionData,
+          logo: null,
+          signature: null,
+          csvFile: null
+        };
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load wizard session:', error);
+  }
+  return null;
+};
+
+const clearSessionFromStorage = () => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.warn('Failed to clear wizard session:', error);
+  }
+};
+
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<WizardState>(initialState);
+
+  // Load saved session on mount
+  useEffect(() => {
+    const savedSession = loadSessionFromStorage();
+    if (savedSession) {
+      setState(savedSession);
+    }
+  }, []);
+
+  // Save session whenever state changes
+  useEffect(() => {
+    saveSessionToStorage(state);
+  }, [state]);
 
   const updateState = (updates: Partial<WizardState>) => {
     setState(prev => ({ ...prev, ...updates }));
@@ -103,6 +170,11 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const resetWizard = () => {
     setState(initialState);
+    clearSessionFromStorage();
+  };
+
+  const clearSession = () => {
+    clearSessionFromStorage();
   };
 
   return (
@@ -112,6 +184,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       nextStep, 
       prevStep, 
       resetWizard,
+      clearSession,
       pricingTiers
     }}>
       {children}
