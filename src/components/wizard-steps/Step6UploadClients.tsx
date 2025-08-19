@@ -164,7 +164,7 @@ const Step6UploadClients = () => {
         <Alert className="flex-1">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Your CSV should include columns for: <strong>Full Name/Business Name, Last Name, Address, City, State, Zip</strong>
+            Your CSV should include columns for: <strong>Full Name/Business Name, Address, City, State, Zip</strong>
           </AlertDescription>
         </Alert>
         
