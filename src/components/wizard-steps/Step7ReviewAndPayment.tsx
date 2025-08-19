@@ -38,9 +38,10 @@ const Step7ReviewAndPayment = () => {
   
   // Calculate rush fee per card for certain windows
   const rushFeePerCard = (state.mailingWindow === 'dec-11-15' || state.mailingWindow === 'dec-16-20') ? 0.25 : 0;
-  const rushFeeTotal = rushFeePerCard * state.clientList.length;
+  const clientCount = state.clientList.length;
+  const rushFeeTotal = rushFeePerCard * clientCount;
   
-  const subtotal = state.clientList.length * 1.91;
+  const subtotal = clientCount * 1.91;
   const discount = state.promoCode ? subtotal * 0.1 : 0; // 10% discount for any promo code
   const total = subtotal + rushFeeTotal - discount;
 
@@ -56,10 +57,10 @@ const Step7ReviewAndPayment = () => {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: {
           amount: Math.round(total * 100), // Convert to cents
-          description: `Holiday Cards Order - ${state.clientList.length} cards`,
+          description: `Holiday Cards Order - ${clientCount || 'TBD'} cards`,
           metadata: {
             template: state.selectedTemplate,
-            clientCount: state.clientList.length.toString(),
+            clientCount: clientCount.toString(),
             mailingWindow: state.mailingWindow,
           }
         }
@@ -151,7 +152,7 @@ const Step7ReviewAndPayment = () => {
       const { data: orderId, error: orderError } = await supabase.rpc('create_order', {
         p_template_id: state.selectedTemplate,
         p_tier_name: state.selectedTier?.name || 'Custom',
-        p_card_quantity: state.clientList.length,
+        p_card_quantity: clientCount,
         p_regular_price: subtotal + rushFeeTotal,
         p_final_price: total,
         p_mailing_window: state.mailingWindow,
@@ -172,7 +173,7 @@ const Step7ReviewAndPayment = () => {
       console.log('Order created with ID:', orderId);
 
       // Insert client records
-      if (state.clientList.length > 0) {
+      if (clientCount > 0) {
         console.log('Inserting client records...');
         const clientData = state.clientList.map(client => ({
           first_name: client.firstName,
@@ -291,7 +292,7 @@ const Step7ReviewAndPayment = () => {
               
               <div className="flex items-center justify-between">
                 <span className="font-medium">Recipients:</span>
-                <span>{state.clientList.length} cards</span>
+                <span>{clientCount > 0 ? `${clientCount} cards` : 'To be determined'}</span>
               </div>
               
               <div className="flex items-center justify-between">
@@ -337,42 +338,53 @@ const Step7ReviewAndPayment = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex justify-between">
-                <span>Cards ({state.clientList.length} × $1.91)</span>
-                <span>${subtotal.toFixed(2)}</span>
-              </div>
-              
-              {rushFeeTotal > 0 && (
-                <div className="flex justify-between">
-                  <span>Rush Fee ({state.clientList.length} × $0.25)</span>
-                  <span>${rushFeeTotal.toFixed(2)}</span>
+              {clientCount > 0 ? (
+                <>
+                  <div className="flex justify-between">
+                    <span>Cards ({clientCount} × $1.91)</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  
+                  {rushFeeTotal > 0 && (
+                    <div className="flex justify-between">
+                      <span>Rush Fee ({clientCount} × $0.25)</span>
+                      <span>${rushFeeTotal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <Label htmlFor="promoCode">Promo Code</Label>
+                    <Input
+                      id="promoCode"
+                      value={state.promoCode}
+                      onChange={(e) => handlePromoCodeChange(e.target.value)}
+                      placeholder="Enter code"
+                      className="w-32"
+                    />
+                  </div>
+                  
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount (10%)</span>
+                      <span>-${discount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  
+                  <Separator />
+                  
+                  <div className="flex justify-between text-xl font-bold">
+                    <span>Total</span>
+                    <span>${total.toFixed(2)}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-xl font-bold text-gray-900 mb-2">Cost To Be Determined</div>
+                  <p className="text-gray-600">
+                    Since no client list was uploaded, we'll provide a custom quote based on your requirements.
+                  </p>
                 </div>
               )}
-              
-              <div className="flex justify-between">
-                <Label htmlFor="promoCode">Promo Code</Label>
-                <Input
-                  id="promoCode"
-                  value={state.promoCode}
-                  onChange={(e) => handlePromoCodeChange(e.target.value)}
-                  placeholder="Enter code"
-                  className="w-32"
-                />
-              </div>
-              
-              {discount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount (10%)</span>
-                  <span>-${discount.toFixed(2)}</span>
-                </div>
-              )}
-              
-              <Separator />
-              
-              <div className="flex justify-between text-xl font-bold">
-                <span>Total</span>
-                <span>${total.toFixed(2)}</span>
-              </div>
             </CardContent>
           </Card>
 
@@ -398,13 +410,17 @@ const Step7ReviewAndPayment = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <Button
-                onClick={handleStripePayment}
+                onClick={clientCount > 0 ? handleStripePayment : handleDirectSubmit}
                 disabled={isSubmitting || !isFormValid}
                 className="w-full flex items-center justify-center space-x-2"
                 size="lg"
               >
                 <Lock className="w-4 h-4" />
-                <span>{isSubmitting ? 'Processing...' : `Pay $${total.toFixed(2)} with Stripe`}</span>
+                <span>
+                  {isSubmitting ? 'Processing...' : 
+                   clientCount > 0 ? `Pay $${total.toFixed(2)} with Stripe` : 
+                   'Submit Order for Quote'}
+                </span>
               </Button>
               
               {!isFormValid && (

@@ -135,10 +135,6 @@ const Step6UploadClients = () => {
   };
 
   const handleNext = () => {
-    if (state.clientList.length === 0) {
-      setError('Please upload a CSV file with client data');
-      return;
-    }
     nextStep();
   };
 
@@ -154,9 +150,9 @@ const Step6UploadClients = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Upload Client List</h2>
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">Upload Client List (Optional)</h2>
         <p className="text-lg text-gray-600">
-          Upload a CSV file with your client information. We'll automatically detect the column headers.
+          Upload a CSV file with your client information, or continue without a list for manual pricing.
         </p>
       </div>
 
@@ -164,7 +160,7 @@ const Step6UploadClients = () => {
         <Alert className="flex-1">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Your CSV should include columns for: <strong>Full Name/Business Name, Address, City, State, Zip</strong>
+            <strong>Optional:</strong> Upload a CSV with columns for: <strong>Full Name/Business Name, Address, City, State, Zip</strong>
           </AlertDescription>
         </Alert>
         
@@ -276,10 +272,9 @@ const Step6UploadClients = () => {
         </Button>
         <Button 
           onClick={handleNext}
-          disabled={state.clientList.length === 0}
           className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
         >
-          Continue to Package Selection
+          {state.clientList.length === 0 ? 'Continue Without List' : 'Continue to Package Selection'}
         </Button>
       </div>
     </div>

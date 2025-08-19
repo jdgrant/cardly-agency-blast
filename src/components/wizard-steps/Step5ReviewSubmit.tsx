@@ -38,9 +38,10 @@ const Step5ReviewSubmit = () => {
   
   // Calculate rush fee per card for certain windows
   const rushFeePerCard = (state.mailingWindow === 'dec-11-15' || state.mailingWindow === 'dec-16-20') ? 0.25 : 0;
-  const rushFeeTotal = rushFeePerCard * state.clientList.length;
+  const clientCount = state.clientList.length;
+  const rushFeeTotal = rushFeePerCard * clientCount;
   
-  const subtotal = state.clientList.length * 1.91;
+  const subtotal = clientCount * 1.91;
   const discount = state.promoCode ? subtotal * 0.1 : 0; // 10% discount for any promo code
   const total = subtotal + rushFeeTotal - discount;
 
@@ -96,7 +97,7 @@ const Step5ReviewSubmit = () => {
         .rpc('create_order', {
           p_template_id: state.selectedTemplate || '',
           p_tier_name: 'Standard',
-          p_card_quantity: state.clientList.length,
+          p_card_quantity: clientCount,
           p_regular_price: subtotal,
           p_final_price: total,
           p_mailing_window: state.mailingWindow || '',
@@ -116,7 +117,7 @@ const Step5ReviewSubmit = () => {
       const order = { id: orderId };
 
       // Insert client records using secure function
-      if (state.clientList.length > 0 && order) {
+      if (clientCount > 0 && order) {
         const clientData = state.clientList.map(client => ({
           first_name: client.firstName,
           last_name: client.lastName,
@@ -137,7 +138,7 @@ const Step5ReviewSubmit = () => {
 
       toast({
         title: "Order Submitted Successfully!",
-        description: `Your order for ${state.clientList.length} holiday cards has been submitted.`,
+        description: `Your order for ${clientCount || 'TBD'} holiday cards has been submitted.`,
       });
       
       // Get the latest order data with readable ID using secure function
@@ -250,7 +251,7 @@ const Step5ReviewSubmit = () => {
             
             <div className="flex justify-between items-center">
               <span className="text-gray-600">Recipients:</span>
-              <span className="font-medium">{state.clientList.length} cards</span>
+              <span className="font-medium">{clientCount > 0 ? `${clientCount} cards` : 'To be determined'}</span>
             </div>
             
             <div className="flex justify-between items-center">
@@ -281,41 +282,52 @@ const Step5ReviewSubmit = () => {
             <CardTitle>Pricing Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <span>Cards ({state.clientList.length} × $1.91):</span>
-              <span>${subtotal.toFixed(2)}</span>
-            </div>
-            
-            {rushFeeTotal > 0 && (
-              <div className="flex justify-between text-orange-600">
-                <span>Rush Fee ({state.clientList.length} × ${rushFeePerCard.toFixed(2)}):</span>
-                <span>${rushFeeTotal.toFixed(2)}</span>
+            {clientCount > 0 ? (
+              <>
+                <div className="flex justify-between">
+                  <span>Cards ({clientCount} × $1.91):</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                
+                {rushFeeTotal > 0 && (
+                  <div className="flex justify-between text-orange-600">
+                    <span>Rush Fee ({clientCount} × ${rushFeePerCard.toFixed(2)}):</span>
+                    <span>${rushFeeTotal.toFixed(2)}</span>
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  <Label htmlFor="promo">Promo Code (optional)</Label>
+                  <Input
+                    id="promo"
+                    placeholder="Enter promo code"
+                    value={state.promoCode}
+                    onChange={(e) => handlePromoCodeChange(e.target.value)}
+                  />
+                </div>
+                
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Discount:</span>
+                    <span>-${discount.toFixed(2)}</span>
+                  </div>
+                )}
+                
+                <Separator />
+                
+                <div className="flex justify-between font-bold text-lg">
+                  <span>Total:</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-xl font-bold text-gray-900 mb-2">Cost To Be Determined</div>
+                <p className="text-gray-600">
+                  Since no client list was uploaded, we'll provide a custom quote based on your requirements.
+                </p>
               </div>
             )}
-            
-            <div className="space-y-3">
-              <Label htmlFor="promo">Promo Code (optional)</Label>
-              <Input
-                id="promo"
-                placeholder="Enter promo code"
-                value={state.promoCode}
-                onChange={(e) => handlePromoCodeChange(e.target.value)}
-              />
-            </div>
-            
-            {discount > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>Discount:</span>
-                <span>-${discount.toFixed(2)}</span>
-              </div>
-            )}
-            
-            <Separator />
-            
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -374,7 +386,7 @@ const Step5ReviewSubmit = () => {
           disabled={isSubmitting || !state.contactName || !state.contactEmail || !state.billingAddress}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
-          {isSubmitting ? 'Submitting Order...' : `Submit Order - $${total.toFixed(2)}`}
+          {isSubmitting ? 'Submitting Order...' : clientCount > 0 ? `Submit Order - $${total.toFixed(2)}` : 'Submit Order for Quote'}
         </Button>
         {/* Debug info */}
         {(!state.contactName || !state.contactEmail || !state.billingAddress) && (
