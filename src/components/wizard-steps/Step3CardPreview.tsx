@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
@@ -9,16 +10,6 @@ import { getTemplateById } from '@/services/templatesService';
 const Step3CardPreview = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [logoPreview, setLogoPreview] = useState<string>('/lovable-uploads/d94d5cf7-af6f-47be-8b08-00fe9dc27a60.png');
-
-  // Simulate uploaded logo state
-  useEffect(() => {
-    // Set the logo state to show uploaded state with VisionWealthMarketing.png
-    if (!state.logo) {
-      const mockFile = new File([''], 'VisionWealthMarketing.png', { type: 'image/png' });
-      updateState({ logo: mockFile });
-    }
-  }, []);
 
   // Get selected template and message for preview
   useEffect(() => {
@@ -136,13 +127,22 @@ const Step3CardPreview = () => {
               
               {/* Bottom half with logo and signature */}
               <div className="flex-1 flex flex-col justify-center space-y-6">
-                {/* Logo - show uploaded logo */}
+                {/* Logo - show uploaded logo, placeholder, or no logo message */}
                 <div className="flex justify-center">
-                  <img 
-                    src={logoPreview} 
-                    alt="VisionWealthMarketing logo"
-                    className="w-40 h-24 object-contain"
-                  />
+                  {state.logo ? (
+                    <img 
+                      src={URL.createObjectURL(state.logo)} 
+                      alt="Company logo"
+                      className="w-40 h-24 object-contain"
+                    />
+                  ) : (
+                    <div className="w-40 h-24 bg-gray-50 border-2 border-dashed border-gray-300 rounded flex items-center justify-center">
+                      <div className="text-center">
+                        <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                        <span className="text-gray-500 text-xs">No logo</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Signature - show if signature service is selected */}
@@ -163,7 +163,7 @@ const Step3CardPreview = () => {
         </div>
       </div>
 
-      {/* Upload Logo Section - Show uploaded logo */}
+      {/* Upload Logo Section - Now Optional */}
       <div className="space-y-6 max-w-md mx-auto">
         <div className="text-center">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Company Logo (Optional)</h3>
@@ -177,16 +177,14 @@ const Step3CardPreview = () => {
           </Label>
           
           {state.logo ? (
-            <div className="space-y-4">
-              {/* Show the actual uploaded logo */}
-              <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50 flex justify-center">
-                <img 
-                  src={logoPreview} 
-                  alt="Uploaded logo preview"
-                  className="max-w-full max-h-32 object-contain"
-                />
+            <div className="space-y-3">
+              <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4 text-center">
+                <div className="flex items-center justify-center space-x-2 text-green-700 mb-2">
+                  <ImageIcon className="w-5 h-5" />
+                  <span className="font-medium">Logo uploaded</span>
+                </div>
+                <p className="text-sm text-green-600">{state.logo.name}</p>
               </div>
-              
               <div className="flex space-x-2">
                 <Label
                   htmlFor="logo-upload"
