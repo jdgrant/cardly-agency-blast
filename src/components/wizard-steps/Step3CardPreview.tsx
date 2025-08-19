@@ -163,20 +163,72 @@ const Step3CardPreview = () => {
         </div>
       </div>
 
-      {/* Upload Logo Section - Show uploaded state */}
+      {/* Upload Logo Section - Show uploaded logo */}
       <div className="space-y-6 max-w-md mx-auto">
         <div className="text-center">
           <h3 className="text-xl font-semibold text-gray-900 mb-2">Company Logo (Optional)</h3>
+          <p className="text-gray-600">Add your company logo to personalize your cards</p>
         </div>
 
         <div className="space-y-4">
-          <div className="border-2 border-green-200 bg-green-50 rounded-lg p-6 text-center">
-            <div className="flex items-center justify-center space-x-2 text-green-700 mb-2">
-              <ImageIcon className="w-5 h-5" />
-              <span className="font-medium">Logo uploaded</span>
+          <Label htmlFor="logo-upload" className="text-base font-medium text-gray-700">
+            Company Logo
+            <span className="text-sm text-gray-500 font-normal ml-2">(Optional)</span>
+          </Label>
+          
+          {state.logo ? (
+            <div className="space-y-4">
+              {/* Show the actual uploaded logo */}
+              <div className="border-2 border-gray-200 rounded-lg p-4 bg-gray-50 flex justify-center">
+                <img 
+                  src={logoPreview} 
+                  alt="Uploaded logo preview"
+                  className="max-w-full max-h-32 object-contain"
+                />
+              </div>
+              
+              <div className="flex space-x-2">
+                <Label
+                  htmlFor="logo-upload"
+                  className="cursor-pointer flex-1 inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Replace Logo
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRemoveLogo}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                >
+                  Remove
+                </Button>
+              </div>
             </div>
-            <p className="text-sm text-green-600">VisionWealthMarketing.png</p>
-          </div>
+          ) : (
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  Click to upload your logo (optional)
+                </p>
+                <p className="text-xs text-gray-500">PNG, JPG up to 10MB</p>
+              </div>
+              <Label
+                htmlFor="logo-upload"
+                className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 mt-3"
+              >
+                Choose File
+              </Label>
+            </div>
+          )}
+          
+          <Input
+            id="logo-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleLogoUpload}
+            className="hidden"
+          />
         </div>
       </div>
 
