@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useWizard, ClientRecord } from '../WizardContext';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Upload, FileText, X, AlertCircle } from 'lucide-react';
+import { Upload, FileText, X, AlertCircle, Download } from 'lucide-react';
 
 const Step6UploadClients = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
@@ -142,6 +142,15 @@ const Step6UploadClients = () => {
     nextStep();
   };
 
+  const downloadSample = () => {
+    const link = document.createElement('a');
+    link.href = '/sample-client-list.csv';
+    link.download = 'sample-client-list.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -151,12 +160,23 @@ const Step6UploadClients = () => {
         </p>
       </div>
 
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Your CSV should include columns for: <strong>Full Name/Business Name, Last Name, Address, City, State, Zip</strong>
-        </AlertDescription>
-      </Alert>
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <Alert className="flex-1">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Your CSV should include columns for: <strong>Full Name/Business Name, Last Name, Address, City, State, Zip</strong>
+          </AlertDescription>
+        </Alert>
+        
+        <Button
+          variant="outline"
+          onClick={downloadSample}
+          className="flex items-center space-x-2 whitespace-nowrap"
+        >
+          <Download className="h-4 w-4" />
+          <span>Download Sample CSV</span>
+        </Button>
+      </div>
 
       {error && (
         <Alert variant="destructive">
