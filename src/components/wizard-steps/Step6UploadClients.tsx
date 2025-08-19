@@ -272,7 +272,7 @@ const Step6UploadClients = () => {
         </Button>
         <Button 
           onClick={handleNext}
-          className="bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700"
+          className="bg-green-600 hover:bg-green-700"
         >
           {state.clientList.length === 0 ? 'Continue Without List' : 'Continue to Package Selection'}
         </Button>
