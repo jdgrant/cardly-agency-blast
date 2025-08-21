@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,8 +74,7 @@ const Admin = () => {
   const { toast } = useToast();
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [clientRecords, setClientRecords] = useState<any[]>([]);
+  const navigate = useNavigate();
 
   // Persist admin access for the current browser session
   useEffect(() => {
@@ -164,28 +164,8 @@ const Admin = () => {
     }
   };
 
-  const fetchClientRecords = async (orderId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('client_records')
-        .select('*')
-        .eq('order_id', orderId);
-
-      if (error) throw error;
-      setClientRecords(data || []);
-    } catch (error) {
-      console.error('Error fetching client records:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch client records',
-        variant: 'destructive'
-      });
-    }
-  };
-
   const handleViewOrder = (order: Order) => {
-    setSelectedOrder(order);
-    fetchClientRecords(order.id);
+    navigate(`/admin/job/${order.id}`);
   };
 
   const getTemplateName = (templateId: string) => {
@@ -965,94 +945,6 @@ const Admin = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Order Details Modal */}
-        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-          <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Order Details - {selectedOrder?.id.slice(0, 8)}</DialogTitle>
-            </DialogHeader>
-            
-            {selectedOrder && (
-              <div className="space-y-6">
-                {/* Order Information */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Order Information</h3>
-                    <p><strong>Order ID:</strong> {selectedOrder.id.slice(0, 8)}...</p>
-                    <p><strong>Status:</strong> 
-                      <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                        selectedOrder.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        selectedOrder.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                        selectedOrder.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {selectedOrder.status}
-                      </span>
-                    </p>
-                    <p><strong>Template:</strong> {getTemplateName(selectedOrder.template_id)}</p>
-                    <p><strong>Quantity:</strong> {selectedOrder.card_quantity}</p>
-                    <p><strong>Price:</strong> ${selectedOrder.final_price}</p>
-                    <p><strong>Created:</strong> {new Date(selectedOrder.created_at).toLocaleDateString()}</p>
-                  </div>
-                  
-                  <div>
-                    <h3 className="font-semibold mb-2">Details</h3>
-                    <p><strong>Tier:</strong> {selectedOrder.tier_name}</p>
-                    <p><strong>Mailing Window:</strong> {formatMailingWindow(selectedOrder.mailing_window)}</p>
-                  </div>
-                </div>
-
-                {/* Client Records */}
-                {clientRecords.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Client List ({clientRecords.length} records)</h3>
-                    <div className="max-h-60 overflow-y-auto border rounded">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50 sticky top-0">
-                          <tr>
-                            <th className="text-left p-2 border-b">Name</th>
-                            <th className="text-left p-2 border-b">Address</th>
-                            <th className="text-left p-2 border-b">City</th>
-                            <th className="text-left p-2 border-b">State</th>
-                            <th className="text-left p-2 border-b">ZIP</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {clientRecords.map((client, index) => (
-                            <tr key={client.id} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                              <td className="p-2 border-b">{client.first_name} {client.last_name}</td>
-                              <td className="p-2 border-b">{client.address}</td>
-                              <td className="p-2 border-b">{client.city}</td>
-                              <td className="p-2 border-b">{client.state}</td>
-                              <td className="p-2 border-b">{client.zip}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => generateProductionPDF(selectedOrder.id)}
-                    className="flex-1"
-                  >
-                    Generate Production PDF
-                  </Button>
-                  <Button 
-                    onClick={() => generateOrderPDF(selectedOrder.id)}
-                    variant="outline"
-                    className="flex-1"
-                  >
-                    Generate Preview PDF
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
