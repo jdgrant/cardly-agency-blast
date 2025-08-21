@@ -469,9 +469,12 @@ const JobDetail = () => {
         body: { orderId: order.id, only: 'inside', mode: 'url', origin: window.location.origin }
       });
       if (error) throw error;
-      const url = data?.downloadUrl;
-      if (!url) throw new Error('No PDF URL returned');
-      window.open(url, '_blank');
+      const pdfPath = data?.pdfPath;
+      if (!pdfPath) throw new Error('No PDF path returned');
+      
+      // Use our PDF serving function instead of direct URL
+      const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
+      window.open(servePdfUrl, '_blank');
       toast({ title: 'Inside PDF Ready', description: 'Opened inside-style PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating inside PDF:', error);
@@ -493,9 +496,12 @@ const JobDetail = () => {
         body: { orderId: order.id, only: 'front', mode: 'html', origin: window.location.origin }
       });
       if (error) throw error;
-      const url = data?.downloadUrl;
-      if (!url) throw new Error('No PDF URL returned');
-      window.open(url, '_blank');
+      const pdfPath = data?.pdfPath;
+      if (!pdfPath) throw new Error('No PDF path returned');
+      
+      // Use our PDF serving function instead of direct URL
+      const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
+      window.open(servePdfUrl, '_blank');
       toast({ title: 'Front PDF Ready', description: 'Opened front-style PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating front PDF:', error);
@@ -596,19 +602,24 @@ const JobDetail = () => {
     setGeneratingProduction(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, format: 'production', mode: 'html', origin: window.location.origin }
+        body: { orderId: order.id, format: 'production', only: 'front+inside' }
       });
       if (error) throw error;
+      const pdfPath = data?.pdfPath;
       const publicUrl = data?.publicUrl as string | undefined;
-      if (!publicUrl) throw new Error('No public URL returned');
+      if (!pdfPath || !publicUrl) throw new Error('No PDF path or public URL returned');
+      
       setOrder(prev => prev ? { ...prev, production_combined_pdf_public_url: publicUrl, production_combined_pdf_generated_at: new Date().toISOString() } : prev);
-      window.open(publicUrl, '_blank');
-      toast({ title: 'Production Combined PDF Ready', description: 'Public URL copied and opened in a new tab.' });
+      
+      // Use our PDF serving function instead of direct URL
+      const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
+      window.open(servePdfUrl, '_blank');
+      toast({ title: 'Production Combined PDF Ready', description: 'Public URL saved and opened in a new tab.' });
     } catch (error: any) {
       console.error('Error generating Production Combined PDF:', error);
       toast({
         title: 'PDF Generation Failed',
-        description: error?.message || 'Could not generate combined production PDF.',
+        description: error?.message || 'Could not generate production combined PDF.',
         variant: 'destructive'
       });
     } finally {
@@ -974,7 +985,15 @@ const JobDetail = () => {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => window.open(order.production_combined_pdf_public_url!, '_blank')}
+                        onClick={() => {
+                          if (order.production_combined_pdf_public_url) {
+                            // Extract PDF path from the public URL and use our serve-pdf function
+                            const urlParts = order.production_combined_pdf_public_url.split('/');
+                            const pdfPath = urlParts.slice(-2).join('/'); // Get cards/filename.pdf
+                            const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
+                            window.open(servePdfUrl, '_blank');
+                          }
+                        }}
                       >
                         Open
                       </Button>
@@ -1178,7 +1197,15 @@ const JobDetail = () => {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => window.open(order.production_combined_pdf_public_url!, '_blank')}
+                          onClick={() => {
+                            if (order.production_combined_pdf_public_url) {
+                              // Extract PDF path from the public URL and use our serve-pdf function
+                              const urlParts = order.production_combined_pdf_public_url.split('/');
+                              const pdfPath = urlParts.slice(-2).join('/'); // Get cards/filename.pdf
+                              const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
+                              window.open(servePdfUrl, '_blank');
+                            }
+                          }}
                         >
                           Open
                         </Button>
