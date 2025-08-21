@@ -760,7 +760,6 @@ const Admin = () => {
                     <TableHead>Logo</TableHead>
                     <TableHead>Invoice Paid</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -825,30 +824,10 @@ const Admin = () => {
                           onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
                         />
                       </TableCell>
-                      <TableCell className="text-xs">
-                        {new Date(order.created_at).toLocaleDateString()}
-                      </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-2">
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <Select
-                                value={order.status}
-                                onValueChange={(value) => updateOrderStatus(order.id, value)}
-                              >
-                                <SelectTrigger className="w-24">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="pending">Pending</SelectItem>
-                                  <SelectItem value="blocked">Blocked</SelectItem>
-                                  <SelectItem value="approved">Approved</SelectItem>
-                                  <SelectItem value="sent">Sent</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                        </TableCell>
-                    </TableRow>
+                       <TableCell className="text-xs">
+                         {new Date(order.created_at).toLocaleDateString()}
+                       </TableCell>
+                     </TableRow>
                   ))}
                 </TableBody>
               </Table>

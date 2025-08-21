@@ -21,6 +21,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import SignatureExtractor from '@/components/signature/SignatureExtractor';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Order {
   id: string;
@@ -278,6 +279,32 @@ const JobDetail = () => {
   // Get the current message for display
   const getCurrentMessage = () => {
     return order?.custom_message || order?.selected_message || '';
+  };
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrder(prev => prev ? { ...prev, status: newStatus } : null);
+
+      toast({
+        title: "Status Updated",
+        description: `Order status changed to ${newStatus}`,
+      });
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update order status",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSignatureUpload = async (signatureBlob: Blob) => {
@@ -622,17 +649,36 @@ const JobDetail = () => {
               <p className="text-gray-600">Order #{order.readable_order_id || order.id.slice(0, 8)}</p>
             </div>
           </div>
-          <Badge 
-            variant={
-              order.status === 'pending' ? 'secondary' :
-              order.status === 'approved' ? 'default' :
-              order.status === 'blocked' ? 'destructive' :
-              'outline'
-            }
-            className="text-sm px-3 py-1"
-          >
-            {order.status.toUpperCase()}
-          </Badge>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Status:</span>
+              <Select
+                value={order.status}
+                onValueChange={(value) => updateOrderStatus(order.id, value)}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Badge 
+              variant={
+                order.status === 'pending' ? 'secondary' :
+                order.status === 'approved' ? 'default' :
+                order.status === 'blocked' ? 'destructive' :
+                'outline'
+              }
+              className="text-sm px-3 py-1"
+            >
+              {order.status.toUpperCase()}
+            </Badge>
+          </div>
         </div>
       </header>
 
