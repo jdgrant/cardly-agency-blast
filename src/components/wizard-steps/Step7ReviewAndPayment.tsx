@@ -120,6 +120,10 @@ const Step7ReviewAndSubmit = () => {
         p_logo_url: logoUrl,
         p_signature_url: signatureUrl,
         p_csv_file_url: csvFileUrl,
+        p_contact_name: state.contactName,
+        p_contact_email: state.contactEmail,
+        p_contact_phone: state.contactPhone,
+        p_billing_address: state.billingAddress,
       });
 
       if (orderError) {

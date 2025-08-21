@@ -212,21 +212,41 @@ export type Database = {
         Returns: undefined
       }
       create_order: {
-        Args: {
-          p_card_quantity: number
-          p_csv_file_url?: string
-          p_custom_message?: string
-          p_final_price: number
-          p_logo_url?: string
-          p_mailing_window: string
-          p_postage_cost?: number
-          p_postage_option?: string
-          p_regular_price: number
-          p_selected_message?: string
-          p_signature_url?: string
-          p_template_id: string
-          p_tier_name: string
-        }
+        Args:
+          | {
+              p_billing_address?: string
+              p_card_quantity: number
+              p_contact_email?: string
+              p_contact_name?: string
+              p_contact_phone?: string
+              p_csv_file_url?: string
+              p_custom_message?: string
+              p_final_price: number
+              p_logo_url?: string
+              p_mailing_window: string
+              p_postage_cost?: number
+              p_postage_option?: string
+              p_regular_price: number
+              p_selected_message?: string
+              p_signature_url?: string
+              p_template_id: string
+              p_tier_name: string
+            }
+          | {
+              p_card_quantity: number
+              p_csv_file_url?: string
+              p_custom_message?: string
+              p_final_price: number
+              p_logo_url?: string
+              p_mailing_window: string
+              p_postage_cost?: number
+              p_postage_option?: string
+              p_regular_price: number
+              p_selected_message?: string
+              p_signature_url?: string
+              p_template_id: string
+              p_tier_name: string
+            }
         Returns: string
       }
       find_order_by_short_id: {
