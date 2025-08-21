@@ -78,8 +78,12 @@ export type Database = {
       }
       orders: {
         Row: {
+          billing_address: string | null
           card_quantity: number
           client_count: number | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string
           csv_file_url: string | null
           custom_message: string | null
@@ -106,8 +110,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          billing_address?: string | null
           card_quantity: number
           client_count?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           csv_file_url?: string | null
           custom_message?: string | null
@@ -134,8 +142,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          billing_address?: string | null
           card_quantity?: number
           client_count?: number | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           csv_file_url?: string | null
           custom_message?: string | null
@@ -220,8 +232,12 @@ export type Database = {
       find_order_by_short_id: {
         Args: { short_id: string }
         Returns: {
+          billing_address: string | null
           card_quantity: number
           client_count: number | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string
           csv_file_url: string | null
           custom_message: string | null
@@ -263,8 +279,12 @@ export type Database = {
       get_admin_orders: {
         Args: { session_id_param: string }
         Returns: {
+          billing_address: string | null
           card_quantity: number
           client_count: number | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
           created_at: string
           csv_file_url: string | null
           custom_message: string | null

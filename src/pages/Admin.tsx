@@ -52,6 +52,10 @@ interface Order {
   csv_file_url: string | null;
   created_at: string;
   updated_at: string;
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  billing_address?: string;
 }
 
 interface Template {
@@ -74,7 +78,6 @@ const Admin = () => {
   const { toast } = useToast();
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
-  const [clientData, setClientData] = useState<Record<string, any>>({});
   const navigate = useNavigate();
 
   // Persist admin access for the current browser session
@@ -151,23 +154,6 @@ const Admin = () => {
 
       setOrders(ordersData || []);
       setTemplates(templatesData || []);
-      
-      // Fetch client data for all orders using admin function
-      const { data: clientRecords, error: clientError } = await supabase
-        .rpc('get_admin_clients_for_orders', { session_id_param: sessionId });
-
-      if (clientError) {
-        console.error('Client data fetch error:', clientError);
-      } else {
-        const clientDataMap: Record<string, any> = {};
-        (clientRecords || []).forEach((record: any) => {
-          clientDataMap[record.order_id] = {
-            first_name: record.first_name,
-            last_name: record.last_name
-          };
-        });
-        setClientData(clientDataMap);
-      }
     } catch (error) {
       console.error('Fetch data error:', error);
       toast({
@@ -182,12 +168,8 @@ const Admin = () => {
     }
   };
 
-  const getCustomerName = (orderId: string) => {
-    const client = clientData[orderId];
-    if (client) {
-      return `${client.first_name} ${client.last_name}`;
-    }
-    return 'No customer data';
+  const getCustomerName = (order: Order) => {
+    return order.contact_name || 'No customer name provided';
   };
 
   const handleViewOrder = (order: Order) => {
@@ -735,7 +717,7 @@ const Admin = () => {
                       <TableCell className="font-mono text-xs">
                         {order.id.slice(0, 8)}...
                       </TableCell>
-                      <TableCell>{getCustomerName(order.id)}</TableCell>
+                      <TableCell>{getCustomerName(order)}</TableCell>
                       <TableCell>{order.card_quantity}</TableCell>
                       <TableCell className="font-semibold">
                         ${Number(order.final_price).toFixed(2)}
