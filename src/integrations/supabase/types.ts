@@ -384,8 +384,13 @@ export type Database = {
       get_order_by_id: {
         Args: { order_id: string }
         Returns: {
+          billing_address: string
           card_quantity: number
           client_count: number
+          contact_email: string
+          contact_firstname: string
+          contact_lastname: string
+          contact_phone: string
           created_at: string
           csv_file_url: string
           custom_message: string
