@@ -74,6 +74,7 @@ const Admin = () => {
   const { toast } = useToast();
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
+  const [clientData, setClientData] = useState<Record<string, any>>({});
   const navigate = useNavigate();
 
   // Persist admin access for the current browser session
@@ -150,6 +151,22 @@ const Admin = () => {
 
       setOrders(ordersData || []);
       setTemplates(templatesData || []);
+      
+      // Fetch first client record for each order to get customer names
+      const clientDataMap: Record<string, any> = {};
+      for (const order of ordersData || []) {
+        const { data: clientRecord } = await supabase
+          .from('client_records')
+          .select('first_name, last_name')
+          .eq('order_id', order.id)
+          .limit(1)
+          .single();
+        
+        if (clientRecord) {
+          clientDataMap[order.id] = clientRecord;
+        }
+      }
+      setClientData(clientDataMap);
     } catch (error) {
       console.error('Fetch data error:', error);
       toast({
@@ -162,6 +179,14 @@ const Admin = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getCustomerName = (orderId: string) => {
+    const client = clientData[orderId];
+    if (client) {
+      return `${client.first_name} ${client.last_name}`;
+    }
+    return 'No customer data';
   };
 
   const handleViewOrder = (order: Order) => {
@@ -694,12 +719,11 @@ const Admin = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Order ID</TableHead>
-                    <TableHead>Template</TableHead>
+                    <TableHead>Customer Name</TableHead>
                     <TableHead>Cards</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Mailing Window</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Files</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -710,7 +734,7 @@ const Admin = () => {
                       <TableCell className="font-mono text-xs">
                         {order.id.slice(0, 8)}...
                       </TableCell>
-                      <TableCell>{getTemplateName(order.template_id)}</TableCell>
+                      <TableCell>{getCustomerName(order.id)}</TableCell>
                       <TableCell>{order.card_quantity}</TableCell>
                       <TableCell className="font-semibold">
                         ${Number(order.final_price).toFixed(2)}
@@ -727,37 +751,6 @@ const Admin = () => {
                         >
                           {order.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-1">
-                          {order.logo_url && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => downloadFile(order.logo_url!, 'logo')}
-                            >
-                              Logo
-                            </Button>
-                          )}
-                          {order.signature_url && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => downloadFile(order.signature_url!, 'signature')}
-                            >
-                              Sig
-                            </Button>
-                          )}
-                          {order.csv_file_url && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => downloadFile(order.csv_file_url!, 'clients.csv')}
-                            >
-                              CSV
-                            </Button>
-                          )}
-                        </div>
                       </TableCell>
                       <TableCell className="text-xs">
                         {new Date(order.created_at).toLocaleDateString()}
