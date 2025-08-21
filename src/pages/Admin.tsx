@@ -29,7 +29,7 @@ import {
   Calendar,
   CreditCard,
   Users,
-  Package,
+  Package2,
   Settings,
   Tags,
   X,
@@ -638,7 +638,7 @@ const Admin = () => {
                 onClick={() => setActiveTab('orders')}
                 className="flex items-center space-x-2"
               >
-                <Package className="w-4 h-4" />
+                <Package2 className="w-4 h-4" />
                 <span>Orders</span>
               </Button>
               <Button 
@@ -696,7 +696,7 @@ const Admin = () => {
                   <p className="text-sm font-medium text-gray-600">Total Orders</p>
                   <p className="text-2xl font-bold">{orders.length}</p>
                 </div>
-                <Package className="w-8 h-8 text-blue-600" />
+                <Package2 className="w-8 h-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
