@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -201,19 +201,19 @@ export type Database = {
       }
       create_order: {
         Args: {
+          p_card_quantity: number
+          p_csv_file_url?: string
+          p_custom_message?: string
+          p_final_price: number
+          p_logo_url?: string
+          p_mailing_window: string
+          p_postage_cost?: number
+          p_postage_option?: string
+          p_regular_price: number
+          p_selected_message?: string
+          p_signature_url?: string
           p_template_id: string
           p_tier_name: string
-          p_card_quantity: number
-          p_regular_price: number
-          p_final_price: number
-          p_mailing_window: string
-          p_postage_option?: string
-          p_postage_cost?: number
-          p_custom_message?: string
-          p_selected_message?: string
-          p_logo_url?: string
-          p_signature_url?: string
-          p_csv_file_url?: string
         }
         Returns: string
       }
@@ -252,6 +252,14 @@ export type Database = {
         Args: { uuid_val: string }
         Returns: string
       }
+      get_admin_clients_for_orders: {
+        Args: { session_id_param: string }
+        Returns: {
+          first_name: string
+          last_name: string
+          order_id: string
+        }[]
+      }
       get_admin_orders: {
         Args: { session_id_param: string }
         Returns: {
@@ -286,35 +294,35 @@ export type Database = {
       get_order_by_id: {
         Args: { order_id: string }
         Returns: {
-          id: string
-          readable_order_id: string
-          status: string
           card_quantity: number
-          final_price: number
-          mailing_window: string
+          client_count: number
           created_at: string
-          updated_at: string
+          csv_file_url: string
+          custom_message: string
+          early_bird_discount: boolean
+          final_price: number
+          front_preview_base64: string
+          id: string
+          inside_preview_base64: string
+          logo_url: string
+          mailing_window: string
+          postage_cost: number
+          postage_option: string
+          production_combined_pdf_generated_at: string
+          production_combined_pdf_path: string
+          production_combined_pdf_public_url: string
+          readable_order_id: string
+          regular_price: number
+          selected_message: string
+          signature_url: string
+          status: string
           template_id: string
           tier_name: string
-          client_count: number
-          postage_option: string
-          postage_cost: number
-          regular_price: number
-          logo_url: string
-          signature_url: string
-          csv_file_url: string
-          early_bird_discount: boolean
-          selected_message: string
-          custom_message: string
-          front_preview_base64: string
-          inside_preview_base64: string
-          production_combined_pdf_public_url: string
-          production_combined_pdf_path: string
-          production_combined_pdf_generated_at: string
+          updated_at: string
         }[]
       }
       insert_client_records: {
-        Args: { order_id: string; client_data: Json[] }
+        Args: { client_data: Json[]; order_id: string }
         Returns: undefined
       }
       is_admin_user: {
@@ -331,9 +339,9 @@ export type Database = {
       }
       update_admin_order_status: {
         Args: {
-          session_id_param: string
-          order_id_param: string
           new_status_param: string
+          order_id_param: string
+          session_id_param: string
         }
         Returns: undefined
       }
