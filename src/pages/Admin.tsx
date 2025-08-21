@@ -35,6 +35,7 @@ import {
   X,
   FileText
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Order {
   id: string;
@@ -57,6 +58,11 @@ interface Order {
   contact_email?: string;
   contact_phone?: string;
   billing_address?: string;
+  signature_purchased?: boolean;
+  signature_submitted?: boolean;
+  mailing_list_uploaded?: boolean;
+  logo_uploaded?: boolean;
+  invoice_paid?: boolean;
 }
 
 interface Template {
@@ -227,6 +233,44 @@ const Admin = () => {
       toast({
         title: "Error",
         description: "Failed to update order status. Please re-login to admin.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateOrderStatusField = async (orderId: string, fieldName: string, fieldValue: boolean) => {
+    try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
+      const { error } = await supabase
+        .rpc('update_admin_order_status_fields', {
+          session_id_param: sessionId,
+          order_id_param: orderId,
+          field_name: fieldName,
+          field_value: fieldValue
+        });
+
+      if (error) throw error;
+
+      // Update local state
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, [fieldName]: fieldValue, updated_at: new Date().toISOString() }
+          : order
+      ));
+
+      toast({
+        title: "Status Updated",
+        description: `${fieldName.replace('_', ' ')} updated successfully`,
+      });
+    } catch (error) {
+      console.error('Update status field error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status field. Please re-login to admin.",
         variant: "destructive"
       });
     }
@@ -709,8 +753,12 @@ const Admin = () => {
                     <TableHead>Customer Name</TableHead>
                     <TableHead>Cards</TableHead>
                     <TableHead>Price</TableHead>
-                    <TableHead>Mailing Window</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Sig Purchase</TableHead>
+                    <TableHead>Sig Submit</TableHead>
+                    <TableHead>Mailing List</TableHead>
+                    <TableHead>Logo</TableHead>
+                    <TableHead>Invoice Paid</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -726,7 +774,6 @@ const Admin = () => {
                       <TableCell className="font-semibold">
                         ${Number(order.final_price).toFixed(2)}
                       </TableCell>
-                      <TableCell>{formatMailingWindow(order.mailing_window)}</TableCell>
                       <TableCell>
                         <Badge 
                           variant={
@@ -738,6 +785,45 @@ const Admin = () => {
                         >
                           {order.status}
                         </Badge>
+                      </TableCell>
+                      {/* Signature Purchase - Grey out if no signature */}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox 
+                          checked={order.signature_purchased || false}
+                          onCheckedChange={(checked) => updateOrderStatusField(order.id, 'signature_purchased', !!checked)}
+                          disabled={!order.signature_url}
+                          className={!order.signature_url ? 'opacity-50' : ''}
+                        />
+                      </TableCell>
+                      {/* Signature Submit - Grey out if signature not purchased */}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox 
+                          checked={order.signature_submitted || false}
+                          onCheckedChange={(checked) => updateOrderStatusField(order.id, 'signature_submitted', !!checked)}
+                          disabled={!order.signature_purchased}
+                          className={!order.signature_purchased ? 'opacity-50' : ''}
+                        />
+                      </TableCell>
+                      {/* Mailing List Uploaded */}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox 
+                          checked={order.mailing_list_uploaded || false}
+                          onCheckedChange={(checked) => updateOrderStatusField(order.id, 'mailing_list_uploaded', !!checked)}
+                        />
+                      </TableCell>
+                      {/* Logo Uploaded */}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox 
+                          checked={order.logo_uploaded || false}
+                          onCheckedChange={(checked) => updateOrderStatusField(order.id, 'logo_uploaded', !!checked)}
+                        />
+                      </TableCell>
+                      {/* Invoice Paid */}
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox 
+                          checked={order.invoice_paid || false}
+                          onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
+                        />
                       </TableCell>
                       <TableCell className="text-xs">
                         {new Date(order.created_at).toLocaleDateString()}

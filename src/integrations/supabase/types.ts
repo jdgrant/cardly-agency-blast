@@ -435,6 +435,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_admin_order_status_fields: {
+        Args: {
+          field_name: string
+          field_value: boolean
+          order_id_param: string
+          session_id_param: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       order_status: "pending" | "blocked" | "approved" | "sent"
