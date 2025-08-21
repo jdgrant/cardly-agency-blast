@@ -152,21 +152,22 @@ const Admin = () => {
       setOrders(ordersData || []);
       setTemplates(templatesData || []);
       
-      // Fetch first client record for each order to get customer names
-      const clientDataMap: Record<string, any> = {};
-      for (const order of ordersData || []) {
-        const { data: clientRecord } = await supabase
-          .from('client_records')
-          .select('first_name, last_name')
-          .eq('order_id', order.id)
-          .limit(1)
-          .single();
-        
-        if (clientRecord) {
-          clientDataMap[order.id] = clientRecord;
-        }
+      // Fetch client data for all orders using admin function
+      const { data: clientRecords, error: clientError } = await supabase
+        .rpc('get_admin_clients_for_orders', { session_id_param: sessionId });
+
+      if (clientError) {
+        console.error('Client data fetch error:', clientError);
+      } else {
+        const clientDataMap: Record<string, any> = {};
+        (clientRecords || []).forEach((record: any) => {
+          clientDataMap[record.order_id] = {
+            first_name: record.first_name,
+            last_name: record.last_name
+          };
+        });
+        setClientData(clientDataMap);
       }
-      setClientData(clientDataMap);
     } catch (error) {
       console.error('Fetch data error:', error);
       toast({
