@@ -107,9 +107,13 @@ const JobDetail = () => {
 
   const fetchOrderDetails = async () => {
     try {
+      console.log('Starting to fetch order details for:', orderId);
+      
       // Fetch order details using secure function
       const { data: orderDetails, error: orderError } = await supabase
         .rpc('get_order_by_id', { order_id: orderId });
+
+      console.log('Order details response:', { orderDetails, orderError });
 
       if (orderError || !orderDetails || orderDetails.length === 0) {
         throw new Error('Order not found');
@@ -117,14 +121,19 @@ const JobDetail = () => {
       
       const orderData = orderDetails[0];
       setOrder(orderData);
+      console.log('Order data set:', orderData);
 
       // Fetch template details
       if (orderData.template_id) {
+        console.log('Fetching template:', orderData.template_id);
+        
         const { data: templateData, error: templateError } = await supabase
           .from('templates')
           .select('*')
           .eq('id', orderData.template_id)
-          .single();
+          .maybeSingle(); // Use maybeSingle instead of single
+
+        console.log('Template response:', { templateData, templateError });
 
         if (templateError) {
           console.error('Template fetch error:', templateError);
@@ -134,10 +143,14 @@ const JobDetail = () => {
       }
 
       // Fetch client records for this order
+      console.log('Fetching client records for order:', orderId);
+      
       const { data: clientsData, error: clientsError } = await supabase
         .from('client_records')
         .select('*')
         .eq('order_id', orderId);
+
+      console.log('Clients response:', { clientsData, clientsError });
 
       if (clientsError) {
         console.error('Clients fetch error:', clientsError);
@@ -148,6 +161,8 @@ const JobDetail = () => {
       // Download logo and signature files for preview
       if (orderData.logo_url) {
         try {
+          console.log('Downloading logo:', orderData.logo_url);
+          
           const { data: logoData } = await supabase.storage
             .from('holiday-cards')
             .download(orderData.logo_url);
@@ -162,6 +177,8 @@ const JobDetail = () => {
 
       if (orderData.signature_url) {
         try {
+          console.log('Downloading signature:', orderData.signature_url);
+          
           const { data: signatureData } = await supabase.storage
             .from('holiday-cards')
             .download(orderData.signature_url);
@@ -174,6 +191,8 @@ const JobDetail = () => {
         }
       }
 
+      console.log('Finished fetching all data successfully');
+
     } catch (error) {
       console.error('Error fetching order details:', error);
       toast({
@@ -182,6 +201,7 @@ const JobDetail = () => {
         variant: "destructive"
       });
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };
