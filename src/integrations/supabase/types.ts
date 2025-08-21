@@ -93,7 +93,10 @@ export type Database = {
           front_preview_base64: string | null
           id: string
           inside_preview_base64: string | null
+          invoice_paid: boolean | null
+          logo_uploaded: boolean | null
           logo_url: string | null
+          mailing_list_uploaded: boolean | null
           mailing_window: string
           postage_cost: number | null
           postage_option: string
@@ -104,6 +107,8 @@ export type Database = {
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
+          signature_purchased: boolean | null
+          signature_submitted: boolean | null
           signature_url: string | null
           status: string | null
           template_id: string
@@ -126,7 +131,10 @@ export type Database = {
           front_preview_base64?: string | null
           id?: string
           inside_preview_base64?: string | null
+          invoice_paid?: boolean | null
+          logo_uploaded?: boolean | null
           logo_url?: string | null
+          mailing_list_uploaded?: boolean | null
           mailing_window: string
           postage_cost?: number | null
           postage_option?: string
@@ -137,6 +145,8 @@ export type Database = {
           readable_order_id?: string | null
           regular_price: number
           selected_message?: string | null
+          signature_purchased?: boolean | null
+          signature_submitted?: boolean | null
           signature_url?: string | null
           status?: string | null
           template_id: string
@@ -159,7 +169,10 @@ export type Database = {
           front_preview_base64?: string | null
           id?: string
           inside_preview_base64?: string | null
+          invoice_paid?: boolean | null
+          logo_uploaded?: boolean | null
           logo_url?: string | null
+          mailing_list_uploaded?: boolean | null
           mailing_window?: string
           postage_cost?: number | null
           postage_option?: string
@@ -170,6 +183,8 @@ export type Database = {
           readable_order_id?: string | null
           regular_price?: number
           selected_message?: string | null
+          signature_purchased?: boolean | null
+          signature_submitted?: boolean | null
           signature_url?: string | null
           status?: string | null
           template_id?: string
@@ -290,7 +305,10 @@ export type Database = {
           front_preview_base64: string | null
           id: string
           inside_preview_base64: string | null
+          invoice_paid: boolean | null
+          logo_uploaded: boolean | null
           logo_url: string | null
+          mailing_list_uploaded: boolean | null
           mailing_window: string
           postage_cost: number | null
           postage_option: string
@@ -301,6 +319,8 @@ export type Database = {
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
+          signature_purchased: boolean | null
+          signature_submitted: boolean | null
           signature_url: string | null
           status: string | null
           template_id: string
@@ -338,7 +358,10 @@ export type Database = {
           front_preview_base64: string | null
           id: string
           inside_preview_base64: string | null
+          invoice_paid: boolean | null
+          logo_uploaded: boolean | null
           logo_url: string | null
+          mailing_list_uploaded: boolean | null
           mailing_window: string
           postage_cost: number | null
           postage_option: string
@@ -349,6 +372,8 @@ export type Database = {
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
+          signature_purchased: boolean | null
+          signature_submitted: boolean | null
           signature_url: string | null
           status: string | null
           template_id: string
