@@ -50,6 +50,12 @@ interface Order {
   production_combined_pdf_public_url?: string | null;
   production_combined_pdf_path?: string | null;
   production_combined_pdf_generated_at?: string | null;
+  // Contact information
+  contact_firstname?: string | null;
+  contact_lastname?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  billing_address?: string | null;
 }
 
 
@@ -765,6 +771,40 @@ const JobDetail = () => {
                     <p className="text-sm text-emerald-800 font-medium">Early Bird Discount Applied</p>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Contact Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Users className="w-5 h-5" />
+                  <span>Contact Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Customer Name</p>
+                    <p className="font-medium">
+                      {order.contact_firstname || order.contact_lastname 
+                        ? `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim()
+                        : 'Not provided'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Email</p>
+                    <p className="font-medium">{order.contact_email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Phone</p>
+                    <p className="font-medium">{order.contact_phone || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Billing Address</p>
+                    <p className="font-medium">{order.billing_address || 'Not provided'}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
