@@ -82,7 +82,8 @@ export type Database = {
           card_quantity: number
           client_count: number | null
           contact_email: string | null
-          contact_name: string | null
+          contact_firstname: string | null
+          contact_lastname: string | null
           contact_phone: string | null
           created_at: string
           csv_file_url: string | null
@@ -114,7 +115,8 @@ export type Database = {
           card_quantity: number
           client_count?: number | null
           contact_email?: string | null
-          contact_name?: string | null
+          contact_firstname?: string | null
+          contact_lastname?: string | null
           contact_phone?: string | null
           created_at?: string
           csv_file_url?: string | null
@@ -146,7 +148,8 @@ export type Database = {
           card_quantity?: number
           client_count?: number | null
           contact_email?: string | null
-          contact_name?: string | null
+          contact_firstname?: string | null
+          contact_lastname?: string | null
           contact_phone?: string | null
           created_at?: string
           csv_file_url?: string | null
@@ -256,7 +259,8 @@ export type Database = {
           card_quantity: number
           client_count: number | null
           contact_email: string | null
-          contact_name: string | null
+          contact_firstname: string | null
+          contact_lastname: string | null
           contact_phone: string | null
           created_at: string
           csv_file_url: string | null
@@ -303,7 +307,8 @@ export type Database = {
           card_quantity: number
           client_count: number | null
           contact_email: string | null
-          contact_name: string | null
+          contact_firstname: string | null
+          contact_lastname: string | null
           contact_phone: string | null
           created_at: string
           csv_file_url: string | null
