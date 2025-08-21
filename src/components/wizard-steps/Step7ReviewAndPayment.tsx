@@ -120,7 +120,8 @@ const Step7ReviewAndSubmit = () => {
         p_logo_url: logoUrl,
         p_signature_url: signatureUrl,
         p_csv_file_url: csvFileUrl,
-        p_contact_name: state.contactName,
+          p_contact_firstname: state.contactFirstName,
+          p_contact_lastname: state.contactLastName,
         p_contact_email: state.contactEmail,
         p_contact_phone: state.contactPhone,
         p_billing_address: state.billingAddress,
@@ -180,7 +181,7 @@ const Step7ReviewAndSubmit = () => {
     }
   };
 
-  const isFormValid = state.contactName && state.contactEmail && state.contactPhone && state.billingAddress;
+  const isFormValid = state.contactFirstName && state.contactLastName && state.contactEmail && state.contactPhone && state.billingAddress;
 
   return (
     <div className="space-y-8">
@@ -200,12 +201,33 @@ const Step7ReviewAndSubmit = () => {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="contactName">Full Name *</Label>
+                  <Label htmlFor="contactFirstName">First Name *</Label>
                   <Input
-                    id="contactName"
-                    value={state.contactName}
-                    onChange={(e) => updateState({ contactName: e.target.value })}
-                    placeholder="Enter your full name"
+                    id="contactFirstName"
+                    value={state.contactFirstName}
+                    onChange={(e) => updateState({ contactFirstName: e.target.value })}
+                    placeholder="Enter your first name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="contactLastName">Last Name *</Label>
+                  <Input
+                    id="contactLastName"
+                    value={state.contactLastName}
+                    onChange={(e) => updateState({ contactLastName: e.target.value })}
+                    placeholder="Enter your last name"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="contactEmail">Email Address *</Label>
+                  <Input
+                    id="contactEmail"
+                    type="email"
+                    value={state.contactEmail}
+                    onChange={(e) => updateState({ contactEmail: e.target.value })}
+                    placeholder="your@email.com"
                   />
                 </div>
                 <div>
@@ -217,16 +239,6 @@ const Step7ReviewAndSubmit = () => {
                     placeholder="(555) 123-4567"
                   />
                 </div>
-              </div>
-              <div>
-                <Label htmlFor="contactEmail">Email Address *</Label>
-                <Input
-                  id="contactEmail"
-                  type="email"
-                  value={state.contactEmail}
-                  onChange={(e) => updateState({ contactEmail: e.target.value })}
-                  placeholder="your@email.com"
-                />
               </div>
               <div>
                 <Label htmlFor="billingAddress">Billing Address *</Label>

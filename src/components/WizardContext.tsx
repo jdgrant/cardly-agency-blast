@@ -40,7 +40,8 @@ export interface WizardState {
   csvFile: File | null;
   earlyBirdActive: boolean;
   promoCode: string;
-  contactName: string;
+  contactFirstName: string;
+  contactLastName: string;
   contactEmail: string;
   contactPhone: string;
   billingAddress: string;
@@ -79,7 +80,8 @@ const initialState: WizardState = {
   csvFile: null,
   earlyBirdActive: true,
   promoCode: '',
-  contactName: '',
+  contactFirstName: '',
+  contactLastName: '',
   contactEmail: '',
   contactPhone: '',
   billingAddress: '',

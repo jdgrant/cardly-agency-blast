@@ -52,7 +52,8 @@ interface Order {
   csv_file_url: string | null;
   created_at: string;
   updated_at: string;
-  contact_name?: string;
+  contact_firstname?: string;
+  contact_lastname?: string;
   contact_email?: string;
   contact_phone?: string;
   billing_address?: string;
@@ -169,7 +170,10 @@ const Admin = () => {
   };
 
   const getCustomerName = (order: Order) => {
-    return order.contact_name || 'No customer name provided';
+    if (order.contact_firstname && order.contact_lastname) {
+      return `${order.contact_firstname} ${order.contact_lastname}`;
+    }
+    return order.contact_firstname || order.contact_lastname || 'No customer name provided';
   };
 
   const handleViewOrder = (order: Order) => {

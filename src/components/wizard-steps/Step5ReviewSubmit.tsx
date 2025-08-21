@@ -108,7 +108,8 @@ const Step5ReviewSubmit = () => {
           p_logo_url: logoUrl,
           p_signature_url: signatureUrl,
           p_csv_file_url: csvFileUrl,
-          p_contact_name: state.contactName,
+          p_contact_firstname: state.contactFirstName,
+          p_contact_lastname: state.contactLastName,
           p_contact_email: state.contactEmail,
           p_contact_phone: state.contactPhone,
           p_billing_address: state.billingAddress,
@@ -156,7 +157,7 @@ const Step5ReviewSubmit = () => {
         state: { 
           orderData: {
             ...finalOrder,
-            contact_name: state.contactName,
+            contact_name: `${state.contactFirstName} ${state.contactLastName}`.trim(),
             contact_email: state.contactEmail
           }
         } 
@@ -188,14 +189,25 @@ const Step5ReviewSubmit = () => {
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="contact-name">Contact Name *</Label>
+              <Label htmlFor="contact-firstname">First Name *</Label>
               <Input 
-                id="contact-name"
-                placeholder="Full Name"
-                value={state.contactName || ''}
-                onChange={(e) => updateState({ contactName: e.target.value })}
+                id="contact-firstname"
+                placeholder="First Name"
+                value={state.contactFirstName || ''}
+                onChange={(e) => updateState({ contactFirstName: e.target.value })}
               />
             </div>
+            <div>
+              <Label htmlFor="contact-lastname">Last Name *</Label>
+              <Input 
+                id="contact-lastname"
+                placeholder="Last Name"
+                value={state.contactLastName || ''}
+                onChange={(e) => updateState({ contactLastName: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="contact-email">Email Address *</Label>
               <Input 
@@ -206,8 +218,6 @@ const Step5ReviewSubmit = () => {
                 onChange={(e) => updateState({ contactEmail: e.target.value })}
               />
             </div>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="contact-phone">Phone Number</Label>
               <Input 
@@ -217,6 +227,8 @@ const Step5ReviewSubmit = () => {
                 onChange={(e) => updateState({ contactPhone: e.target.value })}
               />
             </div>
+          </div>
+          <div className="grid md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="billing-address">Billing Address *</Label>
               <Input 
@@ -387,15 +399,15 @@ const Step5ReviewSubmit = () => {
         </Button>
         <Button 
           onClick={handleSubmit}
-          disabled={isSubmitting || !state.contactName || !state.contactEmail || !state.billingAddress}
+          disabled={isSubmitting || !state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
           {isSubmitting ? 'Submitting Order...' : clientCount > 0 ? `Submit Order - $${total.toFixed(2)}` : 'Submit Order for Quote'}
         </Button>
         {/* Debug info */}
-        {(!state.contactName || !state.contactEmail || !state.billingAddress) && (
+        {(!state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress) && (
           <div className="text-xs text-red-600 mt-2">
-            Missing required fields: {!state.contactName && 'Name '}{!state.contactEmail && 'Email '}{!state.billingAddress && 'Billing Address'}
+            Missing required fields: {!state.contactFirstName && 'First Name '}{!state.contactLastName && 'Last Name '}{!state.contactEmail && 'Email '}{!state.billingAddress && 'Billing Address'}
           </div>
         )}
       </div>
