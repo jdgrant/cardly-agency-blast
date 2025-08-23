@@ -11,7 +11,7 @@ const corsHeaders = {
 interface GenerateRequest {
   orderId: string;
   only?: 'inside' | 'front' | 'front+inside';
-  mode?: 'url' | 'html';
+  mode?: 'url' | 'html' | 'debug'; // Added debug mode
   format?: 'preview' | 'production'; // new format option
   origin?: string; // e.g., https://your-app.lovableproject.com
   fullUrl?: string; // direct URL to render
@@ -175,6 +175,25 @@ serve(async (req) => {
       const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/url`;
       console.log('Calling Gotenberg (url) at:', url, 'for:', targetUrl);
       gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
+    } else if (mode === 'debug') {
+      // Return the HTML content for debugging
+      const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+      const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl, format, paperWidth, paperHeight);
+      
+      let debugHTML = '';
+      
+      if (only === 'front' || !only) {
+        debugHTML = frontHTML;
+      } else if (only === 'inside') {
+        debugHTML = insideHTML;
+      }
+      
+      return new Response(debugHTML, {
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'text/html' 
+        },
+      });
     } else {
       // Build HTML and convert (supports multi-page)
       const form = new FormData();
