@@ -189,7 +189,7 @@ serve(async (req) => {
     .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 32px; box-sizing: border-box; }
     .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
     .msg { text-align: center; max-width: 80%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
-    .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; padding: 0 32px; box-sizing: border-box; }
+    .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; width: 100%; padding: 0 32px; box-sizing: border-box; }
     .logo { max-width: 180px; max-height: 56px; object-fit: contain; }
     .sig { max-width: 160px; max-height: 48px; object-fit: contain; }
     .ph { color: #9ca3af; font-size: 12px; }
