@@ -97,7 +97,7 @@ const Step5ReviewSubmit = () => {
         .rpc('create_order', {
           p_template_id: state.selectedTemplate || '',
           p_tier_name: 'Standard',
-          p_card_quantity: clientCount,
+          p_card_quantity: Math.max(clientCount, 1), // Ensure minimum of 1
           p_regular_price: subtotal,
           p_final_price: total,
           p_mailing_window: state.mailingWindow || '',
