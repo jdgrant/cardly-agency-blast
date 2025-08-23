@@ -941,18 +941,58 @@ const JobDetail = () => {
                       <p className="text-sm text-gray-600 mb-4">{template.description}</p>
                     </div>
                     
-                    {/* Card Preview - Front and Back Side by Side */}
+                     {/* Card Preview - Front and Back Side by Side */}
                     <div className="grid grid-cols-2 gap-4">
                       {/* Front Side */}
                       <div>
                         <p className="text-sm font-medium text-gray-700 mb-3 text-center">Card Front</p>
                         <div className="aspect-[3/4] w-full overflow-hidden rounded-lg border bg-gray-50">
-                          <img 
-                            src={order?.front_preview_base64 || template.preview_url}
-                            alt={`${template.name} - Front`}
-                            className="w-full h-full object-cover"
-                          />
+                          {order?.front_preview_base64 ? (
+                            <img 
+                              src={order.front_preview_base64}
+                              alt={`${template.name} - Front`}
+                              className="w-full h-full object-cover"
+                              onLoad={() => console.log('Front preview image loaded successfully')}
+                              onError={(e) => {
+                                console.error('Front preview image failed to load');
+                                console.log('Image src length:', order?.front_preview_base64?.length || 0);
+                                console.log('Image src preview:', order?.front_preview_base64?.substring(0, 50));
+                              }}
+                            />
+                          ) : template?.preview_url ? (
+                            <img 
+                              src={`/lovable-uploads/${template.preview_url.split('/').pop()}`}
+                              alt={`${template.name} - Front`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                console.error('Template preview failed to load:', template.preview_url);
+                                (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjI2NyIgdmlld0JveD0iMCAwIDIwMCAyNjciIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjY3IiBmaWxsPSIjRjNGNEY2Ii8+Cjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM2QjczODAiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4K';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                              No preview available
+                            </div>
+                          )}
                         </div>
+                        
+                        {/* Debug Info */}
+                        {order?.front_preview_base64 && (
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-500">
+                              Preview: {order.front_preview_base64.length} chars
+                            </p>
+                            <button 
+                              className="text-xs text-blue-600 hover:underline"
+                              onClick={() => {
+                                console.log('Full base64 string:', order.front_preview_base64);
+                                window.open(order.front_preview_base64, '_blank');
+                              }}
+                            >
+                              Open in new tab
+                            </button>
+                          </div>
+                        )}
                       </div>
                       
                       {/* Back/Inside Side with Message, Logo, and Signature */}
