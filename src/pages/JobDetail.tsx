@@ -18,6 +18,7 @@ import {
   MapPin,
   Upload
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import SignatureExtractor from '@/components/signature/SignatureExtractor';
@@ -56,6 +57,12 @@ interface Order {
   contact_email?: string | null;
   contact_phone?: string | null;
   billing_address?: string | null;
+  // Status checkboxes
+  signature_purchased?: boolean;
+  signature_submitted?: boolean;
+  mailing_list_uploaded?: boolean;
+  logo_uploaded?: boolean;
+  invoice_paid?: boolean;
 }
 
 
@@ -328,6 +335,32 @@ const JobDetail = () => {
       toast({
         title: "Update Failed",
         description: "Failed to update order status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const updateOrderStatusField = async (orderId: string, fieldName: string, fieldValue: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ [fieldName]: fieldValue })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrder(prev => prev ? { ...prev, [fieldName]: fieldValue } : null);
+
+      toast({
+        title: "Status Updated",
+        description: `${fieldName.replace('_', ' ')} updated successfully`,
+      });
+    } catch (error) {
+      console.error('Update status field error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update status field",
         variant: "destructive"
       });
     }
@@ -864,6 +897,93 @@ const JobDetail = () => {
                   <div>
                     <p className="text-sm text-gray-600">Billing Address</p>
                     <p className="font-medium">{order.billing_address || 'Not provided'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Status Checkmarks */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Package className="w-5 h-5" />
+                  <span>Order Status Checklist</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {/* Signature Purchase - Grey out if no signature */}
+                  <div className="flex flex-col space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Signature Purchase</label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        checked={order.signature_purchased || false}
+                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'signature_purchased', !!checked)}
+                        disabled={!order.signature_url}
+                        className={!order.signature_url ? 'opacity-50' : ''}
+                      />
+                      <span className={`text-sm ${!order.signature_url ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {order.signature_purchased ? 'Purchased' : 'Not purchased'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Signature Submit - Grey out if signature not purchased */}
+                  <div className="flex flex-col space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Signature Submit</label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        checked={order.signature_submitted || false}
+                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'signature_submitted', !!checked)}
+                        disabled={!order.signature_purchased}
+                        className={!order.signature_purchased ? 'opacity-50' : ''}
+                      />
+                      <span className={`text-sm ${!order.signature_purchased ? 'text-gray-400' : 'text-gray-600'}`}>
+                        {order.signature_submitted ? 'Submitted' : 'Not submitted'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Mailing List Uploaded */}
+                  <div className="flex flex-col space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Mailing List</label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        checked={order.mailing_list_uploaded || false}
+                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'mailing_list_uploaded', !!checked)}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {order.mailing_list_uploaded ? 'Uploaded' : 'Not uploaded'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Logo Uploaded */}
+                  <div className="flex flex-col space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Logo</label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        checked={order.logo_uploaded || false}
+                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'logo_uploaded', !!checked)}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {order.logo_uploaded ? 'Uploaded' : 'Not uploaded'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Invoice Paid */}
+                  <div className="flex flex-col space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Invoice Paid</label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        checked={order.invoice_paid || false}
+                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {order.invoice_paid ? 'Paid' : 'Unpaid'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
