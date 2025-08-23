@@ -629,17 +629,47 @@ const JobDetail = () => {
 
   const handleGeneratePreviews = async () => {
     if (!order?.id) return;
+    console.log('Starting preview generation for order:', order.id);
+    
     try {
       const { data, error } = await supabase.functions.invoke('generate-card-previews', {
         body: { orderId: order.id }
       });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || 'Failed to generate previews');
-      setOrder(prev => prev ? { ...prev, front_preview_base64: data.frontBase64, inside_preview_base64: data.insideBase64 } : prev);
-      toast({ title: 'Previews Ready', description: 'Front and inside previews updated to match production.' });
+      
+      console.log('Preview generation response:', { data, error });
+      
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+      
+      if (!data?.success) {
+        console.error('Preview generation failed:', data?.error);
+        throw new Error(data?.error || 'Failed to generate previews');
+      }
+      
+      console.log('Updating order with new previews:', {
+        frontBase64: data.frontBase64?.length || 0,
+        insideBase64: data.insideBase64?.length || 0
+      });
+      
+      setOrder(prev => prev ? { 
+        ...prev, 
+        front_preview_base64: data.frontBase64, 
+        inside_preview_base64: data.insideBase64 
+      } : prev);
+      
+      toast({ 
+        title: 'Previews Ready', 
+        description: 'Front and inside previews updated to match production.' 
+      });
     } catch (err: any) {
       console.error('Preview generation failed:', err);
-      toast({ title: 'Preview Generation Failed', description: err?.message || 'Unknown error', variant: 'destructive' });
+      toast({ 
+        title: 'Preview Generation Failed', 
+        description: err?.message || 'Unknown error', 
+        variant: 'destructive' 
+      });
     }
   };
   if (loading) {

@@ -26,11 +26,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log('=== generate-card-previews function started ===');
+  console.log('Request method:', req.method);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
   try {
     const body = await req.json() as GeneratePreviewsRequest;
     const { orderId } = body;
+    console.log('Processing order ID:', orderId);
 
     if (!orderId) {
+      console.error('No order ID provided');
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -45,6 +51,7 @@ serve(async (req) => {
     const GOTENBERG_API_KEY = Deno.env.get('GOTENBERG_API_KEY');
 
     console.log('generate-card-previews using Gotenberg:', GOTENBERG_URL);
+    console.log('Gotenberg API Key available:', !!GOTENBERG_API_KEY);
 
     // Fetch order & template
     const { data: order, error: orderError } = await supabase
