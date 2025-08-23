@@ -98,6 +98,9 @@ serve(async (req) => {
       } else if (src.startsWith('/lovable-uploads/')) {
         // Local lovable-uploads path - use origin header approach like generate-card-gotenberg
         const origin = req.headers.get('origin') || '';
+        console.log('Origin header:', origin);
+        console.log('All request headers:', Object.fromEntries(req.headers.entries()));
+        
         if (origin) {
           const fullUrl = `${origin}${src}`;
           console.log('Fetching preview from:', fullUrl);
@@ -113,7 +116,25 @@ serve(async (req) => {
             console.log('Failed to fetch preview image, status:', resp.status);
           }
         } else {
-          console.log('No origin header available for local path');
+          console.log('No origin header available for local path, trying hardcoded approach');
+          // Fallback: try the current domain directly 
+          const fallbackUrl = `https://e84fd20e-7cca-4259-84ad-12452c25e301.sandbox.lovable.dev${src}`;
+          console.log('Trying fallback URL:', fallbackUrl);
+          
+          try {
+            const resp = await fetch(fallbackUrl);
+            if (resp.ok) {
+              const ct = resp.headers.get('content-type') || 'image/png';
+              const buf = await resp.arrayBuffer();
+              const base64 = toBase64(new Uint8Array(buf));
+              previewDataUrl = `data:${ct};base64,${base64}`;
+              console.log('Preview image fetched via fallback successfully');
+            } else {
+              console.log('Fallback fetch failed, status:', resp.status);
+            }
+          } catch (fallbackError) {
+            console.log('Fallback fetch error:', fallbackError);
+          }
         }
       }
     } catch (e) {
