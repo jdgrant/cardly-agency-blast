@@ -96,37 +96,24 @@ serve(async (req) => {
           previewDataUrl = `data:${ct};base64,${base64}`;
         }
       } else if (src.startsWith('/lovable-uploads/')) {
-        // Local lovable-uploads path - construct full URL using Lovable's CDN
-        const filename = src.replace('/lovable-uploads/', '');
-        const lovableUrl = `https://images.lovableproject.com/lovable-uploads/${filename}`;
-        console.log('Fetching from Lovable CDN:', lovableUrl);
-        
-        try {
-          const resp = await fetch(lovableUrl);
+        // Local lovable-uploads path - use origin header approach like generate-card-gotenberg
+        const origin = req.headers.get('origin') || '';
+        if (origin) {
+          const fullUrl = `${origin}${src}`;
+          console.log('Fetching preview from:', fullUrl);
+          
+          const resp = await fetch(fullUrl);
           if (resp.ok) {
             const ct = resp.headers.get('content-type') || 'image/png';
             const buf = await resp.arrayBuffer();
             const base64 = toBase64(new Uint8Array(buf));
             previewDataUrl = `data:${ct};base64,${base64}`;
-            console.log('Successfully fetched preview image from Lovable CDN');
+            console.log('Preview image fetched and inlined successfully');
           } else {
-            console.log('Failed to fetch from Lovable CDN, status:', resp.status);
+            console.log('Failed to fetch preview image, status:', resp.status);
           }
-        } catch (cdnError) {
-          console.log('CDN fetch failed, trying origin header approach:', cdnError);
-          
-          // Fallback: try with origin header
-          const origin = req.headers.get('origin') || '';
-          if (origin) {
-            const fallbackUrl = `${origin}${src}`;
-            const resp = await fetch(fallbackUrl);
-            if (resp.ok) {
-              const ct = resp.headers.get('content-type') || 'image/png';
-              const buf = await resp.arrayBuffer();
-              const base64 = toBase64(new Uint8Array(buf));
-              previewDataUrl = `data:${ct};base64,${base64}`;
-            }
-          }
+        } else {
+          console.log('No origin header available for local path');
         }
       }
     } catch (e) {
