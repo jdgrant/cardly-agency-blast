@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   CheckCircle, 
   Clock, 
@@ -16,7 +17,8 @@ import {
   Image as ImageIcon,
   Users,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -64,6 +66,7 @@ interface Template {
 const OrderManagement = () => {
   const { hashedOrderId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [order, setOrder] = useState<Order | null>(null);
   const [template, setTemplate] = useState<Template | null>(null);
@@ -93,6 +96,42 @@ const OrderManagement = () => {
       fetchOrderByHashedId();
     }
   }, [hashedOrderId]);
+
+  useEffect(() => {
+    // Check for payment status in URL params
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      toast({
+        title: "Payment Successful!",
+        description: "Your payment has been processed successfully.",
+      });
+      // Update order status to paid
+      if (order?.id) {
+        updateOrderPaymentStatus(order.id, true);
+      }
+    } else if (paymentStatus === 'cancelled') {
+      toast({
+        title: "Payment Cancelled",
+        description: "Your payment was cancelled. You can try again when ready.",
+        variant: "destructive"
+      });
+    }
+  }, [searchParams, order?.id]);
+
+  const updateOrderPaymentStatus = async (orderId: string, isPaid: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ invoice_paid: isPaid })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      setOrder(prev => prev ? { ...prev, invoice_paid: isPaid } : null);
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+    }
+  };
 
   const fetchOrderByHashedId = async () => {
     try {
@@ -339,6 +378,17 @@ const OrderManagement = () => {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Payment Success Alert */}
+        {searchParams.get('payment') === 'success' && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>Payment Successful!</strong> Your order has been paid and is now being processed. 
+              Thank you for your business!
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Progress Bar */}
         <Card className="mb-8">
           <CardHeader>

@@ -1444,6 +1444,44 @@ const JobDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Customer Order Management Link */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-medium text-blue-900 mb-2">Customer Order Management</h4>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Share this link with the customer to allow them to upload files and complete payment:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={`${window.location.origin}/#/ordermanagement/${order.id.replace(/-/g, '').slice(0, 8)}`}
+                      className="flex-1 px-3 py-2 text-sm border rounded bg-white"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const link = `${window.location.origin}/#/ordermanagement/${order.id.replace(/-/g, '').slice(0, 8)}`;
+                        navigator.clipboard.writeText(link);
+                        toast({ title: 'Copied', description: 'Order management link copied to clipboard.' });
+                      }}
+                    >
+                      Copy Link
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        const link = `${window.location.origin}/#/ordermanagement/${order.id.replace(/-/g, '').slice(0, 8)}`;
+                        window.open(link, '_blank');
+                      }}
+                    >
+                      Open
+                    </Button>
+                  </div>
+                </div>
+
+                <Separator />
+                
                 {order.logo_url && (
                   <Button
                     variant="outline"
