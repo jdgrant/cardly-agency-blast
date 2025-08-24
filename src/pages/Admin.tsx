@@ -36,6 +36,7 @@ import {
   FileText
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PromoCodeForm } from '@/components/admin/PromoCodeForm';
 
 interface Order {
   id: string;
@@ -73,13 +74,26 @@ interface Template {
   description?: string;
 }
 
+interface PromoCode {
+  id: string;
+  code: string;
+  discount_percentage: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  expires_at?: string;
+  max_uses?: number;
+  current_uses: number;
+}
+
 const Admin = () => {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [promocodes, setPromocodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'orders' | 'templates'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'templates' | 'promocodes'>('orders');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [originalNames, setOriginalNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -159,8 +173,17 @@ const Admin = () => {
 
       if (templatesError) throw templatesError;
 
+      // Fetch promocodes using admin function
+      const { data: promocodesData, error: promocodesError } = await supabase
+        .from('promocodes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (promocodesError) throw promocodesError;
+
       setOrders(ordersData || []);
       setTemplates(templatesData || []);
+      setPromocodes(promocodesData || []);
     } catch (error) {
       console.error('Fetch data error:', error);
       toast({
@@ -598,6 +621,85 @@ const Admin = () => {
     }
   };
 
+  const createPromoCode = async (formData: { code: string; discount_percentage: number; expires_at?: string; max_uses?: number }) => {
+    try {
+      const { error } = await supabase
+        .from('promocodes')
+        .insert([{
+          code: formData.code.toUpperCase(),
+          discount_percentage: formData.discount_percentage,
+          expires_at: formData.expires_at || null,
+          max_uses: formData.max_uses || null,
+        }]);
+
+      if (error) throw error;
+
+      await fetchData(); // Refresh data
+      toast({
+        title: "Promo Code Created",
+        description: `Code ${formData.code.toUpperCase()} created successfully`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create promo code",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const togglePromoCodeActive = async (promoCodeId: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('promocodes')
+        .update({ is_active: isActive, updated_at: new Date().toISOString() })
+        .eq('id', promoCodeId);
+
+      if (error) throw error;
+
+      setPromocodes(prev => prev.map(pc => 
+        pc.id === promoCodeId 
+          ? { ...pc, is_active: isActive }
+          : pc
+      ));
+
+      toast({
+        title: "Promo Code Updated",
+        description: `Promo code ${isActive ? 'activated' : 'deactivated'} successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update promo code status",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const deletePromoCode = async (promoCodeId: string, code: string) => {
+    try {
+      const { error } = await supabase
+        .from('promocodes')
+        .delete()
+        .eq('id', promoCodeId);
+
+      if (error) throw error;
+
+      setPromocodes(prev => prev.filter(pc => pc.id !== promoCodeId));
+
+      toast({
+        title: "Promo Code Deleted",
+        description: `Code ${code} deleted successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete promo code",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -648,6 +750,14 @@ const Admin = () => {
               >
                 <Settings className="w-4 h-4" />
                 <span>Templates</span>
+              </Button>
+              <Button 
+                variant={activeTab === 'promocodes' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('promocodes')}
+                className="flex items-center space-x-2"
+              >
+                <Tags className="w-4 h-4" />
+                <span>Promo Codes</span>
               </Button>
             </div>
           </div>
@@ -925,9 +1035,100 @@ const Admin = () => {
               </CardContent>
             </Card>
           </div>
-        )}
+         )}
 
-        {/* Preview Modal */}
+         {activeTab === 'promocodes' && (
+           <div className="space-y-6">
+             {/* Promo Code Creation Form */}
+             <Card>
+               <CardHeader>
+                 <CardTitle className="flex items-center space-x-2">
+                   <Tags className="w-5 h-5" />
+                   <span>Create Promo Code</span>
+                 </CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <PromoCodeForm onSubmit={createPromoCode} />
+               </CardContent>
+             </Card>
+
+             {/* Promo Codes Table */}
+             <Card>
+               <CardHeader>
+                 <CardTitle>Promo Codes</CardTitle>
+               </CardHeader>
+               <CardContent>
+                 <div className="overflow-x-auto">
+                   <Table>
+                     <TableHeader>
+                       <TableRow>
+                         <TableHead>Code</TableHead>
+                         <TableHead>Discount</TableHead>
+                         <TableHead>Status</TableHead>
+                         <TableHead>Uses</TableHead>
+                         <TableHead>Expires</TableHead>
+                         <TableHead>Created</TableHead>
+                         <TableHead>Actions</TableHead>
+                       </TableRow>
+                     </TableHeader>
+                     <TableBody>
+                       {promocodes.map((promo) => (
+                         <TableRow key={promo.id}>
+                           <TableCell className="font-mono font-semibold">
+                             {promo.code}
+                           </TableCell>
+                           <TableCell>
+                             {promo.discount_percentage}%
+                           </TableCell>
+                           <TableCell>
+                             <Badge 
+                               variant={promo.is_active ? 'default' : 'secondary'}
+                             >
+                               {promo.is_active ? 'Active' : 'Inactive'}
+                             </Badge>
+                           </TableCell>
+                           <TableCell>
+                             {promo.current_uses}
+                             {promo.max_uses ? ` / ${promo.max_uses}` : ' / ∞'}
+                           </TableCell>
+                           <TableCell className="text-xs">
+                             {promo.expires_at 
+                               ? new Date(promo.expires_at).toLocaleDateString()
+                               : 'Never'
+                             }
+                           </TableCell>
+                           <TableCell className="text-xs">
+                             {new Date(promo.created_at).toLocaleDateString()}
+                           </TableCell>
+                           <TableCell>
+                             <div className="flex space-x-2">
+                               <Button
+                                 size="sm"
+                                 variant={promo.is_active ? "outline" : "default"}
+                                 onClick={() => togglePromoCodeActive(promo.id, !promo.is_active)}
+                               >
+                                 {promo.is_active ? 'Deactivate' : 'Activate'}
+                               </Button>
+                               <Button
+                                 size="sm"
+                                 variant="destructive"
+                                 onClick={() => deletePromoCode(promo.id, promo.code)}
+                               >
+                                 Delete
+                               </Button>
+                             </div>
+                           </TableCell>
+                         </TableRow>
+                       ))}
+                     </TableBody>
+                   </Table>
+                 </div>
+               </CardContent>
+             </Card>
+           </div>
+         )}
+
+         {/* Preview Modal */}
         <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>

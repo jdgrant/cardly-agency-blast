@@ -193,6 +193,42 @@ export type Database = {
         }
         Relationships: []
       }
+      promocodes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number
+          discount_percentage: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number
+          discount_percentage?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number
+          discount_percentage?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       templates: {
         Row: {
           created_at: string
@@ -416,6 +452,18 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_promocode: {
+        Args: { code_param: string }
+        Returns: {
+          code: string
+          current_uses: number
+          discount_percentage: number
+          expires_at: string
+          id: string
+          is_active: boolean
+          max_uses: number
+        }[]
+      }
       insert_client_records: {
         Args: { client_data: Json[]; order_id: string }
         Returns: undefined
@@ -448,6 +496,10 @@ export type Database = {
           session_id_param: string
         }
         Returns: undefined
+      }
+      use_promocode: {
+        Args: { code_param: string }
+        Returns: boolean
       }
     }
     Enums: {
