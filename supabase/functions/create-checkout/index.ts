@@ -13,12 +13,26 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, description, metadata } = await req.json();
+    const { amount, description, metadata, returnUrl, orderId } = await req.json();
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
+
+    // Determine success/cancel URLs based on context
+    let successUrl, cancelUrl;
+    
+    if (returnUrl) {
+      // Order management flow - return to the same page
+      successUrl = `${returnUrl}?payment=success`;
+      cancelUrl = `${returnUrl}?payment=cancelled`;
+    } else {
+      // Original wizard flow
+      const origin = req.headers.get("origin") || "http://localhost:3000";
+      successUrl = `${origin}/#/order-confirmation?session_id={CHECKOUT_SESSION_ID}`;
+      cancelUrl = `${origin}/#/wizard`;
+    }
 
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
@@ -28,8 +42,8 @@ serve(async (req) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: 'Holiday Cards Order',
-              description: description,
+              name: orderId ? `Holiday Card Order #${orderId.slice(0, 8)}` : 'Holiday Cards Order',
+              description: description || 'Custom holiday card printing and mailing service',
             },
             unit_amount: amount,
           },
@@ -37,12 +51,18 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
-      success_url: `${req.headers.get("origin") || "http://localhost:3000"}/#/order-confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.get("origin") || "http://localhost:3000"}/#/wizard`,
-      metadata: metadata,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        ...metadata,
+        ...(orderId && { orderId })
+      },
     });
 
-    return new Response(JSON.stringify({ url: session.url }), {
+    return new Response(JSON.stringify({ 
+      url: session.url,
+      sessionId: session.id 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
