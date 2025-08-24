@@ -24,6 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import SignatureExtractor from '@/components/signature/SignatureExtractor';
+import { ClientListUploader } from '@/components/admin/ClientListUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Order {
@@ -101,6 +102,7 @@ const JobDetail = () => {
   const [generatingGotenberg, setGeneratingGotenberg] = useState(false);
   const [generatingProduction, setGeneratingProduction] = useState(false);
   const [advancedSectionOpen, setAdvancedSectionOpen] = useState(false);
+  const [showClientListUpload, setShowClientListUpload] = useState(false);
   const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string, production?: string, productionFront?: string, productionInside?: string}>({});
 
   useEffect(() => {
@@ -1486,6 +1488,17 @@ const JobDetail = () => {
                   </Button>
                 )}
 
+                {!order.csv_file_url && (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => setShowClientListUpload(true)}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Client List
+                  </Button>
+                )}
+
                 {!order.logo_url && !order.signature_url && !order.csv_file_url && (
                   <p className="text-gray-500 text-center py-4">No files uploaded</p>
                 )}
@@ -1504,6 +1517,19 @@ const JobDetail = () => {
           <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
             <SignatureExtractor onSignatureExtracted={handleSignatureUpload} />
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Client List Upload Dialog */}
+      <Dialog open={showClientListUpload} onOpenChange={setShowClientListUpload}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Upload Client List</DialogTitle>
+          </DialogHeader>
+          <ClientListUploader orderId={orderId!} onUploadComplete={() => {
+            setShowClientListUpload(false);
+            window.location.reload();
+          }} />
         </DialogContent>
       </Dialog>
     </div>
