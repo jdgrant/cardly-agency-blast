@@ -221,15 +221,15 @@ export const ClientListUploader: React.FC<ClientListUploaderProps> = ({
           throw new Error(`Failed to update client count: ${updateCountError.message}`);
         }
       } else {
-        // Admin management - direct DB access
-        const { error: updateError } = await supabase
-          .from('orders')
-          .update({
-            csv_file_url: urlData.publicUrl,
-            client_count: allRecords.length,
-            mailing_list_uploaded: true
-          })
-          .eq('id', orderId);
+      // Update the order with the CSV file URL and client count and mark as uploaded
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          csv_file_url: urlData.publicUrl,
+          client_count: allRecords.length,
+          mailing_list_uploaded: true
+        })
+        .eq('id', orderId);
 
         if (updateError) {
           throw new Error(`Failed to update order: ${updateError.message}`);

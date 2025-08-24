@@ -375,7 +375,6 @@ const JobDetail = () => {
     if (!order?.id) return;
 
     try {
-      // Upload signature to Supabase storage
       const fileName = `signatures/${order.id}_signature_${Date.now()}.png`;
       
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -387,20 +386,19 @@ const JobDetail = () => {
 
       if (uploadError) throw uploadError;
 
-      // Update order record with signature URL
-      // Note: Admin session should allow this update
+      // Update order record with signature URL and mark as submitted
       const { error: updateError } = await supabase
         .from('orders')
-        .update({ signature_url: fileName })
+        .update({ 
+          signature_url: fileName,
+          signature_submitted: true
+        })
         .eq('id', order.id);
 
       if (updateError) throw updateError;
 
       // Update local state
-      setOrder(prev => prev ? { ...prev, signature_url: fileName } : null);
-      
-      // Create blob URL for immediate preview
-      setSignatureBlob(URL.createObjectURL(signatureBlob));
+      setOrder(prev => prev ? { ...prev, signature_url: fileName, signature_submitted: true } : null);
       setShowSignatureUpload(false);
 
       toast({
