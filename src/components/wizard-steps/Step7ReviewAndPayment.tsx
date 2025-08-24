@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Check, Calendar, Upload, File, Image, FileText, Mail } from 'lucide-react';
+import { Check, Calendar, Upload, File, Image, FileText, Mail, Tag, X } from 'lucide-react';
 
 const templates = [
   { id: 'winter-wonderland', name: 'Winter Wonderland' },
@@ -29,6 +29,10 @@ const shippingWindows = [
 const Step7ReviewAndSubmit = () => {
   const { state, updateState, prevStep, resetWizard } = useWizard();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [validatedPromoCode, setValidatedPromoCode] = useState<any>(null);
+  const [promoCodeError, setPromoCodeError] = useState('');
+  const [validatingPromoCode, setValidatingPromoCode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -41,11 +45,52 @@ const Step7ReviewAndSubmit = () => {
   const rushFeeTotal = rushFeePerCard * clientCount;
   
   const subtotal = clientCount * 1.91;
-  const discount = state.promoCode ? subtotal * 0.1 : 0; // 10% discount for any promo code
+  const discount = validatedPromoCode ? (subtotal * (validatedPromoCode.discount_percentage / 100)) : 0;
   const total = subtotal + rushFeeTotal - discount;
 
-  const handlePromoCodeChange = (value: string) => {
-    updateState({ promoCode: value });
+  const validatePromoCode = async (code: string) => {
+    if (!code.trim()) {
+      setValidatedPromoCode(null);
+      setPromoCodeError('');
+      return;
+    }
+
+    setValidatingPromoCode(true);
+    setPromoCodeError('');
+
+    try {
+      const { data, error } = await supabase.rpc('get_promocode', { code_param: code.toUpperCase() });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const promoData = data[0];
+        setValidatedPromoCode(promoData);
+        toast({
+          title: "Promo Code Applied!",
+          description: `${promoData.discount_percentage}% discount applied to your order`,
+        });
+      } else {
+        setValidatedPromoCode(null);
+        setPromoCodeError('Invalid or expired promo code');
+      }
+    } catch (error: any) {
+      setValidatedPromoCode(null);
+      setPromoCodeError('Failed to validate promo code');
+      console.error('Promo code validation error:', error);
+    } finally {
+      setValidatingPromoCode(false);
+    }
+  };
+
+  const applyPromoCode = () => {
+    validatePromoCode(promoCodeInput);
+  };
+
+  const removePromoCode = () => {
+    setPromoCodeInput('');
+    setValidatedPromoCode(null);
+    setPromoCodeError('');
   };
 
   const handleSubmitOrder = async () => {
@@ -133,6 +178,15 @@ const Step7ReviewAndSubmit = () => {
       }
 
       console.log('Order created with ID:', orderId);
+
+      // Use promo code if applied
+      if (validatedPromoCode) {
+        try {
+          await supabase.rpc('use_promocode', { code_param: validatedPromoCode.code });
+        } catch (promoError) {
+          console.warn('Failed to increment promo code usage:', promoError);
+        }
+      }
 
       // Insert client records
       if (clientCount > 0) {
@@ -318,14 +372,78 @@ const Step7ReviewAndSubmit = () => {
                     <span>${subtotal.toFixed(2)}</span>
                   </div>
                   
-                  {rushFeeTotal > 0 && (
-                    <div className="flex justify-between">
-                      <span>Rush Fee ({clientCount} × $0.25)</span>
-                      <span>${rushFeeTotal.toFixed(2)}</span>
-                    </div>
-                  )}
-                  
-                  <Separator />
+                   {rushFeeTotal > 0 && (
+                     <div className="flex justify-between">
+                       <span>Rush Fee ({clientCount} × $0.25)</span>
+                       <span>${rushFeeTotal.toFixed(2)}</span>
+                     </div>
+                   )}
+
+                   {/* Promo Code Section */}
+                   <div className="space-y-3">
+                     <div className="flex items-center space-x-2">
+                       <Tag className="w-4 h-4 text-gray-500" />
+                       <Label htmlFor="promoCode" className="text-sm font-medium">Promo Code</Label>
+                     </div>
+                     
+                     {validatedPromoCode ? (
+                       <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                         <div className="flex items-center space-x-2">
+                           <Check className="w-4 h-4 text-green-600" />
+                           <span className="text-sm text-green-700 font-medium">
+                             {validatedPromoCode.code} ({validatedPromoCode.discount_percentage}% off)
+                           </span>
+                         </div>
+                         <Button
+                           type="button"
+                           variant="ghost"
+                           size="sm"
+                           onClick={removePromoCode}
+                           className="text-green-600 hover:text-green-700"
+                         >
+                           <X className="w-4 h-4" />
+                         </Button>
+                       </div>
+                     ) : (
+                       <div className="space-y-2">
+                         <div className="flex space-x-2">
+                           <Input
+                             id="promoCode"
+                             value={promoCodeInput}
+                             onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                             placeholder="Enter promo code"
+                             className="uppercase"
+                             onKeyDown={(e) => {
+                               if (e.key === 'Enter') {
+                                 e.preventDefault();
+                                 applyPromoCode();
+                               }
+                             }}
+                           />
+                           <Button
+                             type="button"
+                             variant="outline"
+                             onClick={applyPromoCode}
+                             disabled={validatingPromoCode || !promoCodeInput.trim()}
+                           >
+                             {validatingPromoCode ? 'Checking...' : 'Apply'}
+                           </Button>
+                         </div>
+                         {promoCodeError && (
+                           <p className="text-sm text-red-600">{promoCodeError}</p>
+                         )}
+                       </div>
+                     )}
+                   </div>
+
+                   {discount > 0 && (
+                     <div className="flex justify-between text-green-600">
+                       <span>Discount ({validatedPromoCode?.discount_percentage}% off)</span>
+                       <span>-${discount.toFixed(2)}</span>
+                     </div>
+                   )}
+                   
+                   <Separator />
                   
                   <div className="flex justify-between text-xl font-bold">
                     <span>Estimated Total</span>
