@@ -227,7 +227,7 @@ export const ClientListUploader: React.FC<ClientListUploaderProps> = ({
         .update({
           csv_file_url: urlData.publicUrl,
           client_count: allRecords.length,
-          mailing_list_uploaded: true
+          
         })
         .eq('id', orderId);
 

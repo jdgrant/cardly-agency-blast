@@ -60,9 +60,6 @@ interface Order {
   contact_phone?: string;
   billing_address?: string;
   signature_purchased?: boolean;
-  signature_submitted?: boolean;
-  mailing_list_uploaded?: boolean;
-  logo_uploaded?: boolean;
   invoice_paid?: boolean;
 }
 
@@ -905,26 +902,24 @@ const Admin = () => {
                         />
                       </TableCell>
                       {/* Signature Submit - Grey out if signature not purchased */}
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox 
-                          checked={order.signature_submitted || false}
-                          onCheckedChange={(checked) => updateOrderStatusField(order.id, 'signature_submitted', !!checked)}
-                          disabled={!order.signature_purchased}
-                          className={!order.signature_purchased ? 'opacity-50' : ''}
-                        />
-                      </TableCell>
+                       <TableCell onClick={(e) => e.stopPropagation()}>
+                         <Checkbox 
+                           checked={!!order.signature_url}
+                           disabled={true}
+                         />
+                       </TableCell>
                       {/* Mailing List Uploaded */}
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox 
-                          checked={order.mailing_list_uploaded || false}
-                          onCheckedChange={(checked) => updateOrderStatusField(order.id, 'mailing_list_uploaded', !!checked)}
+                        <Checkbox
+                          checked={!!order.csv_file_url}
+                          disabled={true}
                         />
                       </TableCell>
                       {/* Logo Uploaded */}
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox 
-                          checked={order.logo_uploaded || false}
-                          onCheckedChange={(checked) => updateOrderStatusField(order.id, 'logo_uploaded', !!checked)}
+                        <Checkbox
+                          checked={!!order.logo_url}
+                          disabled={true}
                         />
                       </TableCell>
                       {/* Invoice Paid */}

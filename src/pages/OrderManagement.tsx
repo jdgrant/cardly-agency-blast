@@ -250,15 +250,6 @@ const OrderManagement = () => {
 
       if (updateError) throw updateError;
 
-      // Also update signature_submitted status
-      const { error: statusError } = await supabase
-        .rpc('update_order_file_for_customer', {
-          short_id: hashedOrderId,
-          file_type: 'signature_status',
-          file_url: 'true'
-        });
-
-      if (statusError) console.error('Status update error:', statusError);
 
       setOrder(prev => prev ? { ...prev, signature_url: fileName } : null);
       setShowSignatureUpload(false);
@@ -303,15 +294,6 @@ const OrderManagement = () => {
 
       if (updateError) throw updateError;
 
-      // Also update logo_uploaded status
-      const { error: statusError } = await supabase
-        .rpc('update_order_file_for_customer', {
-          short_id: hashedOrderId,
-          file_type: 'logo_status',
-          file_url: 'true'
-        });
-
-      if (statusError) console.error('Status update error:', statusError);
 
       setOrder(prev => prev ? { ...prev, logo_url: fileName } : null);
 

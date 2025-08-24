@@ -62,10 +62,11 @@ interface Order {
   billing_address?: string | null;
   // Status checkboxes
   signature_purchased?: boolean;
-  signature_submitted?: boolean;
-  mailing_list_uploaded?: boolean;
-  logo_uploaded?: boolean;
   invoice_paid?: boolean;
+}
+
+interface OrderWithId extends Order {
+  id: string;
 }
 
 
@@ -398,7 +399,7 @@ const JobDetail = () => {
       if (updateError) throw updateError;
 
       // Update local state
-      setOrder(prev => prev ? { ...prev, signature_url: fileName, signature_submitted: true } : null);
+      setOrder(prev => prev ? { ...prev, signature_url: fileName } : null);
       setShowSignatureUpload(false);
 
       toast({
@@ -934,45 +935,43 @@ const JobDetail = () => {
                   {/* Signature Submit - Grey out if signature not purchased */}
                   <div className="flex flex-col space-y-2">
                     <label className="text-sm font-medium text-gray-700">Signature Submit</label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        checked={order.signature_submitted || false}
-                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'signature_submitted', !!checked)}
-                        disabled={!order.signature_purchased}
-                        className={!order.signature_purchased ? 'opacity-50' : ''}
-                      />
-                      <span className={`text-sm ${!order.signature_purchased ? 'text-gray-400' : 'text-gray-600'}`}>
-                        {order.signature_submitted ? 'Submitted' : 'Not submitted'}
-                      </span>
-                    </div>
+                     <div className="flex items-center space-x-2">
+                       <Checkbox 
+                         checked={!!order.signature_url}
+                         disabled={true}
+                       />
+                       <span className={`text-sm ${!order.signature_purchased ? 'text-gray-400' : 'text-gray-600'}`}>
+                         {order.signature_url ? 'Submitted' : 'Not submitted'}
+                       </span>
+                     </div>
                   </div>
 
                   {/* Mailing List Uploaded */}
                   <div className="flex flex-col space-y-2">
                     <label className="text-sm font-medium text-gray-700">Mailing List</label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        checked={order.mailing_list_uploaded || false}
-                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'mailing_list_uploaded', !!checked)}
-                      />
-                      <span className="text-sm text-gray-600">
-                        {order.mailing_list_uploaded ? 'Uploaded' : 'Not uploaded'}
-                      </span>
-                    </div>
+                     <div className="flex items-center space-x-2">
+                       <Checkbox 
+                         checked={!!order.csv_file_url}
+                         disabled={true}
+                       />
+                       <span className="text-sm text-gray-600">
+                         {order.csv_file_url ? 'Uploaded' : 'Not uploaded'}
+                       </span>
+                     </div>
                   </div>
 
                   {/* Logo Uploaded */}
                   <div className="flex flex-col space-y-2">
                     <label className="text-sm font-medium text-gray-700">Logo</label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        checked={order.logo_uploaded || false}
-                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'logo_uploaded', !!checked)}
-                      />
-                      <span className="text-sm text-gray-600">
-                        {order.logo_uploaded ? 'Uploaded' : 'Not uploaded'}
-                      </span>
-                    </div>
+                     <div className="flex items-center space-x-2">
+                       <Checkbox 
+                         checked={!!order.logo_url}
+                         disabled={true}
+                       />
+                       <span className="text-sm text-gray-600">
+                         {order.logo_url ? 'Uploaded' : 'Not uploaded'}
+                       </span>
+                     </div>
                   </div>
 
                   {/* Invoice Paid */}

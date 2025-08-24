@@ -94,9 +94,7 @@ export type Database = {
           id: string
           inside_preview_base64: string | null
           invoice_paid: boolean | null
-          logo_uploaded: boolean | null
           logo_url: string | null
-          mailing_list_uploaded: boolean | null
           mailing_window: string
           postage_cost: number | null
           postage_option: string
@@ -108,7 +106,6 @@ export type Database = {
           regular_price: number
           selected_message: string | null
           signature_purchased: boolean | null
-          signature_submitted: boolean | null
           signature_url: string | null
           status: string | null
           template_id: string
@@ -132,9 +129,7 @@ export type Database = {
           id?: string
           inside_preview_base64?: string | null
           invoice_paid?: boolean | null
-          logo_uploaded?: boolean | null
           logo_url?: string | null
-          mailing_list_uploaded?: boolean | null
           mailing_window: string
           postage_cost?: number | null
           postage_option?: string
@@ -146,7 +141,6 @@ export type Database = {
           regular_price: number
           selected_message?: string | null
           signature_purchased?: boolean | null
-          signature_submitted?: boolean | null
           signature_url?: string | null
           status?: string | null
           template_id: string
@@ -170,9 +164,7 @@ export type Database = {
           id?: string
           inside_preview_base64?: string | null
           invoice_paid?: boolean | null
-          logo_uploaded?: boolean | null
           logo_url?: string | null
-          mailing_list_uploaded?: boolean | null
           mailing_window?: string
           postage_cost?: number | null
           postage_option?: string
@@ -184,7 +176,6 @@ export type Database = {
           regular_price?: number
           selected_message?: string | null
           signature_purchased?: boolean | null
-          signature_submitted?: boolean | null
           signature_url?: string | null
           status?: string | null
           template_id?: string
@@ -342,9 +333,7 @@ export type Database = {
           id: string
           inside_preview_base64: string | null
           invoice_paid: boolean | null
-          logo_uploaded: boolean | null
           logo_url: string | null
-          mailing_list_uploaded: boolean | null
           mailing_window: string
           postage_cost: number | null
           postage_option: string
@@ -356,7 +345,6 @@ export type Database = {
           regular_price: number
           selected_message: string | null
           signature_purchased: boolean | null
-          signature_submitted: boolean | null
           signature_url: string | null
           status: string | null
           template_id: string
@@ -395,9 +383,7 @@ export type Database = {
           id: string
           inside_preview_base64: string | null
           invoice_paid: boolean | null
-          logo_uploaded: boolean | null
           logo_url: string | null
-          mailing_list_uploaded: boolean | null
           mailing_window: string
           postage_cost: number | null
           postage_option: string
@@ -409,7 +395,6 @@ export type Database = {
           regular_price: number
           selected_message: string | null
           signature_purchased: boolean | null
-          signature_submitted: boolean | null
           signature_url: string | null
           status: string | null
           template_id: string
