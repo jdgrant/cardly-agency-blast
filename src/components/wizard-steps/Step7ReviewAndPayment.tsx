@@ -306,6 +306,74 @@ const Step7ReviewAndSubmit = () => {
             </CardContent>
           </Card>
 
+          {/* Promo Code Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Tag className="w-5 h-5" />
+                <span>Promo Code</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {validatedPromoCode ? (
+                <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Check className="w-5 h-5 text-green-600" />
+                    <div>
+                      <span className="text-sm text-green-700 font-medium block">
+                        {validatedPromoCode.code}
+                      </span>
+                      <span className="text-xs text-green-600">
+                        {validatedPromoCode.discount_percentage}% discount applied
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removePromoCode}
+                    className="text-green-600 hover:text-green-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex space-x-2">
+                    <Input
+                      id="promoCode"
+                      value={promoCodeInput}
+                      onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                      placeholder="Enter promo code"
+                      className="uppercase"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          applyPromoCode();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={applyPromoCode}
+                      disabled={validatingPromoCode || !promoCodeInput.trim()}
+                    >
+                      {validatingPromoCode ? 'Checking...' : 'Apply'}
+                    </Button>
+                  </div>
+                  {promoCodeError && (
+                    <p className="text-sm text-red-600">{promoCodeError}</p>
+                  )}
+                  <p className="text-xs text-gray-500">
+                    Have a promo code? Enter it above to apply your discount.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Order Summary */}
           <Card>
             <CardHeader>
@@ -378,63 +446,6 @@ const Step7ReviewAndSubmit = () => {
                        <span>${rushFeeTotal.toFixed(2)}</span>
                      </div>
                    )}
-
-                   {/* Promo Code Section */}
-                   <div className="space-y-3">
-                     <div className="flex items-center space-x-2">
-                       <Tag className="w-4 h-4 text-gray-500" />
-                       <Label htmlFor="promoCode" className="text-sm font-medium">Promo Code</Label>
-                     </div>
-                     
-                     {validatedPromoCode ? (
-                       <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                         <div className="flex items-center space-x-2">
-                           <Check className="w-4 h-4 text-green-600" />
-                           <span className="text-sm text-green-700 font-medium">
-                             {validatedPromoCode.code} ({validatedPromoCode.discount_percentage}% off)
-                           </span>
-                         </div>
-                         <Button
-                           type="button"
-                           variant="ghost"
-                           size="sm"
-                           onClick={removePromoCode}
-                           className="text-green-600 hover:text-green-700"
-                         >
-                           <X className="w-4 h-4" />
-                         </Button>
-                       </div>
-                     ) : (
-                       <div className="space-y-2">
-                         <div className="flex space-x-2">
-                           <Input
-                             id="promoCode"
-                             value={promoCodeInput}
-                             onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                             placeholder="Enter promo code"
-                             className="uppercase"
-                             onKeyDown={(e) => {
-                               if (e.key === 'Enter') {
-                                 e.preventDefault();
-                                 applyPromoCode();
-                               }
-                             }}
-                           />
-                           <Button
-                             type="button"
-                             variant="outline"
-                             onClick={applyPromoCode}
-                             disabled={validatingPromoCode || !promoCodeInput.trim()}
-                           >
-                             {validatingPromoCode ? 'Checking...' : 'Apply'}
-                           </Button>
-                         </div>
-                         {promoCodeError && (
-                           <p className="text-sm text-red-600">{promoCodeError}</p>
-                         )}
-                       </div>
-                     )}
-                   </div>
 
                    {discount > 0 && (
                      <div className="flex justify-between text-green-600">
