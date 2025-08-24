@@ -203,7 +203,7 @@ serve(async (req) => {
       </div>
       <div class="brand">
         ${logoDataUrl ? `<img class="logo" src="${logoDataUrl}" alt="Logo"/>` : `<div class="ph">Company Logo</div>`}
-        ${signatureDataUrl ? `<img class="sig" src="${signatureDataUrl}" alt="Signature"/>` : `<div class="ph">Signature</div>`}
+        ${signatureDataUrl ? `<img class="sig" src="${signatureDataUrl}" alt="Signature"/>` : ``}
       </div>
     </div>
   </div>

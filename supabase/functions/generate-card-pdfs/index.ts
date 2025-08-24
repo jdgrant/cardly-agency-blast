@@ -414,7 +414,7 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
         <div class="bottom-section">
           <div class="branding-row">
             ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="logo" />` : '<div style="height: 60px; display: flex; align-items: center; color: #9ca3af; font-size: 14px;">Company Logo</div>'}
-            ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : '<div style="height: 40px; display: flex; align-items: center; color: #9ca3af; font-size: 14px;">Signature</div>'}
+            ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : ''}
           </div>
         </div>
 
@@ -494,7 +494,6 @@ async function generateHTMLToSVG(htmlContent: string, filename: string): Promise
   <!-- Branding section -->
   <rect x="100" y="200" width="200" height="40" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="4"/>
   <text x="200" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9ca3af">Company Logo</text>
-  <text x="200" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9ca3af">Signature</text>
   
   <rect x="320" y="200" width="200" height="40" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="4"/>
   <text x="420" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9ca3af">Additional Branding</text>
