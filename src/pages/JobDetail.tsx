@@ -1526,10 +1526,12 @@ const JobDetail = () => {
           <DialogHeader>
             <DialogTitle>Upload Client List</DialogTitle>
           </DialogHeader>
-          <ClientListUploader orderId={orderId!} onUploadComplete={() => {
-            setShowClientListUpload(false);
-            window.location.reload();
-          }} />
+          {orderId && (
+            <ClientListUploader orderId={orderId} onUploadComplete={() => {
+              setShowClientListUpload(false);
+              window.location.reload();
+            }} />
+          )}
         </DialogContent>
       </Dialog>
     </div>
