@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
   ArrowLeft, 
   Download, 
@@ -16,7 +17,8 @@ import {
   FileText,
   Image as ImageIcon,
   MapPin,
-  Upload
+  Upload,
+  ChevronDown
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,6 +100,7 @@ const JobDetail = () => {
   const [generatingFront, setGeneratingFront] = useState(false);
   const [generatingGotenberg, setGeneratingGotenberg] = useState(false);
   const [generatingProduction, setGeneratingProduction] = useState(false);
+  const [advancedSectionOpen, setAdvancedSectionOpen] = useState(false);
   const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string, production?: string, productionFront?: string, productionInside?: string}>({});
 
   useEffect(() => {
@@ -1198,8 +1201,25 @@ const JobDetail = () => {
               </CardContent>
             </Card>
 
-            {/* Inside PDF */}
-            <Card>
+            {/* Advanced PDF Generation Section */}
+            <Collapsible open={advancedSectionOpen} onOpenChange={setAdvancedSectionOpen}>
+              <Card>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-5 h-5" />
+                        <span>Advanced PDF Generation</span>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${advancedSectionOpen ? 'rotate-180' : ''}`} />
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent>
+                  <div className="space-y-6 px-6 pb-6">
+                    {/* Inside PDF */}
+                    <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <FileText className="w-5 h-5" />
@@ -1408,6 +1428,10 @@ const JobDetail = () => {
                 </div>
               </CardContent>
             </Card>
+                  </div>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
 
             {/* Uploaded Files */}
             <Card>
