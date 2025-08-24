@@ -19,11 +19,13 @@ interface ClientRecord {
 interface ClientListUploaderProps {
   orderId: string;
   onUploadComplete: () => void;
+  hashedOrderId?: string; // Optional for customer management
 }
 
 export const ClientListUploader: React.FC<ClientListUploaderProps> = ({
   orderId,
-  onUploadComplete
+  onUploadComplete,
+  hashedOrderId
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,18 +197,43 @@ export const ClientListUploader: React.FC<ClientListUploaderProps> = ({
         throw new Error(`Failed to save client records: ${insertError.message}`);
       }
 
-      // Update the order with the CSV file URL and client count
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          csv_file_url: urlData.publicUrl,
-          client_count: allRecords.length,
-          mailing_list_uploaded: true
-        })
-        .eq('id', orderId);
+      // Update order with CSV file URL and client count
+      if (hashedOrderId) {
+        // Customer management - use secure functions
+        const { error: updateFileError } = await supabase
+          .rpc('update_order_file_for_customer', {
+            short_id: hashedOrderId,
+            file_type: 'csv',
+            file_url: urlData.publicUrl
+          });
 
-      if (updateError) {
-        throw new Error(`Failed to update order: ${updateError.message}`);
+        if (updateFileError) {
+          throw new Error(`Failed to update order: ${updateFileError.message}`);
+        }
+
+        const { error: updateCountError } = await supabase
+          .rpc('update_order_client_count_for_customer', {
+            short_id: hashedOrderId,
+            new_client_count: allRecords.length
+          });
+
+        if (updateCountError) {
+          throw new Error(`Failed to update client count: ${updateCountError.message}`);
+        }
+      } else {
+        // Admin management - direct DB access
+        const { error: updateError } = await supabase
+          .from('orders')
+          .update({
+            csv_file_url: urlData.publicUrl,
+            client_count: allRecords.length,
+            mailing_list_uploaded: true
+          })
+          .eq('id', orderId);
+
+        if (updateError) {
+          throw new Error(`Failed to update order: ${updateError.message}`);
+        }
       }
 
       toast({

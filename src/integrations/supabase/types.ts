@@ -452,6 +452,39 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_order_for_customer_management: {
+        Args: { short_id: string }
+        Returns: {
+          billing_address: string
+          card_quantity: number
+          client_count: number
+          contact_email: string
+          contact_firstname: string
+          contact_lastname: string
+          contact_phone: string
+          created_at: string
+          csv_file_url: string
+          custom_message: string
+          early_bird_discount: boolean
+          final_price: number
+          front_preview_base64: string
+          id: string
+          inside_preview_base64: string
+          invoice_paid: boolean
+          logo_url: string
+          mailing_window: string
+          postage_cost: number
+          postage_option: string
+          readable_order_id: string
+          regular_price: number
+          selected_message: string
+          signature_url: string
+          status: string
+          template_id: string
+          tier_name: string
+          updated_at: string
+        }[]
+      }
       get_promocode: {
         Args: { code_param: string }
         Returns: {
@@ -496,6 +529,14 @@ export type Database = {
           session_id_param: string
         }
         Returns: undefined
+      }
+      update_order_client_count_for_customer: {
+        Args: { new_client_count: number; short_id: string }
+        Returns: boolean
+      }
+      update_order_file_for_customer: {
+        Args: { file_type: string; file_url: string; short_id: string }
+        Returns: boolean
       }
       use_promocode: {
         Args: { code_param: string }

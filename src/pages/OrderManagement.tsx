@@ -120,14 +120,18 @@ const OrderManagement = () => {
 
   const updateOrderPaymentStatus = async (orderId: string, isPaid: boolean) => {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ invoice_paid: isPaid })
-        .eq('id', orderId);
+      // Use the secure function to update payment status
+      const { data, error } = await supabase
+        .rpc('update_order_file_for_customer', {
+          short_id: hashedOrderId,
+          file_type: 'payment',
+          file_url: isPaid.toString()
+        });
 
       if (error) throw error;
-
-      setOrder(prev => prev ? { ...prev, invoice_paid: isPaid } : null);
+      if (data) {
+        setOrder(prev => prev ? { ...prev, invoice_paid: isPaid } : null);
+      }
     } catch (error) {
       console.error('Error updating payment status:', error);
     }
@@ -137,9 +141,9 @@ const OrderManagement = () => {
     try {
       setLoading(true);
       
-      // First try to find the order by short ID (first 8 chars of UUID without hyphens)
+      // Use the secure function to get order details for customer management
       const { data: orders, error } = await supabase
-        .rpc('find_order_by_short_id', { short_id: hashedOrderId });
+        .rpc('get_order_for_customer_management', { short_id: hashedOrderId });
 
       if (error) throw error;
       
@@ -222,7 +226,7 @@ const OrderManagement = () => {
   };
 
   const handleSignatureUpload = async (signatureBlob: Blob) => {
-    if (!order?.id) return;
+    if (!order?.id || !hashedOrderId) return;
 
     try {
       const fileName = `signatures/${order.id}_signature_${Date.now()}.png`;
@@ -236,10 +240,13 @@ const OrderManagement = () => {
 
       if (uploadError) throw uploadError;
 
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({ signature_url: fileName })
-        .eq('id', order.id);
+      // Use secure function to update order
+      const { data, error: updateError } = await supabase
+        .rpc('update_order_file_for_customer', {
+          short_id: hashedOrderId,
+          file_type: 'signature',
+          file_url: fileName
+        });
 
       if (updateError) throw updateError;
 
@@ -263,7 +270,7 @@ const OrderManagement = () => {
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !order?.id) return;
+    if (!file || !order?.id || !hashedOrderId) return;
 
     try {
       const fileName = `logos/${order.id}_logo_${Date.now()}.${file.name.split('.').pop()}`;
@@ -276,10 +283,13 @@ const OrderManagement = () => {
 
       if (uploadError) throw uploadError;
 
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({ logo_url: fileName })
-        .eq('id', order.id);
+      // Use secure function to update order
+      const { data, error: updateError } = await supabase
+        .rpc('update_order_file_for_customer', {
+          short_id: hashedOrderId,
+          file_type: 'logo',
+          file_url: fileName
+        });
 
       if (updateError) throw updateError;
 
@@ -710,9 +720,10 @@ const OrderManagement = () => {
           <DialogHeader>
             <DialogTitle>Upload Client List</DialogTitle>
           </DialogHeader>
-          {order?.id && (
+          {order?.id && hashedOrderId && (
             <ClientListUploader 
-              orderId={order.id} 
+              orderId={order.id}
+              hashedOrderId={hashedOrderId}
               onUploadComplete={() => {
                 setShowClientListUpload(false);
                 fetchOrderByHashedId();
