@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
+const MAILGUN_API_KEY = Deno.env.get('MAILGUN_KEY') || Deno.env.get('MAILGUN_API_KEY');
 const MAILGUN_DOMAIN = 'mg.sendyourcards.io';
 
 interface StatusEmailRequest {
