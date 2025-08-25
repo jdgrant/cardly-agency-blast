@@ -233,6 +233,42 @@ const OrderManagement = () => {
     return windows[window] || window;
   };
 
+  const handleSignatureUpgrade = async () => {
+    if (!order?.id || !hashedOrderId) return;
+
+    try {
+      // Use secure function to upgrade signature for this order
+      const { data, error } = await supabase
+        .rpc('update_order_file_for_customer', {
+          short_id: hashedOrderId,
+          file_type: 'signature_upgrade',
+          file_url: 'true'
+        });
+
+      if (error) throw error;
+
+      // Update local order state
+      setOrder(prev => prev ? { 
+        ...prev, 
+        signature_purchased: true,
+        final_price: Number(prev.final_price) + 25 
+      } : null);
+
+      toast({
+        title: "Signature Upgrade Added!",
+        description: "You can now upload your signature. Your total has been updated.",
+      });
+
+    } catch (error) {
+      console.error('Error upgrading signature:', error);
+      toast({
+        title: "Upgrade Failed",
+        description: "Unable to add signature upgrade. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSignatureUpload = async (signatureBlob: Blob) => {
     if (!order?.id || !hashedOrderId) return;
 
@@ -257,7 +293,6 @@ const OrderManagement = () => {
         });
 
       if (updateError) throw updateError;
-
 
       setOrder(prev => prev ? { ...prev, signature_url: fileName } : null);
       setShowSignatureUpload(false);
@@ -607,6 +642,7 @@ const OrderManagement = () => {
                           variant="default"
                           size="sm"
                           className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                          onClick={handleSignatureUpgrade}
                         >
                           <span className="mr-2">✨</span>
                           Upgrade to Add Signature - $25
