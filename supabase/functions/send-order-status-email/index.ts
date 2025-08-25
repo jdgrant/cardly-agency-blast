@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { sendEmailViaMailgun } from "../_shared/mailgun-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -17,9 +18,6 @@ interface StatusEmailRequest {
   signaturePurchased?: boolean;
   invoicePaid?: boolean;
 }
-
-const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
-const MAILGUN_DOMAIN = 'mg.printifymail.com';
 
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
@@ -44,10 +42,6 @@ const handler = async (req: Request): Promise<Response> => {
       signaturePurchased,
       invoicePaid 
     } = requestData;
-
-    if (!MAILGUN_API_KEY) {
-      throw new Error('MAILGUN_API_KEY not configured');
-    }
 
     if (!contactEmail) {
       throw new Error('Contact email is required');
@@ -99,30 +93,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Preparing to send email to:", contactEmail);
 
-    // Send email using Mailgun
-    const formData = new FormData();
-    formData.append('from', 'Holiday Cards <noreply@mg.printifymail.com>');
-    formData.append('to', contactEmail);
-    formData.append('subject', `Order Update: ${readableOrderId} - ${orderStatus.toUpperCase()}`);
-    formData.append('html', emailHtml);
-
-    const mailgunResponse = await fetch(`https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`
-      },
-      body: formData
+    // Send email using shared Mailgun client
+    const mailgunResult = await sendEmailViaMailgun({
+      to: contactEmail,
+      subject: `Order Update: ${readableOrderId} - ${orderStatus.toUpperCase()}`,
+      html: emailHtml
     });
 
-    console.log("Mailgun response status:", mailgunResponse.status);
-    
-    if (!mailgunResponse.ok) {
-      const errorText = await mailgunResponse.text();
-      console.error("Mailgun error response:", errorText);
-      throw new Error(`Mailgun API error: ${mailgunResponse.status} - ${errorText}`);
-    }
-
-    const mailgunResult = await mailgunResponse.json();
     console.log("Email sent successfully:", mailgunResult);
 
     return new Response(
