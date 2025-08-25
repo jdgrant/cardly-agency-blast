@@ -150,8 +150,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!mailgunResponse.ok) {
       const errorText = await mailgunResponse.text();
-      console.error("Mailgun API error:", errorText);
-      throw new Error(`Mailgun API error: ${mailgunResponse.status}`);
+      console.error("Mailgun API error details:", {
+        status: mailgunResponse.status,
+        statusText: mailgunResponse.statusText,
+        errorBody: errorText,
+        domain: MAILGUN_DOMAIN,
+        fromEmail: `noreply@${MAILGUN_DOMAIN}`,
+        toEmail: contactEmail
+      });
+      throw new Error(`Mailgun API error: ${mailgunResponse.status} - ${errorText}`);
     }
 
     const mailgunResult = await mailgunResponse.json();
