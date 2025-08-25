@@ -1,0 +1,148 @@
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
+import { generateStatusEmailHtml, StatusEmailData } from '../_shared/email-templates.ts';
+import { sendEmailViaMailgun, generateOrderManagementUrl } from '../_shared/mailgun-client.ts';
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface CronEmailRequest {
+  ordersToEmail?: string[]; // Optional array of order IDs to email
+  statusFilter?: string; // Optional status filter (e.g., 'pending', 'approved')
+}
+
+const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const requestData: CronEmailRequest = await req.json().catch(() => ({}));
+    console.log("Cron email job started:", requestData);
+
+    // Query orders that need status emails
+    let query = supabase
+      .from('orders')
+      .select('*')
+      .not('contact_email', 'is', null);
+
+    // Apply filters if provided
+    if (requestData.ordersToEmail && requestData.ordersToEmail.length > 0) {
+      query = query.in('id', requestData.ordersToEmail);
+    }
+
+    if (requestData.statusFilter) {
+      query = query.eq('status', requestData.statusFilter);
+    }
+
+    const { data: orders, error } = await query;
+
+    if (error) {
+      throw new Error(`Failed to fetch orders: ${error.message}`);
+    }
+
+    if (!orders || orders.length === 0) {
+      console.log("No orders found matching criteria");
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "No orders found matching criteria",
+          emailsSent: 0
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
+    console.log(`Processing ${orders.length} orders for status emails`);
+
+    const emailResults = [];
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Process each order
+    for (const order of orders) {
+      try {
+        const statusEmailData: StatusEmailData = {
+          orderId: order.id,
+          orderStatus: order.status,
+          contactEmail: order.contact_email,
+          contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
+          readableOrderId: order.readable_order_id || order.id.slice(0, 8),
+          logoUploaded: !!order.logo_url,
+          signatureSubmitted: !!order.signature_url,
+          mailingListUploaded: !!order.csv_file_url,
+          signaturePurchased: order.signature_purchased,
+          invoicePaid: order.invoice_paid
+        };
+
+        const orderManagementUrl = generateOrderManagementUrl(order.id, req.headers.get('origin'));
+        const emailHtml = generateStatusEmailHtml(statusEmailData, orderManagementUrl);
+
+        const mailgunResult = await sendEmailViaMailgun({
+          to: order.contact_email,
+          subject: `Order Status Update - #${statusEmailData.readableOrderId}`,
+          html: emailHtml
+        });
+
+        emailResults.push({
+          orderId: order.id,
+          success: true,
+          messageId: mailgunResult.id
+        });
+        successCount++;
+
+        console.log(`Email sent successfully for order ${order.id}`);
+
+      } catch (error: any) {
+        console.error(`Failed to send email for order ${order.id}:`, error);
+        emailResults.push({
+          orderId: order.id,
+          success: false,
+          error: error.message
+        });
+        errorCount++;
+      }
+    }
+
+    console.log(`Cron email job completed. Success: ${successCount}, Errors: ${errorCount}`);
+
+    return new Response(
+      JSON.stringify({ 
+        success: true,
+        message: `Processed ${orders.length} orders. Sent: ${successCount}, Failed: ${errorCount}`,
+        emailsSent: successCount,
+        emailsFailed: errorCount,
+        results: emailResults
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+
+  } catch (error: any) {
+    console.error("Error in cron email job:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        success: false 
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
+  }
+};
+
+serve(handler);

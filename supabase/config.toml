@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.send-order-status-email]
 verify_jwt = false
 
+[functions.send-status-email-cron]
+verify_jwt = false
+
 [functions.create-checkout]
 verify_jwt = false
 
