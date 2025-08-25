@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
-const MAILGUN_DOMAIN = "mg.yourdomain.com"; // User will need to configure this
+const MAILGUN_DOMAIN = "mg.sendyourcards.io";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
