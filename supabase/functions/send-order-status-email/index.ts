@@ -1,10 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { sendEmailViaMailgun } from "../_shared/mailgun-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
+const MAILGUN_DOMAIN = 'mg.sendyourcards.io';
 
 interface StatusEmailRequest {
   orderId: string;
@@ -92,14 +94,36 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     console.log("Preparing to send email to:", contactEmail);
+    console.log("MAILGUN_API_KEY available:", !!MAILGUN_API_KEY);
 
-    // Send email using shared Mailgun client
-    const mailgunResult = await sendEmailViaMailgun({
-      to: contactEmail,
-      subject: `Order Update: ${readableOrderId} - ${orderStatus.toUpperCase()}`,
-      html: emailHtml,
-      from: 'Holiday Cards <noreply@mg.sendyourcards.io>'
+    if (!MAILGUN_API_KEY) {
+      throw new Error('MAILGUN_API_KEY not configured');
+    }
+
+    // Send email using Mailgun directly
+    const formData = new FormData();
+    formData.append('from', 'Holiday Cards <noreply@mg.sendyourcards.io>');
+    formData.append('to', contactEmail);
+    formData.append('subject', `Order Update: ${readableOrderId} - ${orderStatus.toUpperCase()}`);
+    formData.append('html', emailHtml);
+
+    const mailgunResponse = await fetch(`https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`
+      },
+      body: formData
     });
+
+    console.log("Mailgun response status:", mailgunResponse.status);
+    
+    if (!mailgunResponse.ok) {
+      const errorText = await mailgunResponse.text();
+      console.error("Mailgun error response:", errorText);
+      throw new Error(`Mailgun API error: ${mailgunResponse.status} - ${errorText}`);
+    }
+
+    const mailgunResult = await mailgunResponse.json();
 
     console.log("Email sent successfully:", mailgunResult);
 
