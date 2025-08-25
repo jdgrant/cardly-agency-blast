@@ -29,6 +29,11 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     console.log("=== EMAIL FUNCTION START ===");
+    console.log("Environment check:");
+    console.log("- MAILGUN_API_KEY present:", !!MAILGUN_API_KEY);
+    console.log("- MAILGUN_API_KEY length:", MAILGUN_API_KEY ? MAILGUN_API_KEY.length : 0);
+    console.log("- All env vars:", Object.keys(Deno.env.toObject()).filter(k => k.includes('MAILGUN')));
+    
     const requestData: StatusEmailRequest = await req.json();
     console.log("Received data:", JSON.stringify(requestData, null, 2));
 
