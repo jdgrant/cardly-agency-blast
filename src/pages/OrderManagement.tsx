@@ -604,7 +604,7 @@ const OrderManagement = () => {
                         onClick={() => {
                           // Download signature template
                           const link = document.createElement('a');
-                          link.href = '/SignatureInstructions.pdf';
+                          link.href = '/SignatureInstruction.pdf';
                           link.download = 'SignatureTemplate.pdf';
                           link.click();
                         }}
@@ -654,7 +654,7 @@ const OrderManagement = () => {
                           onClick={() => {
                             // Download signature template
                             const link = document.createElement('a');
-                            link.href = '/SignatureInstructions.pdf';
+                            link.href = '/SignatureInstruction.pdf';
                             link.download = 'SignatureTemplate.pdf';
                             link.click();
                           }}
