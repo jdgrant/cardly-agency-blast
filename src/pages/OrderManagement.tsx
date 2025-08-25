@@ -191,8 +191,8 @@ const OrderManagement = () => {
     if (order.csv_file_url) completed++;
     if (order.invoice_paid) completed++;
     
-    // Only count signature if it was purchased
-    if (order.signature_purchased) {
+    // Only count signature if it was purchased (explicitly true)
+    if (order.signature_purchased === true) {
       total++;
       if (order.signature_url) completed++;
     }
@@ -219,7 +219,7 @@ const OrderManagement = () => {
 
   const canProceedToPayment = () => {
     const baseRequirements = order?.logo_url && order?.csv_file_url;
-    const signatureRequirement = order?.signature_purchased ? order?.signature_url : true;
+    const signatureRequirement = order?.signature_purchased === true ? order?.signature_url : true;
     return baseRequirements && signatureRequirement;
   };
 
@@ -426,7 +426,7 @@ const OrderManagement = () => {
                   )}
                   <span>Logo Upload</span>
                 </div>
-                {order.signature_purchased && (
+                {order.signature_purchased === true && (
                   <div className="flex items-center space-x-2">
                     {getStepStatus('signature') === 'complete' ? (
                       <CheckCircle className="w-4 h-4 text-green-500" />
@@ -552,8 +552,8 @@ const OrderManagement = () => {
                   )}
                 </div>
 
-                {/* Signature Upload - Only show if purchased */}
-                {order.signature_purchased && (
+                {/* Signature Section - Show upgrade option if not purchased, upload if purchased */}
+                {order.signature_purchased === true ? (
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       <FileText className="w-5 h-5 text-gray-400" />
@@ -562,18 +562,67 @@ const OrderManagement = () => {
                         <p className="text-sm text-gray-600">Upload or extract your signature</p>
                       </div>
                     </div>
-                    {order.signature_url ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
+                    <div className="flex items-center space-x-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setShowSignatureUpload(true)}
+                        onClick={() => {
+                          // Download signature template
+                          const link = document.createElement('a');
+                          link.href = '/SignatureInstructions.pdf';
+                          link.download = 'SignatureTemplate.pdf';
+                          link.click();
+                        }}
                       >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload
+                        📄 Template
                       </Button>
-                    )}
+                      {order.signature_url ? (
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowSignatureUpload(true)}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
+                    <div className="flex items-start space-x-3">
+                      <FileText className="w-5 h-5 text-blue-600 mt-1" />
+                      <div className="flex-1">
+                        <p className="font-medium text-blue-900">Add Personal Signature</p>
+                        <p className="text-sm text-blue-700 mb-3">
+                          Make your cards more personal by adding your handwritten signature to each card.
+                        </p>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                          >
+                            ✨ Upgrade to Add Signature - $25
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Download signature template
+                              const link = document.createElement('a');
+                              link.href = '/SignatureInstructions.pdf';
+                              link.download = 'SignatureTemplate.pdf';
+                              link.click();
+                            }}
+                          >
+                            📄 Download Template
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 

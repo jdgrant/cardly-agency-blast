@@ -80,8 +80,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (mailingListUploaded) completed++;
     if (invoicePaid) completed++;
     
-    // Only count signature if it was purchased
-    if (signaturePurchased) {
+    // Only count signature if it was purchased (explicitly true)
+    if (signaturePurchased === true) {
       total++;
       if (signatureSubmitted) completed++;
     }
@@ -103,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
         
         <!-- Progress Steps -->
         ${createCheckItem('Logo Upload', logoUploaded)}
-        ${signaturePurchased ? createCheckItem('Signature Submitted', signatureSubmitted) : ''}
+        ${signaturePurchased === true ? createCheckItem('Signature Submitted', signatureSubmitted) : ''}
         ${createCheckItem('Client List Upload', mailingListUploaded)}
         ${createCheckItem('Payment Completed', invoicePaid || false)}
       </div>
