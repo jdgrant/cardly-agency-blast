@@ -97,7 +97,8 @@ const handler = async (req: Request): Promise<Response> => {
     const mailgunResult = await sendEmailViaMailgun({
       to: contactEmail,
       subject: `Order Update: ${readableOrderId} - ${orderStatus.toUpperCase()}`,
-      html: emailHtml
+      html: emailHtml,
+      from: 'Holiday Cards <noreply@mg.sendyourcards.io>'
     });
 
     console.log("Email sent successfully:", mailgunResult);
