@@ -806,9 +806,9 @@ const JobDetail = () => {
             <Button
               onClick={handleSendStatusEmail}
               disabled={isEmailSending || !order.contact_email}
-              variant="outline"
+              variant="default"
               size="sm"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <Mail className="w-4 h-4" />
               <span>{isEmailSending ? 'Sending...' : 'Email Status'}</span>
