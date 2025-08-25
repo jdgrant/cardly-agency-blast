@@ -18,7 +18,8 @@ import {
   Image as ImageIcon,
   MapPin,
   Upload,
-  ChevronDown
+  ChevronDown,
+  Mail
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
@@ -98,6 +99,7 @@ const JobDetail = () => {
   const [signatureBlob, setSignatureBlob] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSignatureUpload, setShowSignatureUpload] = useState(false);
+  const [isEmailSending, setIsEmailSending] = useState(false);
   const [generatingPDFs, setGeneratingPDFs] = useState(false);
   const [generatingFront, setGeneratingFront] = useState(false);
   const [generatingGotenberg, setGeneratingGotenberg] = useState(false);
@@ -709,6 +711,53 @@ const JobDetail = () => {
       });
     }
   };
+
+  const handleSendStatusEmail = async () => {
+    if (!order || !order.contact_email) {
+      toast({
+        title: 'Email Send Failed',
+        description: 'Contact email is required to send status update.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsEmailSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-order-status-email', {
+        body: {
+          orderId: order.id,
+          orderStatus: order.status,
+          contactEmail: order.contact_email,
+          contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
+          readableOrderId: order.readable_order_id || order.id.slice(0, 8),
+          logoUploaded: !!order.logo_url,
+          signatureSubmitted: !!order.signature_url,
+          mailingListUploaded: !!order.csv_file_url,
+          signaturePurchased: order.signature_purchased,
+          invoicePaid: order.invoice_paid
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Email Sent',
+        description: `Status email sent to ${order.contact_email}`
+      });
+    } catch (error: any) {
+      console.error('Email send failed:', error);
+      toast({
+        title: 'Email Send Failed',
+        description: error?.message || 'Could not send status email.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsEmailSending(false);
+    }
+  };
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -754,6 +803,16 @@ const JobDetail = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <Button
+              onClick={handleSendStatusEmail}
+              disabled={isEmailSending || !order.contact_email}
+              variant="outline"
+              size="sm"
+              className="flex items-center space-x-2"
+            >
+              <Mail className="w-4 h-4" />
+              <span>{isEmailSending ? 'Sending...' : 'Email Status'}</span>
+            </Button>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Status:</span>
               <Select
