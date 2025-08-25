@@ -132,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Mailgun
     const formData = new FormData();
-    formData.append("from", `Holiday Cards <orders@${MAILGUN_DOMAIN}>`);
+    formData.append("from", `Holiday Cards <noreply@${MAILGUN_DOMAIN}>`);
     formData.append("to", contactEmail);
     formData.append("subject", `Order Status Update - #${readableOrderId}`);
     formData.append("html", emailHtml);
