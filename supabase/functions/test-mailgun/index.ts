@@ -12,18 +12,27 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
+    const allEnvVars = Deno.env.toObject();
     
-    console.log("=== MAILGUN TEST ===");
+    console.log("=== DETAILED MAILGUN TEST ===");
+    console.log("MAILGUN_API_KEY from Deno.env.get():", MAILGUN_API_KEY);
     console.log("MAILGUN_API_KEY present:", !!MAILGUN_API_KEY);
+    console.log("MAILGUN_API_KEY type:", typeof MAILGUN_API_KEY);
     console.log("MAILGUN_API_KEY length:", MAILGUN_API_KEY ? MAILGUN_API_KEY.length : 0);
-    console.log("First 10 chars:", MAILGUN_API_KEY ? MAILGUN_API_KEY.substring(0, 10) : "none");
-    console.log("All env vars with MAILGUN:", Object.keys(Deno.env.toObject()).filter(k => k.includes('MAILGUN')));
+    console.log("MAILGUN_API_KEY from allEnvVars:", allEnvVars.MAILGUN_API_KEY);
+    console.log("Direct check - allEnvVars.MAILGUN_API_KEY present:", !!allEnvVars.MAILGUN_API_KEY);
+    console.log("All env vars with MAILGUN:", Object.keys(allEnvVars).filter(k => k.includes('MAILGUN')));
     
-    if (!MAILGUN_API_KEY) {
+    const apiKey = MAILGUN_API_KEY || allEnvVars.MAILGUN_API_KEY;
+    
+    if (!apiKey) {
       return new Response(
         JSON.stringify({ 
           error: "MAILGUN_API_KEY not found in environment",
-          availableEnvVars: Object.keys(Deno.env.toObject())
+          availableEnvVars: Object.keys(allEnvVars),
+          mailgunFromGet: MAILGUN_API_KEY,
+          mailgunFromObject: allEnvVars.MAILGUN_API_KEY,
+          mailgunType: typeof MAILGUN_API_KEY
         }),
         {
           status: 400,
@@ -36,7 +45,7 @@ const handler = async (req: Request): Promise<Response> => {
     const testResponse = await fetch('https://api.mailgun.net/v3/mg.sendyourcards.io/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
+        'Authorization': `Basic ${btoa(`api:${apiKey}`)}`,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
