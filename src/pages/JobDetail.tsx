@@ -764,10 +764,13 @@ const JobDetail = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading job details...</p>
+          <p className="text-sm text-gray-500 mt-2">Order ID: {orderId}</p>
         </div>
       </div>
     );
   }
+
+  console.log('JobDetail render - loading:', loading, 'order:', !!order, 'orderId:', orderId);
 
   if (!order) {
     return (
