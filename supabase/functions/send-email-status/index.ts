@@ -39,6 +39,10 @@ const handler = async (req: Request): Promise<Response> => {
       resendKey: !!Deno.env.get('RESEND_API_KEY')
     });
 
+    if (!mailgunKey) {
+      throw new Error('No email API key found');
+    }
+
     const { 
       contactEmail, 
       contactName, 
@@ -99,19 +103,39 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
     `;
 
-    // For now, just return success to test the function works
-    console.log("Email would be sent to:", contactEmail);
-    console.log("Subject:", `Order Update: ${readableOrderId} - ${orderStatus.toUpperCase()}`);
+    console.log("Preparing to send email to:", contactEmail);
+    
+    // Send email using Mailgun API
+    const formData = new FormData();
+    formData.append('from', 'Holiday Cards <noreply@mg.sendyourcards.io>');
+    formData.append('to', contactEmail);
+    formData.append('subject', `Order Update: ${readableOrderId} - ${orderStatus.toUpperCase()}`);
+    formData.append('html', emailHtml);
+
+    const mailgunResponse = await fetch('https://api.mailgun.net/v3/mg.sendyourcards.io/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${btoa(`api:${mailgunKey}`)}`
+      },
+      body: formData
+    });
+
+    console.log("Mailgun response status:", mailgunResponse.status);
+    
+    if (!mailgunResponse.ok) {
+      const errorText = await mailgunResponse.text();
+      console.error("Mailgun error response:", errorText);
+      throw new Error(`Mailgun API error: ${mailgunResponse.status} - ${errorText}`);
+    }
+
+    const mailgunResult = await mailgunResponse.json();
+    console.log("Email sent successfully:", mailgunResult);
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Order status email would be sent to ${contactEmail}`,
-        debug: {
-          hasMailgunKey: !!Deno.env.get('MAILGUN_KEY'),
-          hasMailgunApiKey: !!Deno.env.get('MAILGUN_API_KEY'),
-          environment: "test"
-        }
+        message: `Order status email sent to ${contactEmail}`,
+        mailgunId: mailgunResult.id
       }),
       {
         status: 200,
