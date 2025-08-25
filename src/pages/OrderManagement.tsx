@@ -591,36 +591,41 @@ const OrderManagement = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 border rounded-lg bg-blue-50 border-blue-200">
-                    <div className="flex items-start space-x-3">
-                      <FileText className="w-5 h-5 text-blue-600 mt-1" />
-                      <div className="flex-1">
-                        <p className="font-medium text-blue-900">Add Personal Signature</p>
-                        <p className="text-sm text-blue-700 mb-3">
+                  <div className="p-6 border-2 border-dashed border-blue-200 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50">
+                    <div className="text-center space-y-4">
+                      <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <FileText className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-blue-900 mb-2">Add Personal Signature</h3>
+                        <p className="text-sm text-blue-700 max-w-md mx-auto">
                           Make your cards more personal by adding your handwritten signature to each card.
                         </p>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-blue-700 border-blue-300 hover:bg-blue-100"
-                          >
-                            ✨ Upgrade to Add Signature - $25
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Download signature template
-                              const link = document.createElement('a');
-                              link.href = '/SignatureInstructions.pdf';
-                              link.download = 'SignatureTemplate.pdf';
-                              link.click();
-                            }}
-                          >
-                            📄 Download Template
-                          </Button>
-                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                        >
+                          <span className="mr-2">✨</span>
+                          Upgrade to Add Signature - $25
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                          onClick={() => {
+                            // Download signature template
+                            const link = document.createElement('a');
+                            link.href = '/SignatureInstructions.pdf';
+                            link.download = 'SignatureTemplate.pdf';
+                            link.click();
+                          }}
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Download Template
+                        </Button>
                       </div>
                     </div>
                   </div>
