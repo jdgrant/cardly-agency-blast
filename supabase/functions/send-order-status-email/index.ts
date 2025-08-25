@@ -27,13 +27,15 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("=== Email Status Function Started ===");
     const requestData: StatusEmailRequest = await req.json();
-    console.log("Sending status email for order:", requestData.orderId);
+    console.log("Request data received:", JSON.stringify(requestData, null, 2));
 
     if (!requestData.contactEmail) {
       throw new Error("Contact email is required");
     }
 
+    console.log("Creating status email data...");
     const statusEmailData: StatusEmailData = {
       orderId: requestData.orderId,
       orderStatus: requestData.orderStatus,
@@ -47,14 +49,21 @@ const handler = async (req: Request): Promise<Response> => {
       invoicePaid: requestData.invoicePaid
     };
 
+    console.log("Generating order management URL...");
     const orderManagementUrl = generateOrderManagementUrl(requestData.orderId, req.headers.get('origin'));
-    const emailHtml = generateStatusEmailHtml(statusEmailData, orderManagementUrl);
+    console.log("Order management URL:", orderManagementUrl);
 
+    console.log("Generating email HTML...");
+    const emailHtml = generateStatusEmailHtml(statusEmailData, orderManagementUrl);
+    console.log("Email HTML generated successfully");
+
+    console.log("Sending email via Mailgun...");
     const mailgunResult = await sendEmailViaMailgun({
       to: requestData.contactEmail,
       subject: `Order Status Update - #${requestData.readableOrderId}`,
       html: emailHtml
     });
+    console.log("Mailgun result:", mailgunResult);
 
     return new Response(
       JSON.stringify({ 
@@ -72,11 +81,16 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error("Error sending status email:", error);
+    console.error("=== EMAIL FUNCTION ERROR ===");
+    console.error("Error details:", error.message);
+    console.error("Error stack:", error.stack);
+    console.error("Error name:", error.name);
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        success: false 
+        success: false,
+        stack: error.stack,
+        errorName: error.name
       }),
       {
         status: 500,
