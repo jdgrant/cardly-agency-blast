@@ -54,6 +54,7 @@ interface Order {
   contact_phone?: string | null;
   billing_address?: string | null;
   invoice_paid?: boolean;
+  signature_purchased?: boolean;
 }
 
 interface Template {
@@ -184,12 +185,17 @@ const OrderManagement = () => {
     if (!order) return 0;
     
     let completed = 0;
-    const total = 4; // Logo, Signature, Client List, Payment
+    let total = 3; // Base: Logo, Client List, Payment
     
     if (order.logo_url) completed++;
-    if (order.signature_url) completed++;
     if (order.csv_file_url) completed++;
     if (order.invoice_paid) completed++;
+    
+    // Only count signature if it was purchased
+    if (order.signature_purchased) {
+      total++;
+      if (order.signature_url) completed++;
+    }
     
     return (completed / total) * 100;
   };
@@ -212,7 +218,9 @@ const OrderManagement = () => {
   };
 
   const canProceedToPayment = () => {
-    return order?.logo_url && order?.signature_url && order?.csv_file_url;
+    const baseRequirements = order?.logo_url && order?.csv_file_url;
+    const signatureRequirement = order?.signature_purchased ? order?.signature_url : true;
+    return baseRequirements && signatureRequirement;
   };
 
   const formatMailingWindow = (window: string) => {
@@ -418,14 +426,16 @@ const OrderManagement = () => {
                   )}
                   <span>Logo Upload</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {getStepStatus('signature') === 'complete' ? (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <Clock className="w-4 h-4 text-gray-400" />
-                  )}
-                  <span>Signature</span>
-                </div>
+                {order.signature_purchased && (
+                  <div className="flex items-center space-x-2">
+                    {getStepStatus('signature') === 'complete' ? (
+                      <CheckCircle className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-gray-400" />
+                    )}
+                    <span>Signature</span>
+                  </div>
+                )}
                 <div className="flex items-center space-x-2">
                   {getStepStatus('clients') === 'complete' ? (
                     <CheckCircle className="w-4 h-4 text-green-500" />
@@ -542,28 +552,30 @@ const OrderManagement = () => {
                   )}
                 </div>
 
-                {/* Signature Upload */}
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <FileText className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="font-medium">Signature</p>
-                      <p className="text-sm text-gray-600">Upload or extract your signature</p>
+                {/* Signature Upload - Only show if purchased */}
+                {order.signature_purchased && (
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <FileText className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <p className="font-medium">Signature</p>
+                        <p className="text-sm text-gray-600">Upload or extract your signature</p>
+                      </div>
                     </div>
+                    {order.signature_url ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSignatureUpload(true)}
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload
+                      </Button>
+                    )}
                   </div>
-                  {order.signature_url ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowSignatureUpload(true)}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload
-                    </Button>
-                  )}
-                </div>
+                )}
 
                 {/* Client List Upload */}
                 <div className="flex items-center justify-between p-4 border rounded-lg">

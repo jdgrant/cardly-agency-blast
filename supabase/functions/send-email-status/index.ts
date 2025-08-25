@@ -74,12 +74,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Calculate progress like the customer management page
     let completed = 0;
-    const total = 4;
+    let total = 3; // Base: Logo, Client List, Payment
     
     if (logoUploaded) completed++;
-    if (signatureSubmitted) completed++;
     if (mailingListUploaded) completed++;
     if (invoicePaid) completed++;
+    
+    // Only count signature if it was purchased
+    if (signaturePurchased) {
+      total++;
+      if (signatureSubmitted) completed++;
+    }
     
     const progressPercentage = Math.round((completed / total) * 100);
 
@@ -98,7 +103,7 @@ const handler = async (req: Request): Promise<Response> => {
         
         <!-- Progress Steps -->
         ${createCheckItem('Logo Upload', logoUploaded)}
-        ${createCheckItem('Signature Submitted', signatureSubmitted)}
+        ${signaturePurchased ? createCheckItem('Signature Submitted', signatureSubmitted) : ''}
         ${createCheckItem('Client List Upload', mailingListUploaded)}
         ${createCheckItem('Payment Completed', invoicePaid || false)}
       </div>
