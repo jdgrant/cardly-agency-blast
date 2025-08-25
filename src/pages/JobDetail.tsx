@@ -724,7 +724,7 @@ const JobDetail = () => {
 
     setIsEmailSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-order-status-email', {
+      const { data, error } = await supabase.functions.invoke('send-email-status', {
         body: {
           orderId: order.id,
           orderStatus: order.status,
