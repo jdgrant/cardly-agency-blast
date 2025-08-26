@@ -76,6 +76,27 @@ export type Database = {
           },
         ]
       }
+      email_unsubscribes: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          unsubscribed_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          unsubscribed_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          unsubscribed_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           billing_address: string | null
@@ -488,6 +509,10 @@ export type Database = {
       }
       is_admin_user: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_email_unsubscribed: {
+        Args: { email_address: string }
         Returns: boolean
       }
       set_admin_session: {

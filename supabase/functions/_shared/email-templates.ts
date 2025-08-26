@@ -11,7 +11,7 @@ export interface StatusEmailData {
   invoicePaid?: boolean;
 }
 
-export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUrl: string): string {
+export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUrl: string, unsubscribeUrl?: string): string {
   const { 
     contactName, 
     readableOrderId,
@@ -90,6 +90,13 @@ export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUr
           <p><strong>Current Status:</strong> ${orderStatus}</p>
           <p>If you have any questions, please don't hesitate to contact us.</p>
           <p>You can manage your order and upload any missing files by clicking the button above.</p>
+          ${unsubscribeUrl ? `
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
+          <p style="font-size: 12px; color: #888;">
+            Don't want to receive these order status updates? 
+            <a href="${unsubscribeUrl}" style="color: #666; text-decoration: underline;">Unsubscribe here</a>
+          </p>
+          ` : ''}
         </div>
       </div>
     </body>

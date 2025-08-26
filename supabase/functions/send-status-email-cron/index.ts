@@ -39,7 +39,12 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (requestData.statusFilter) {
-      query = query.eq('status', requestData.statusFilter);
+      if (requestData.statusFilter === 'not_completed') {
+        // Filter for orders that are not completed
+        query = query.neq('status', 'completed');
+      } else {
+        query = query.eq('status', requestData.statusFilter);
+      }
     }
 
     const { data: orders, error } = await query;
@@ -72,6 +77,28 @@ const handler = async (req: Request): Promise<Response> => {
     // Process each order
     for (const order of orders) {
       try {
+        // Check if email is unsubscribed
+        const { data: unsubscribed, error: unsubError } = await supabase
+          .from('email_unsubscribes')
+          .select('email')
+          .eq('email', order.contact_email)
+          .single();
+
+        if (unsubError && unsubError.code !== 'PGRST116') {
+          console.error(`Error checking unsubscribe status for ${order.contact_email}:`, unsubError);
+        }
+
+        if (unsubscribed) {
+          console.log(`Skipping unsubscribed email: ${order.contact_email}`);
+          emailResults.push({
+            orderId: order.id,
+            success: true,
+            skipped: true,
+            reason: 'unsubscribed'
+          });
+          continue;
+        }
+
         const statusEmailData: StatusEmailData = {
           orderId: order.id,
           orderStatus: order.status,
@@ -86,7 +113,8 @@ const handler = async (req: Request): Promise<Response> => {
         };
 
         const orderManagementUrl = generateOrderManagementUrl(order.id, req.headers.get('origin'));
-        const emailHtml = generateStatusEmailHtml(statusEmailData, orderManagementUrl);
+        const unsubscribeUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/unsubscribe-email?email=${encodeURIComponent(order.contact_email)}`;
+        const emailHtml = generateStatusEmailHtml(statusEmailData, orderManagementUrl, unsubscribeUrl);
 
         const mailgunResult = await sendEmailViaMailgun({
           to: order.contact_email,
