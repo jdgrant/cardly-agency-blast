@@ -1,7 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
-import { generateStatusEmailHtml, StatusEmailData } from '../_shared/email-templates.ts';
-import { sendEmailViaMailgun, generateOrderManagementUrl } from '../_shared/mailgun-client.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -74,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
     let successCount = 0;
     let errorCount = 0;
 
-    // Process each order
+    // Process each order by calling the same send-email-status function
     for (const order of orders) {
       try {
         // Check if email is unsubscribed
@@ -99,33 +97,30 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        const statusEmailData: StatusEmailData = {
-          orderId: order.id,
-          orderStatus: order.status,
-          contactEmail: order.contact_email,
-          contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
-          readableOrderId: order.readable_order_id || order.id.slice(0, 8),
-          logoUploaded: !!order.logo_url,
-          signatureSubmitted: !!order.signature_url,
-          mailingListUploaded: !!order.csv_file_url,
-          signaturePurchased: order.signature_purchased,
-          invoicePaid: order.invoice_paid
-        };
-
-        const orderManagementUrl = generateOrderManagementUrl(order.id, req.headers.get('origin'));
-        const unsubscribeUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/unsubscribe-email?email=${encodeURIComponent(order.contact_email)}`;
-        const emailHtml = generateStatusEmailHtml(statusEmailData, orderManagementUrl, unsubscribeUrl);
-
-        const mailgunResult = await sendEmailViaMailgun({
-          to: order.contact_email,
-          subject: `Order Status Update - #${statusEmailData.readableOrderId}`,
-          html: emailHtml
+        // Use the same send-email-status function to ensure identical emails
+        const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email-status', {
+          body: {
+            orderId: order.id,
+            orderStatus: order.status,
+            contactEmail: order.contact_email,
+            contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
+            readableOrderId: order.readable_order_id || order.id.slice(0, 8),
+            logoUploaded: !!order.logo_url,
+            signatureSubmitted: !!order.signature_url,
+            mailingListUploaded: !!order.csv_file_url,
+            signaturePurchased: order.signature_purchased,
+            invoicePaid: order.invoice_paid
+          }
         });
+
+        if (emailError) {
+          throw emailError;
+        }
 
         emailResults.push({
           orderId: order.id,
           success: true,
-          messageId: mailgunResult.id
+          messageId: emailResult?.mailgunId
         });
         successCount++;
 
