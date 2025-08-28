@@ -334,6 +334,21 @@ const JobDetail = () => {
       // Update local state
       setOrder(prev => prev ? { ...prev, status: newStatus } : null);
 
+      // Send automatic status email after successful update
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-status-email-cron', {
+          body: { ordersToEmail: [orderId] }
+        });
+        
+        if (emailError) {
+          console.error('Error sending status email:', emailError);
+        } else {
+          console.log('Status email sent successfully for order:', orderId);
+        }
+      } catch (emailError) {
+        console.error('Failed to send status email:', emailError);
+      }
+
       toast({
         title: "Status Updated",
         description: `Order status changed to ${newStatus}`,
