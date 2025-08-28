@@ -739,18 +739,10 @@ const JobDetail = () => {
 
     setIsEmailSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke('send-email-status', {
+      // Use the same function as cron job to ensure identical email format
+      const { data, error } = await supabase.functions.invoke('send-status-email-cron', {
         body: {
-          orderId: order.id,
-          orderStatus: order.status,
-          contactEmail: order.contact_email,
-          contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
-          readableOrderId: order.readable_order_id || order.id.slice(0, 8),
-          logoUploaded: !!order.logo_url,
-          signatureSubmitted: !!order.signature_url,
-          mailingListUploaded: !!order.csv_file_url,
-          signaturePurchased: order.signature_purchased,
-          invoicePaid: order.invoice_paid
+          ordersToEmail: [order.id] // Send email for this specific order only
         }
       });
 
