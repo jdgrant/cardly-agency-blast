@@ -1,4 +1,6 @@
-const MAILGUN_API_KEY = Deno.env.get("MAILGUN_API_KEY");
+const MAILGUN_API_KEY = Deno.env.get("MAILGUN_KEY") || 
+                        Deno.env.get("MAILGUN_API_KEY") || 
+                        Deno.env.get("RESEND_API_KEY");
 const MAILGUN_DOMAIN = "mg.sendyourcards.io";
 
 export interface EmailOptions {
