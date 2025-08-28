@@ -56,6 +56,6 @@ export async function sendEmailViaMailgun(options: EmailOptions): Promise<any> {
 
 export function generateOrderManagementUrl(orderId: string, baseUrl?: string): string {
   const shortId = orderId.replace(/-/g, '').substring(0, 8);
-  const domain = baseUrl || 'https://your-domain.com';
+  const domain = baseUrl || 'https://sendyourcards.io';
   return `${domain}/#/ordermanagement/${shortId}`;
 }
