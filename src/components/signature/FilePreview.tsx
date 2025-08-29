@@ -10,24 +10,15 @@ const FilePreview: React.FC<FilePreviewProps> = ({ file, className = "" }) => {
   const [fileUrl, setFileUrl] = React.useState<string>('');
   
   React.useEffect(() => {
-    // Handle converted files from PDF conversion or regular files
-    if (file.name.includes('.svg') || file.type === 'image/svg+xml' || 
-        (file.name.includes('.png') && file.size < 1000000 && file.type === 'image/png')) {
-      // Try to read as text first (for SVG content in PNG files from PDF conversion)
-      file.text().then(content => {
-        if (content.includes('<svg') || content.includes('<?xml')) {
-          // It's SVG content, encode as base64
-          const base64Svg = btoa(content);
-          setFileUrl(`data:image/svg+xml;base64,${base64Svg}`);
-        } else {
-          // It's actual binary image data
-          setFileUrl(URL.createObjectURL(file));
-        }
+    // Handle SVG files by reading as text and creating data URL
+    if (file.name.includes('.svg') || file.type === 'image/svg+xml') {
+      file.text().then(svgText => {
+        setFileUrl(`data:image/svg+xml;utf8,${encodeURIComponent(svgText)}`);
       }).catch(() => {
-        // Fallback to object URL for binary files
         setFileUrl(URL.createObjectURL(file));
       });
     } else {
+      // Handle regular image and PDF files
       setFileUrl(URL.createObjectURL(file));
     }
     

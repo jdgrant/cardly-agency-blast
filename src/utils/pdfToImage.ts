@@ -25,7 +25,24 @@ export const convertPdfToImage = async (file: File): Promise<File> => {
       throw new Error('No image data returned from conversion');
     }
 
-    // Convert base64 back to File
+    // Handle SVG content returned from the edge function
+    if (data.imageData.startsWith('data:image/svg+xml')) {
+      // Extract SVG content from data URL
+      const base64Data = data.imageData.split(',')[1];
+      const svgContent = atob(base64Data);
+      
+      // Create a File object with SVG content and proper mime type
+      const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+      const imageFile = new File([blob], data.fileName || file.name.replace('.pdf', '.svg'), {
+        type: 'image/svg+xml',
+        lastModified: Date.now()
+      });
+
+      console.log('PDF converted successfully to SVG');
+      return imageFile;
+    }
+
+    // Handle PNG content (fallback)
     const base64Data = data.imageData.split(',')[1];
     const byteCharacters = atob(base64Data);
     const byteNumbers = new Array(byteCharacters.length);
