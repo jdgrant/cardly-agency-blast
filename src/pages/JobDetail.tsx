@@ -127,9 +127,15 @@ const JobDetail = () => {
       console.log('Starting to fetch order details for:', orderId);
       
       // Get admin session ID
-      const adminSessionId = localStorage.getItem('admin_session_id');
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
       if (!adminSessionId) {
-        throw new Error('Admin session not found');
+        toast({
+          title: "Authentication Required",
+          description: "Please login as admin to access this page.",
+          variant: "destructive"
+        });
+        navigate('/admin');
+        return;
       }
       
       // Fetch order details using secure function with admin session
@@ -144,7 +150,8 @@ const JobDetail = () => {
       if (orderError || !orderDetails || orderDetails.length === 0) {
         if (orderError?.message?.includes('Invalid admin session')) {
           // Clear invalid session and redirect to admin login
-          localStorage.removeItem('admin_session_id');
+          sessionStorage.removeItem('adminAuth');
+          sessionStorage.removeItem('adminSessionId');
           toast({
             title: "Session Expired",
             description: "Your admin session has expired. Please login again.",
@@ -235,6 +242,9 @@ const JobDetail = () => {
       
       // Handle admin session errors
       if (error instanceof Error && error.message.includes('Admin session not found')) {
+        // Clear any stale session data
+        sessionStorage.removeItem('adminAuth');
+        sessionStorage.removeItem('adminSessionId');
         toast({
           title: "Authentication Required",
           description: "Please login as admin to access this page.",
