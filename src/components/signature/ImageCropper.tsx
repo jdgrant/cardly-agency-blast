@@ -32,8 +32,11 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
 
     setFabricCanvas(canvas);
 
-    // Configure PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    // Configure PDF.js worker - use local worker instead of CDN
+    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+      'pdfjs-dist/build/pdf.worker.min.js',
+      import.meta.url
+    ).toString();
 
     // Load the file (PDF or image)
     if (imageFile.type === 'application/pdf') {
