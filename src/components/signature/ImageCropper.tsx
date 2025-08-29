@@ -50,7 +50,9 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
     console.log('Loading image:', file.name, file.type);
     
     try {
-      const img = await FabricImage.fromURL(imageUrl);
+      const img = await FabricImage.fromURL(imageUrl, {
+        crossOrigin: 'anonymous'
+      });
       console.log('Image loaded:', img.width, img.height);
       
       setupImageOnCanvas(canvas, img);
@@ -114,20 +116,21 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
     const imageWidth = img.width || 1;
     const imageHeight = img.height || 1;
     
-    const scaleX = canvasWidth / imageWidth;
-    const scaleY = canvasHeight / imageHeight;
+    const scaleX = (canvasWidth - 40) / imageWidth; // Leave some padding
+    const scaleY = (canvasHeight - 40) / imageHeight;
     const scale = Math.min(scaleX, scaleY, 1); // Don't scale up
     
+    console.log('Image dimensions:', imageWidth, 'x', imageHeight);
     console.log('Scaling image by:', scale);
-    img.scale(scale);
     
-    // Center the image on the canvas
-    const scaledWidth = imageWidth * scale;
-    const scaledHeight = imageHeight * scale;
-    
+    // Set image properties
     img.set({
-      left: (canvasWidth - scaledWidth) / 2,
-      top: (canvasHeight - scaledHeight) / 2,
+      scaleX: scale,
+      scaleY: scale,
+      left: (canvasWidth - imageWidth * scale) / 2,
+      top: (canvasHeight - imageHeight * scale) / 2,
+      selectable: false,
+      evented: false,
     });
     
     canvas.add(img);
@@ -135,6 +138,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
     setOriginalImage(img);
     
     // Create initial crop rectangle
+    const scaledWidth = imageWidth * scale;
+    const scaledHeight = imageHeight * scale;
     const cropWidth = Math.min(400, scaledWidth * 0.8);
     const cropHeight = Math.min(200, scaledHeight * 0.4);
     
@@ -155,6 +160,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
     setCropRect(rect);
     canvas.setActiveObject(rect);
     canvas.renderAll();
+    
+    console.log('Canvas setup complete, objects:', canvas.getObjects().length);
   };
 
   const handleCrop = async () => {
