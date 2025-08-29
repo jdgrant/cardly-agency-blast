@@ -158,7 +158,14 @@ serve(async (req) => {
         cleanedTexts.forEach((text, index) => {
           const x = 50 + (index % 2) * 350;
           const y = 80 + (Math.floor(index / 2) * 25);
-          const escapedText = text.replace(/[<>&"']/g, (match: string) => {
+          
+          // Clean text and ensure it's safe for XML and base64 encoding
+          let cleanText = text
+            .replace(/[\u0000-\u001f\u007f-\u009f]/g, '') // Remove control characters
+            .replace(/[\u0080-\uffff]/g, '?') // Replace non-Latin1 with ?
+            .substring(0, 50); // Limit length
+          
+          const escapedText = cleanText.replace(/[<>&"']/g, (match: string) => {
             const entities: { [key: string]: string } = {
               '<': '&lt;',
               '>': '&gt;',
@@ -172,11 +179,16 @@ serve(async (req) => {
           svgContent += `<text x="${x}" y="${y}" font-size="14" font-family="Arial" fill="#333">${escapedText}</text>`;
         });
         
+        // Clean filename for safe encoding
+        const cleanFileName = fileName.replace(/[\u0080-\uffff]/g, '?').substring(0, 30);
         svgContent += `<text x="400" y="${height - 50}" text-anchor="middle" font-size="12" fill="#666">
-          PDF: ${fileName} - Content extracted for signature cropping
+          PDF: ${cleanFileName} - Content extracted for signature cropping
         </text></svg>`;
         
-        const base64Svg = btoa(svgContent);
+        // Use TextEncoder for safe base64 encoding
+        const encoder = new TextEncoder();
+        const svgBytes = encoder.encode(svgContent);
+        const base64Svg = btoa(String.fromCharCode(...svgBytes));
         const imageData = `data:image/svg+xml;base64,${base64Svg}`;
         
         console.log('PDF content extracted and converted to SVG');
