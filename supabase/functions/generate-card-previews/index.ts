@@ -71,12 +71,16 @@ serve(async (req) => {
     if (templateError || !template) throw new Error(templateError?.message || 'Template not found');
 
     // Inline assets
-    const encodeToDataUrl = async (path: string) => {
+    const encodeToDataUrl = async (path: string, isPdf = false) => {
       try {
         const { data } = await supabase.storage.from('holiday-cards').download(path);
         if (!data) return '';
         const buf = await data.arrayBuffer();
         const base64 = toBase64(new Uint8Array(buf));
+        
+        if (isPdf) {
+          return `data:application/pdf;base64,${base64}`;
+        }
         return `data:image/png;base64,${base64}`;
       } catch (e) {
         console.log('Failed to inline asset', path, e?.message);
@@ -84,8 +88,116 @@ serve(async (req) => {
       }
     };
 
+    // Handle signature URL - check if it's a full URL or path and if it's a PDF
+    let signatureDataUrl = '';
+    if (order.signature_url) {
+      try {
+        let signaturePath = order.signature_url;
+        
+        // If it's a full URL, extract the path
+        if (order.signature_url.startsWith('https://')) {
+          const urlParts = order.signature_url.split('/');
+          const bucketIndex = urlParts.findIndex(part => part === 'holiday-cards');
+          if (bucketIndex !== -1 && bucketIndex < urlParts.length - 1) {
+            signaturePath = urlParts.slice(bucketIndex + 1).join('/');
+          }
+        }
+        
+        // Check if it's a PDF and convert to image via Gotenberg
+        const isPdf = signaturePath.toLowerCase().endsWith('.pdf');
+        if (isPdf && GOTENBERG_URL && GOTENBERG_API_KEY) {
+          console.log('Converting PDF signature to image:', signaturePath);
+          
+          // Download the PDF
+          const { data: pdfData } = await supabase.storage.from('holiday-cards').download(signaturePath);
+          if (pdfData) {
+            // Convert PDF to base64 for embedding
+            const pdfBuf = await pdfData.arrayBuffer();
+            const pdfBase64 = toBase64(new Uint8Array(pdfBuf));
+            const pdfDataUrl = `data:application/pdf;base64,${pdfBase64}`;
+            
+            // Create HTML wrapper to display PDF and screenshot it
+            const pdfHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    html, body { margin: 0; padding: 0; width: 400px; height: 200px; }
+    body { background: #ffffff; overflow: hidden; }
+    .pdf-container { width: 100%; height: 100%; }
+    embed { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <div class="pdf-container">
+    <embed src="${pdfDataUrl}" type="application/pdf" />
+  </div>
+</body>
+</html>`;
+            
+            const form = new FormData();
+            form.append('files', new File([pdfHtml], 'signature.html', { type: 'text/html' }));
+            form.append('emulatedMediaType', 'print');
+            form.append('waitDelay', '2000ms');
+            form.append('width', '400');
+            form.append('height', '200');
+            
+            const headers: Record<string, string> = {
+              'Authorization': `Bearer ${GOTENBERG_API_KEY}`,
+              'X-Api-Key': GOTENBERG_API_KEY,
+            };
+            
+            const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/screenshot/html`;
+            const resp = await fetch(url, { method: 'POST', headers, body: form as any });
+            
+            if (resp.ok) {
+              const ct = resp.headers.get('content-type') || '';
+              const buf = await resp.arrayBuffer();
+              
+              if (ct.includes('zip')) {
+                // Extract PNG from ZIP
+                const u8 = new Uint8Array(buf);
+                const sig = [0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A];
+                let start = -1;
+                for (let i = 0; i < u8.length - sig.length; i++) {
+                  let match = true;
+                  for (let j = 0; j < sig.length; j++) if (u8[i+j] !== sig[j]) { match = false; break; }
+                  if (match) { start = i; break; }
+                }
+                if (start >= 0) {
+                  const endSig = [0x49,0x45,0x4E,0x44,0xAE,0x42,0x60,0x82];
+                  let end = -1;
+                  for (let i = start + 8; i < u8.length - endSig.length; i++) {
+                    let match = true;
+                    for (let j = 0; j < endSig.length; j++) if (u8[i+j] !== endSig[j]) { match = false; break; }
+                    if (match) { end = i + endSig.length; break; }
+                  }
+                  if (end > start) {
+                    const pngBytes = u8.slice(start, end);
+                    const base64 = toBase64(pngBytes);
+                    signatureDataUrl = `data:image/png;base64,${base64}`;
+                    console.log('PDF signature converted to image successfully');
+                  }
+                }
+              } else {
+                const base64 = toBase64(new Uint8Array(buf));
+                signatureDataUrl = `data:image/png;base64,${base64}`;
+                console.log('PDF signature converted to image successfully');
+              }
+            } else {
+              console.log('PDF conversion failed:', resp.status, await resp.text());
+            }
+          }
+        } else {
+          // Handle as regular image
+          signatureDataUrl = await encodeToDataUrl(signaturePath);
+        }
+      } catch (e) {
+        console.log('Error processing signature:', e?.message);
+      }
+    }
+
     const logoDataUrl = order.logo_url ? await encodeToDataUrl(order.logo_url) : '';
-    const signatureDataUrl = order.signature_url ? await encodeToDataUrl(order.signature_url) : '';
 
     // Handle template preview image - convert local paths to data URLs
     let previewDataUrl = '';
