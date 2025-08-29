@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,48 +24,59 @@ serve(async (req) => {
 
     console.log(`Processing signature file: ${fileName} (${fileType})`);
 
-    // Handle different file types
-    if (fileType === 'application/pdf') {
-      // For PDFs, just return them as-is with a flag indicating they're PDFs
-      // The client can handle them directly
-      return new Response(JSON.stringify({
-        success: true,
-        imageData: `data:${fileType};base64,${file}`,
-        fileName: fileName,
-        originalFormat: fileType,
-        convertedFormat: fileType,
-        isPdf: true,
-        message: 'PDF ready for cropping'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Convert base64 to Uint8Array
+    const base64Data = file.includes(',') ? file.split(',')[1] : file;
+    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    
+    // Generate unique filename
+    const timestamp = Date.now();
+    const fileExtension = fileType === 'application/pdf' ? 'pdf' : 
+                         fileType.split('/')[1] || 'png';
+    const storageFileName = `signatures/signature_${timestamp}.${fileExtension}`;
+
+    console.log(`Uploading file to storage: ${storageFileName}`);
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('holiday-cards')
+      .upload(storageFileName, binaryData, {
+        contentType: fileType,
+        upsert: true
       });
-    } else if (fileType.startsWith('image/')) {
-      // For images, return them directly
-      return new Response(JSON.stringify({
-        success: true,
-        imageData: `data:${fileType};base64,${file}`,
-        fileName: fileName,
-        originalFormat: fileType,
-        convertedFormat: fileType,
-        isPdf: false,
-        message: 'Image ready for cropping'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } else {
-      return new Response(JSON.stringify({ 
-        error: 'Unsupported file type. Please upload PNG, JPEG, or PDF files only.' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      throw new Error(`Upload failed: ${uploadError.message}`);
     }
 
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('holiday-cards')
+      .getPublicUrl(storageFileName);
+
+    console.log(`File uploaded successfully: ${publicUrl}`);
+
+    return new Response(JSON.stringify({
+      success: true,
+      processedFileUrl: publicUrl,
+      fileName: fileName,
+      originalFormat: fileType,
+      message: 'File uploaded successfully for review'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
   } catch (error) {
-    console.error('Error converting signature file:', error);
+    console.error('Error processing signature file:', error);
     
     return new Response(JSON.stringify({ 
-      error: 'File conversion failed',
+      error: 'File processing failed',
       details: error.message 
     }), {
       status: 500,
