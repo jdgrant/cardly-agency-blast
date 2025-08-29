@@ -141,18 +141,32 @@ const OrderManagement = () => {
   const fetchOrderByHashedId = async () => {
     try {
       setLoading(true);
+      console.log('Fetching order for hashedOrderId:', hashedOrderId);
       
       // Use the secure function to get order details for customer management
       const { data: orders, error } = await supabase
         .rpc('get_order_for_customer_management', { short_id: hashedOrderId });
 
-      if (error) throw error;
+      if (error) {
+        console.error('RPC Error:', error);
+        throw error;
+      }
+      
+      console.log('RPC Response:', orders);
       
       if (!orders || orders.length === 0) {
+        console.error('No orders found for ID:', hashedOrderId);
         throw new Error('Order not found');
       }
 
-      const orderData = orders[0];
+      const orderData = orders[0] as any; // Temporary fix for TypeScript
+      console.log('Order data received:', {
+        id: orderData.id,
+        signature_purchased: orderData.signature_purchased,
+        final_price: orderData.final_price,
+        signature_url: orderData.signature_url
+      });
+      
       setOrder(orderData);
 
       // Fetch template details
@@ -236,8 +250,18 @@ const OrderManagement = () => {
   const handleSignatureUpgrade = async () => {
     if (!order?.id || !hashedOrderId) return;
 
+    // Prevent multiple upgrades if already purchased
+    if (order.signature_purchased === true) {
+      toast({
+        title: "Already Upgraded",
+        description: "You have already added the signature upgrade to this order.",
+      });
+      return;
+    }
+
     try {
       console.log('Before upgrade - signature_purchased:', order.signature_purchased);
+      console.log('Current final_price:', order.final_price);
       
       // Use secure function to upgrade signature for this order
       const { data, error } = await supabase
