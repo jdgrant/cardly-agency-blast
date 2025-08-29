@@ -94,14 +94,14 @@ async function convertPdfToImage(file: string, fileName: string): Promise<Respon
       // Decode the base64 PDF file
       const pdfBytes = Uint8Array.from(atob(file), c => c.charCodeAt(0));
       
-      // Use Gotenberg PDF conversion directly
+      // Use Gotenberg LibreOffice conversion (which can handle PDFs to images)
       const form = new FormData();
       const pdfFile = new File([pdfBytes], fileName, { type: 'application/pdf' });
       form.append('files', pdfFile);
       
-      // Convert PDF to PNG with high quality
-      form.append('quality', '100');
-      form.append('format', 'png');
+      // Set landscape to false and specify paper size
+      form.append('landscape', 'false');
+      form.append('nativePageRanges', '1-1'); // Only convert first page
       
       const headers: Record<string, string> = {};
       if (GOTENBERG_API_KEY) {
@@ -109,9 +109,9 @@ async function convertPdfToImage(file: string, fileName: string): Promise<Respon
         headers['X-Api-Key'] = GOTENBERG_API_KEY;
       }
 
-      // Use the PDF engines convert endpoint
-      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/pdfengines/convert`;
-      console.log('Calling Gotenberg PDF conversion at:', url);
+      // Use LibreOffice convert endpoint which supports PDF to image
+      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/libreoffice/convert`;
+      console.log('Calling Gotenberg LibreOffice conversion at:', url);
       
       const gotenbergResp = await fetch(url, {
         method: 'POST',
