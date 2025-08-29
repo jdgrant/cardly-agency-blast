@@ -85,18 +85,24 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
   };
 
   const handleStartCropping = () => {
+    console.log('SignatureExtractor: Starting cropping for file:', uploadedFile?.name);
     setShowCropper(true);
   };
 
   const handleCropComplete = (croppedBlob: Blob) => {
+    console.log('SignatureExtractor: handleCropComplete called with blob:', croppedBlob?.size, 'bytes');
+    
     // Convert blob to data URL for preview
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
+      console.log('SignatureExtractor: DataURL created, length:', dataUrl?.length);
+      
       setCroppedSignature(dataUrl);
       setShowCropper(false);
       
       // Pass the blob to the parent component
+      console.log('SignatureExtractor: Calling onSignatureExtracted with blob');
       onSignatureExtracted(croppedBlob);
       
       toast({
@@ -104,6 +110,16 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         description: "Your signature has been successfully cropped and is ready to use.",
       });
     };
+    
+    reader.onerror = (error) => {
+      console.error('SignatureExtractor: FileReader error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process cropped signature",
+        variant: "destructive"
+      });
+    };
+    
     reader.readAsDataURL(croppedBlob);
   };
 

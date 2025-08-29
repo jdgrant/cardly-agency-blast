@@ -96,7 +96,11 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
   }, [imageFile]);
 
   const handleCrop = async () => {
-    if (!fabricCanvas || !originalImage || !cropRect) return;
+    console.log('ImageCropper: handleCrop called');
+    if (!fabricCanvas || !originalImage || !cropRect) {
+      console.error('ImageCropper: Missing required objects:', { fabricCanvas: !!fabricCanvas, originalImage: !!originalImage, cropRect: !!cropRect });
+      return;
+    }
     
     setIsProcessing(true);
     
@@ -107,7 +111,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       const cropWidth = (cropRect.width || 0) * (cropRect.scaleX || 1);
       const cropHeight = (cropRect.height || 0) * (cropRect.scaleY || 1);
       
-      console.log('Cropping area:', { cropLeft, cropTop, cropWidth, cropHeight });
+      console.log('ImageCropper: Cropping area:', { cropLeft, cropTop, cropWidth, cropHeight });
       
       // Create a temporary canvas for cropping
       const tempCanvas = document.createElement('canvas');
@@ -115,10 +119,14 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       tempCanvas.height = cropHeight;
       const tempCtx = tempCanvas.getContext('2d');
       
-      if (!tempCtx) throw new Error('Could not get canvas context');
+      if (!tempCtx) {
+        console.error('ImageCropper: Could not get canvas context');
+        throw new Error('Could not get canvas context');
+      }
       
       // Draw the cropped portion
       const fabricCanvasElement = fabricCanvas.getElement();
+      console.log('ImageCropper: Drawing cropped portion to temp canvas');
       tempCtx.drawImage(
         fabricCanvasElement,
         cropLeft, cropTop, cropWidth, cropHeight,
@@ -126,15 +134,18 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       );
       
       // Convert to blob
+      console.log('ImageCropper: Converting to blob...');
       tempCanvas.toBlob((blob) => {
         if (blob) {
-          console.log('Cropped image created:', blob.size, 'bytes');
+          console.log('ImageCropper: Cropped image created:', blob.size, 'bytes');
           onCropComplete(blob);
+        } else {
+          console.error('ImageCropper: Failed to create blob from canvas');
         }
       }, 'image/png');
       
     } catch (error) {
-      console.error('Error cropping image:', error);
+      console.error('ImageCropper: Error cropping image:', error);
     } finally {
       setIsProcessing(false);
     }
