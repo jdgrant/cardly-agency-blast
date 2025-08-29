@@ -429,7 +429,9 @@ export type Database = {
         }[]
       }
       get_order_by_id: {
-        Args: { order_id: string }
+        Args:
+          | { order_id: string }
+          | { order_id: string; session_id_param?: string }
         Returns: {
           billing_address: string
           card_quantity: number

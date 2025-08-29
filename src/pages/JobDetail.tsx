@@ -126,9 +126,18 @@ const JobDetail = () => {
     try {
       console.log('Starting to fetch order details for:', orderId);
       
-      // Fetch order details using secure function
+      // Get admin session ID
+      const adminSessionId = localStorage.getItem('admin_session_id');
+      if (!adminSessionId) {
+        throw new Error('Admin session not found');
+      }
+      
+      // Fetch order details using secure function with admin session
       const { data: orderDetails, error: orderError } = await supabase
-        .rpc('get_order_by_id', { order_id: orderId });
+        .rpc('get_order_by_id', { 
+          order_id: orderId,
+          session_id_param: adminSessionId
+        });
 
       console.log('Order details response:', { orderDetails, orderError });
 
