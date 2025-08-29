@@ -269,8 +269,8 @@ const OrderManagement = () => {
     }
   };
 
-  const handleSignatureUpload = async (signatureBlob: Blob) => {
-    console.log('Starting signature upload...', { orderId: order?.id, hashedOrderId, blobSize: signatureBlob.size });
+  const handleSignatureUpload = async (signatureUrl: string) => {
+    console.log('Updating order with signature URL and review flag:', { orderId: order?.id, hashedOrderId, signatureUrl });
     
     if (!order?.id || !hashedOrderId) {
       console.error('Missing order ID or hashed order ID');
@@ -283,30 +283,13 @@ const OrderManagement = () => {
     }
 
     try {
-      const fileName = `signatures/${order.id}_signature_${Date.now()}.png`;
-      console.log('Uploading to storage with filename:', fileName);
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('holiday-cards')
-        .upload(fileName, signatureBlob, {
-          contentType: 'image/png',
-          upsert: true
-        });
-
-      if (uploadError) {
-        console.error('Storage upload error:', uploadError);
-        throw uploadError;
-      }
-
-      console.log('Storage upload successful:', uploadData);
-
-      // Use secure function to update order and mark as uploaded
+      // Use secure function to update order with signature URL
       console.log('Updating order with RPC call...');
       const { data, error: updateError } = await supabase
         .rpc('update_order_file_for_customer', {
           short_id: hashedOrderId,
           file_type: 'signature',
-          file_url: fileName
+          file_url: signatureUrl
         });
 
       if (updateError) {
@@ -314,13 +297,25 @@ const OrderManagement = () => {
         throw updateError;
       }
 
+      // Also set the review flag
+      const { error: reviewError } = await supabase
+        .from('orders')
+        .update({ signature_needs_review: true })
+        .eq('id', order.id);
+
+      if (reviewError) console.error('Error setting review flag:', reviewError);
+
       console.log('Order update successful:', data);
-      setOrder(prev => prev ? { ...prev, signature_url: fileName } : null);
+      setOrder(prev => prev ? { 
+        ...prev, 
+        signature_url: signatureUrl,
+        signature_needs_review: true
+      } : null);
       setShowSignatureUpload(false);
 
       toast({
         title: "Success",
-        description: "Signature uploaded successfully",
+        description: "Signature uploaded successfully and marked for review",
       });
 
     } catch (error) {

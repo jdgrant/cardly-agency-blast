@@ -389,39 +389,32 @@ const JobDetail = () => {
     }
   };
 
-  const handleSignatureUpload = async (signatureBlob: Blob) => {
+  const handleSignatureUpload = async (signatureUrl: string) => {
     if (!order?.id) return;
 
     try {
-      const fileName = `signatures/${order.id}_signature_${Date.now()}.png`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('holiday-cards')
-        .upload(fileName, signatureBlob, {
-          contentType: 'image/png',
-          upsert: true
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Update order record with signature URL and mark as submitted
+      // Update order record with signature URL and mark for review
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
-          signature_url: fileName,
-          signature_submitted: true
+          signature_url: signatureUrl,
+          signature_needs_review: true
         })
         .eq('id', order.id);
 
       if (updateError) throw updateError;
 
       // Update local state
-      setOrder(prev => prev ? { ...prev, signature_url: fileName } : null);
+      setOrder(prev => prev ? { 
+        ...prev, 
+        signature_url: signatureUrl,
+        signature_needs_review: true
+      } : null);
       setShowSignatureUpload(false);
 
       toast({
         title: "Success",
-        description: "Signature uploaded successfully",
+        description: "Signature uploaded successfully and marked for review",
       });
 
     } catch (error) {

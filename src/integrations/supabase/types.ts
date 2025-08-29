@@ -126,6 +126,7 @@ export type Database = {
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
+          signature_needs_review: boolean | null
           signature_purchased: boolean | null
           signature_url: string | null
           status: string | null
@@ -161,6 +162,7 @@ export type Database = {
           readable_order_id?: string | null
           regular_price: number
           selected_message?: string | null
+          signature_needs_review?: boolean | null
           signature_purchased?: boolean | null
           signature_url?: string | null
           status?: string | null
@@ -196,6 +198,7 @@ export type Database = {
           readable_order_id?: string | null
           regular_price?: number
           selected_message?: string | null
+          signature_needs_review?: boolean | null
           signature_purchased?: boolean | null
           signature_url?: string | null
           status?: string | null
@@ -365,6 +368,7 @@ export type Database = {
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
+          signature_needs_review: boolean | null
           signature_purchased: boolean | null
           signature_url: string | null
           status: string | null
@@ -415,6 +419,7 @@ export type Database = {
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
+          signature_needs_review: boolean | null
           signature_purchased: boolean | null
           signature_url: string | null
           status: string | null

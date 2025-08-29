@@ -1,304 +1,221 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, Download, FileText, Image, CheckCircle, Scissors } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import FilePreview from './FilePreview';
-import ImageCropper from './ImageCropper';
+import { Upload, FileImage, FileText, Download, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface SignatureExtractorProps {
-  onSignatureExtracted: (imageBlob: Blob) => void;
+  onSignatureExtracted: (imageUrl: string) => void;
 }
 
 const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtracted }) => {
-  const [isConverting, setIsConverting] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [croppedSignature, setCroppedSignature] = useState<string | null>(null);
-  const [fileUploaded, setFileUploaded] = useState(false);
-  const [showCropper, setShowCropper] = useState(false);
-  const { toast } = useToast();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif', 'application/pdf'];
+    if (!file) return;
+
+    console.log('SignatureExtractor: File selected:', file.name, file.type, file.size);
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload an image file (JPG, PNG, GIF) or PDF');
+      return;
+    }
+
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be under 10MB');
+      return;
+    }
+
+    setUploadedFile(file);
+    console.log('SignatureExtractor: File ready for processing');
+  };
+
+  const processAndUploadSignature = async () => {
+    if (!uploadedFile) return;
+
+    setIsUploading(true);
+    
+    try {
+      console.log('SignatureExtractor: Converting and uploading signature file');
       
-      if (validTypes.includes(file.type)) {
-        setIsConverting(true);
-        setFileUploaded(false);
-        setCroppedSignature(null);
-        setShowCropper(false);
-        
-        try {
-          toast({
-            title: "Processing File",
-            description: "Converting your file for cropping...",
-          });
-
-          // Convert file to base64 for server-side processing
-          const fileBase64 = await fileToBase64(file);
-          
-          // Call our server-side processing function (now just validates and passes through)
-          const { data, error } = await supabase.functions.invoke('convert-signature-file', {
-            body: {
-              file: fileBase64,
-              fileName: file.name,
-              fileType: file.type
-            }
-          });
-
-          if (error) throw error;
-          
-          if (!data.success) {
-            throw new Error(data.error || 'Processing failed');
-          }
-
-          // Create a new File object from the processed data
-          const processedBlob = await dataUrlToBlob(data.imageData);
-          const processedFile = new File([processedBlob], data.fileName, { 
-            type: data.convertedFormat 
-          });
-          
-          setUploadedFile(processedFile);
-          setFileUploaded(true);
-          
-          if (data.isPdf) {
-            toast({
-              title: "PDF Ready",
-              description: "Your PDF is ready for cropping. Click 'Crop Signature' to select the signature area.",
-            });
-          } else {
-            toast({
-              title: "File Ready", 
-              description: "Your file is ready. Click 'Crop Signature' to select the signature area.",
-            });
-          }
-
-        } catch (error) {
-          console.error('Error processing file:', error);
-          toast({
-            title: "Processing Failed",
-            description: `Failed to process file: ${error.message}`,
-            variant: "destructive",
-          });
-          setUploadedFile(null);
-          setFileUploaded(false);
-        } finally {
-          setIsConverting(false);
+      // Convert file to base64
+      const base64File = await fileToBase64(uploadedFile);
+      
+      // Call the edge function to convert the file if needed
+      const { data, error } = await supabase.functions.invoke('convert-signature-file', {
+        body: {
+          file: base64File,
+          fileName: uploadedFile.name,
+          fileType: uploadedFile.type
         }
-      } else {
-        toast({
-          title: "Invalid File Type",
-          description: "Please upload an image file (JPG, PNG, HEIC) or PDF containing your signature.",
-          variant: "destructive",
-        });
+      });
+
+      if (error) {
+        console.error('SignatureExtractor: Conversion error:', error);
+        throw error;
       }
+
+      if (!data?.processedFileUrl) {
+        throw new Error('No processed file URL returned from conversion');
+      }
+
+      console.log('SignatureExtractor: File processed successfully:', data.processedFileUrl);
+      
+      // Set the uploaded image URL
+      setUploadedImageUrl(data.processedFileUrl);
+      
+      // Call the parent callback with the URL
+      onSignatureExtracted(data.processedFileUrl);
+      
+      toast.success('Signature uploaded successfully! This will be reviewed manually before processing.');
+      
+    } catch (error) {
+      console.error('SignatureExtractor: Error processing signature:', error);
+      toast.error('Failed to process signature file. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  // Helper function to convert file to base64
   const fileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove data URL prefix to get just the base64 string
-        const base64 = result.split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
     });
-  };
-
-  // Helper function to convert data URL to blob
-  const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
-    const response = await fetch(dataUrl);
-    return response.blob();
-  };
-
-  const handleChooseFileClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleStartCropping = () => {
-    console.log('SignatureExtractor: Starting cropping for file:', uploadedFile?.name);
-    setShowCropper(true);
-  };
-
-  const handleCropComplete = (croppedBlob: Blob) => {
-    console.log('SignatureExtractor: handleCropComplete called with blob:', croppedBlob?.size, 'bytes');
-    
-    // Convert blob to data URL for preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      console.log('SignatureExtractor: DataURL created, length:', dataUrl?.length);
-      
-      setCroppedSignature(dataUrl);
-      setShowCropper(false);
-      
-      // Pass the blob to the parent component
-      console.log('SignatureExtractor: Calling onSignatureExtracted with blob');
-      onSignatureExtracted(croppedBlob);
-      
-      toast({
-        title: "Signature Cropped!",
-        description: "Your signature has been successfully cropped and is ready to use.",
-      });
-    };
-    
-    reader.onerror = (error) => {
-      console.error('SignatureExtractor: FileReader error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to process cropped signature",
-        variant: "destructive"
-      });
-    };
-    
-    reader.readAsDataURL(croppedBlob);
-  };
-
-  const handleCancelCropping = () => {
-    setShowCropper(false);
   };
 
   const handleDownloadInstructions = () => {
     const link = document.createElement('a');
     link.href = '/SignatureInstruction.pdf';
-    link.download = 'SignatureInstruction.pdf';
+    link.download = 'SignatureInstructions.pdf';
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
   };
-
-  const getFileTypeIcon = () => {
-    if (!uploadedFile) return <Upload className="mx-auto h-8 w-8 text-gray-400 mb-3" />;
-    if (uploadedFile.name.toLowerCase().includes('.pdf')) return <FileText className="mx-auto h-8 w-8 text-red-500 mb-3" />;
-    return <Image className="mx-auto h-8 w-8 text-blue-500 mb-3" />;
-  };
-
-  const getFileDescription = () => {
-    if (!uploadedFile) return 'Upload your signature file';
-    if (uploadedFile.name.toLowerCase().includes('.pdf')) return `PDF converted to image: ${uploadedFile.name}`;
-    return `Image: ${uploadedFile.name}`;
-  };
-
-  // Show cropper if requested
-  if (showCropper && uploadedFile) {
-    return (
-      <ImageCropper
-        imageFile={uploadedFile}
-        onCropComplete={handleCropComplete}
-        onCancel={handleCancelCropping}
-      />
-    );
-  }
 
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center space-x-2">
-            <Scissors className="w-5 h-5" />
-            <span>Manual Signature Cropper</span>
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadInstructions}
-            className="flex items-center space-x-2 text-xs"
-          >
-            <Download className="w-3 h-3" />
-            <span>Instructions</span>
-          </Button>
+        <CardTitle className="flex items-center space-x-2">
+          <Upload className="w-5 h-5" />
+          <span>Upload Your Signature</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* File Upload */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-          {fileUploaded ? (
-            <CheckCircle className="mx-auto h-8 w-8 text-green-500 mb-3" />
-          ) : (
-            getFileTypeIcon()
-          )}
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">
-              {fileUploaded ? `✓ File uploaded: ${uploadedFile?.name}` : getFileDescription()}
-            </p>
-            <p className="text-xs text-gray-500">JPG, PNG, HEIC, PDF files up to 10MB</p>
-            <p className="text-xs text-gray-400">
-              {fileUploaded 
-                ? "File ready! Use the cropping tool to select your signature area." 
-                : "Upload a clear image or PDF of your signature"
-              }
-            </p>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,application/pdf"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Button 
-            variant="outline" 
-            className="mt-3"
-            onClick={handleChooseFileClick}
-            disabled={isConverting}
-          >
-            {isConverting ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                <span>Processing File...</span>
-              </div>
-            ) : (
-              uploadedFile ? 'Change File' : 'Choose File'
-            )}
-          </Button>
+      <CardContent className="space-y-6">
+        <div className="text-sm text-gray-600">
+          <p className="mb-2">Upload your signature file for manual review and processing:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Supported formats: JPG, PNG, GIF, PDF</li>
+            <li>Maximum file size: 10MB</li>
+            <li>Your signature will be reviewed manually before being added to your cards</li>
+          </ul>
         </div>
 
-        {/* File Preview */}
-        {uploadedFile && !showCropper && (
-          <div className="mt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">File Preview:</h4>
-            <FilePreview file={uploadedFile} />
-          </div>
-        )}
-
-        {/* Crop Button */}
-        {uploadedFile && !showCropper && (
-          <div className="space-y-2">
-            <Button 
-              onClick={handleStartCropping}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-            >
-              <div className="flex items-center space-x-2">
-                <Scissors className="w-4 h-4" />
-                <span>Crop Signature</span>
+        {!uploadedFile && (
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+            <div className="space-y-4">
+              <div className="flex justify-center space-x-4">
+                <FileImage className="w-12 h-12 text-gray-400" />
+                <FileText className="w-12 h-12 text-gray-400" />
               </div>
-            </Button>
-            <p className="text-xs text-gray-500 text-center">
-              Use the cropping tool to manually select your signature area
-            </p>
-          </div>
-        )}
-
-        {/* Cropped Preview */}
-        {croppedSignature && (
-          <div className="mt-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Cropped Signature:</h4>
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <img 
-                src={croppedSignature} 
-                alt="Cropped signature"
-                className="max-w-full h-auto max-h-32 mx-auto"
-              />
+              <div>
+                <label htmlFor="signature-upload" className="cursor-pointer">
+                  <span className="block text-lg font-medium text-gray-900 mb-2">
+                    Choose your signature file
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    Click here to select a file from your device
+                  </span>
+                  <input
+                    id="signature-upload"
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
           </div>
         )}
+
+        {uploadedFile && !uploadedImageUrl && (
+          <div className="border rounded-lg p-4 bg-blue-50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                {uploadedFile.type === 'application/pdf' ? (
+                  <FileText className="w-8 h-8 text-red-600" />
+                ) : (
+                  <FileImage className="w-8 h-8 text-blue-600" />
+                )}
+                <div>
+                  <p className="font-medium text-gray-900">{uploadedFile.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={processAndUploadSignature}
+                disabled={isUploading}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                {isUploading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Uploading...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Upload className="w-4 h-4" />
+                    <span>Upload for Review</span>
+                  </div>
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {uploadedImageUrl && (
+          <div className="border rounded-lg p-4 bg-green-50">
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+              <div>
+                <p className="font-medium text-green-900">Signature uploaded successfully!</p>
+                <p className="text-sm text-green-700">
+                  Your signature will be reviewed manually and prepared for your order.
+                </p>
+              </div>
+            </div>
+            
+            {uploadedImageUrl && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                <img 
+                  src={uploadedImageUrl} 
+                  alt="Uploaded signature" 
+                  className="max-w-full max-h-48 rounded border bg-white shadow-sm"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="pt-4 border-t">
+          <Button variant="outline" onClick={handleDownloadInstructions} className="w-full">
+            <Download className="w-4 h-4 mr-2" />
+            Download Signature Instructions
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
