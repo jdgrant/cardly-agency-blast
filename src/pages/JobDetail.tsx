@@ -575,12 +575,11 @@ const JobDetail = () => {
         body: { orderId: order.id, only: 'inside', mode: 'url', origin: window.location.origin }
       });
       if (error) throw error;
-      const pdfPath = data?.pdfPath;
-      if (!pdfPath) throw new Error('No PDF path returned');
+      const downloadUrl = data?.downloadUrl;
+      if (!downloadUrl) throw new Error('No download URL returned');
       
-      // Use our PDF serving function instead of direct URL
-      const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
-      window.open(servePdfUrl, '_blank');
+      // Use the direct download URL from the response
+      window.open(downloadUrl, '_blank');
       toast({ title: 'Inside PDF Ready', description: 'Opened inside-style PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating inside PDF:', error);
@@ -602,12 +601,11 @@ const JobDetail = () => {
         body: { orderId: order.id, only: 'front', mode: 'html', origin: window.location.origin }
       });
       if (error) throw error;
-      const pdfPath = data?.pdfPath;
-      if (!pdfPath) throw new Error('No PDF path returned');
+      const downloadUrl = data?.downloadUrl;
+      if (!downloadUrl) throw new Error('No download URL returned');
       
-      // Use our PDF serving function instead of direct URL
-      const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
-      window.open(servePdfUrl, '_blank');
+      // Use the direct download URL from the response
+      window.open(downloadUrl, '_blank');
       toast({ title: 'Front PDF Ready', description: 'Opened front-style PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating front PDF:', error);
