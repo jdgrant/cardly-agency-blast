@@ -159,7 +159,7 @@ const OrderManagement = () => {
         throw new Error('Order not found');
       }
 
-      const orderData = orders[0] as any; // Temporary fix for TypeScript
+      const orderData = orders[0];
       console.log('Order data received:', {
         id: orderData.id,
         signature_purchased: orderData.signature_purchased,

@@ -489,6 +489,8 @@ export type Database = {
           readable_order_id: string
           regular_price: number
           selected_message: string
+          signature_needs_review: boolean
+          signature_purchased: boolean
           signature_url: string
           status: string
           template_id: string
