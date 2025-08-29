@@ -3,7 +3,6 @@ import { Canvas as FabricCanvas, Rect, FabricImage } from 'fabric';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Crop, Download, RotateCcw } from 'lucide-react';
-import * as pdfjsLib from 'pdfjs-dist';
 
 interface ImageCropperProps {
   imageFile: File;
@@ -32,17 +31,9 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
 
     setFabricCanvas(canvas);
 
-    // Use jsdelivr CDN with CORS support
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
-
-    // Load the file (PDF or image)
-    if (imageFile.type === 'application/pdf') {
-      console.log('ImageCropper: Loading PDF file');
-      loadPdf(canvas, imageFile);
-    } else {
-      console.log('ImageCropper: Loading image file');
-      loadImage(canvas, imageFile);
-    }
+    // Always load as image now - PDFs should be converted server-side
+    console.log('ImageCropper: Loading file as image');
+    loadImage(canvas, imageFile);
 
     return () => {
       canvas.dispose();
@@ -68,50 +59,6 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
       console.error('ImageCropper: Error loading image:', error);
       console.error('ImageCropper: Error details:', error);
       URL.revokeObjectURL(imageUrl);
-      setIsLoading(false);
-    }
-  };
-
-  const loadPdf = async (canvas: FabricCanvas, file: File) => {
-    console.log('Loading PDF:', file.name);
-    
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      
-      console.log('PDF loaded, pages:', pdf.numPages);
-      
-      // Get first page
-      const page = await pdf.getPage(1);
-      const viewport = page.getViewport({ scale: 1.5 });
-      
-      // Create canvas for PDF rendering
-      const pdfCanvas = document.createElement('canvas');
-      const context = pdfCanvas.getContext('2d');
-      pdfCanvas.height = viewport.height;
-      pdfCanvas.width = viewport.width;
-      
-      if (!context) {
-        throw new Error('Could not get PDF canvas context');
-      }
-
-      // Render PDF page to canvas
-      await page.render({
-        canvasContext: context,
-        viewport: viewport
-      }).promise;
-
-      console.log('PDF rendered to canvas:', pdfCanvas.width, pdfCanvas.height);
-
-      // Convert canvas to image and add to fabric canvas
-      const imageDataUrl = pdfCanvas.toDataURL('image/png');
-      const img = await FabricImage.fromURL(imageDataUrl);
-      
-      setupImageOnCanvas(canvas, img);
-      setIsLoading(false);
-      
-    } catch (error) {
-      console.error('Error loading PDF:', error);
       setIsLoading(false);
     }
   };
@@ -265,7 +212,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
           <p>• Resize the rectangle by dragging its corners</p>
           <p>• Position it precisely around your signature for best results</p>
           {imageFile.type === 'application/pdf' && (
-            <p className="text-blue-600">• PDF first page is displayed - crop around your signature area</p>
+            <p className="text-blue-600">• PDF converted to image - crop around your signature area</p>
           )}
         </div>
         
