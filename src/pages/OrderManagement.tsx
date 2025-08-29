@@ -270,10 +270,21 @@ const OrderManagement = () => {
   };
 
   const handleSignatureUpload = async (signatureBlob: Blob) => {
-    if (!order?.id || !hashedOrderId) return;
+    console.log('Starting signature upload...', { orderId: order?.id, hashedOrderId, blobSize: signatureBlob.size });
+    
+    if (!order?.id || !hashedOrderId) {
+      console.error('Missing order ID or hashed order ID');
+      toast({
+        title: "Upload Failed",
+        description: "Order information is missing",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       const fileName = `signatures/${order.id}_signature_${Date.now()}.png`;
+      console.log('Uploading to storage with filename:', fileName);
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('holiday-cards')
@@ -282,9 +293,15 @@ const OrderManagement = () => {
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Storage upload successful:', uploadData);
 
       // Use secure function to update order and mark as uploaded
+      console.log('Updating order with RPC call...');
       const { data, error: updateError } = await supabase
         .rpc('update_order_file_for_customer', {
           short_id: hashedOrderId,
@@ -292,8 +309,12 @@ const OrderManagement = () => {
           file_url: fileName
         });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('RPC update error:', updateError);
+        throw updateError;
+      }
 
+      console.log('Order update successful:', data);
       setOrder(prev => prev ? { ...prev, signature_url: fileName } : null);
       setShowSignatureUpload(false);
 
@@ -306,7 +327,7 @@ const OrderManagement = () => {
       console.error('Error uploading signature:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to upload signature",
+        description: `Failed to upload signature: ${error.message}`,
         variant: "destructive"
       });
     }
