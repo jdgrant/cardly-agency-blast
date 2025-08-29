@@ -22,6 +22,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
   useEffect(() => {
     if (!canvasRef.current) return;
 
+    console.log('ImageCropper: Initializing with file:', imageFile.name, imageFile.type, imageFile.size, 'bytes');
+
     const canvas = new FabricCanvas(canvasRef.current, {
       width: 800,
       height: 600,
@@ -35,8 +37,10 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
 
     // Load the file (PDF or image)
     if (imageFile.type === 'application/pdf') {
+      console.log('ImageCropper: Loading PDF file');
       loadPdf(canvas, imageFile);
     } else {
+      console.log('ImageCropper: Loading image file');
       loadImage(canvas, imageFile);
     }
 
@@ -47,19 +51,22 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ imageFile, onCropComplete, 
 
   const loadImage = async (canvas: FabricCanvas, file: File) => {
     const imageUrl = URL.createObjectURL(file);
-    console.log('Loading image:', file.name, file.type);
+    console.log('ImageCropper: Creating object URL for image:', imageUrl);
+    console.log('ImageCropper: File details:', file.name, file.type, file.size);
     
     try {
+      console.log('ImageCropper: Attempting to load image from URL...');
       const img = await FabricImage.fromURL(imageUrl, {
         crossOrigin: 'anonymous'
       });
-      console.log('Image loaded:', img.width, img.height);
+      console.log('ImageCropper: Image successfully loaded:', img.width, img.height);
       
       setupImageOnCanvas(canvas, img);
       URL.revokeObjectURL(imageUrl);
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading image:', error);
+      console.error('ImageCropper: Error loading image:', error);
+      console.error('ImageCropper: Error details:', error);
       URL.revokeObjectURL(imageUrl);
       setIsLoading(false);
     }
