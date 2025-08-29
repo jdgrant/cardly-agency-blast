@@ -41,7 +41,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           // Convert file to base64 for server-side processing
           const fileBase64 = await fileToBase64(file);
           
-          // Call our server-side conversion function
+          // Call our server-side processing function (now just validates and passes through)
           const { data, error } = await supabase.functions.invoke('convert-signature-file', {
             body: {
               file: fileBase64,
@@ -53,24 +53,29 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
           if (error) throw error;
           
           if (!data.success) {
-            throw new Error(data.error || 'Conversion failed');
+            throw new Error(data.error || 'Processing failed');
           }
 
-          // Create a new File object from the converted data
-          const convertedBlob = await dataUrlToBlob(data.imageData);
-          const processedFile = new File([convertedBlob], data.fileName, { 
+          // Create a new File object from the processed data
+          const processedBlob = await dataUrlToBlob(data.imageData);
+          const processedFile = new File([processedBlob], data.fileName, { 
             type: data.convertedFormat 
           });
           
           setUploadedFile(processedFile);
           setFileUploaded(true);
           
-          toast({
-            title: "File Ready",
-            description: data.isPdfPlaceholder 
-              ? "PDF converted to placeholder. Use cropping tool to select signature area."
-              : "Your file is ready. Click 'Crop Signature' to select the signature area.",
-          });
+          if (data.isPdf) {
+            toast({
+              title: "PDF Ready",
+              description: "Your PDF is ready for cropping. Click 'Crop Signature' to select the signature area.",
+            });
+          } else {
+            toast({
+              title: "File Ready", 
+              description: "Your file is ready. Click 'Crop Signature' to select the signature area.",
+            });
+          }
 
         } catch (error) {
           console.error('Error processing file:', error);
