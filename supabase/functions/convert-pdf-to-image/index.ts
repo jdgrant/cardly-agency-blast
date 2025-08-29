@@ -140,37 +140,72 @@ serve(async (req) => {
         // Try different approaches to extract meaningful content
         const pdfString = new TextDecoder('latin1').decode(pdfBytes);
         
-        // Method 1: Look for text streams (between BT and ET markers)
-        const textStreamMatches = pdfString.match(/BT\s+.*?ET/gs) || [];
+        // Method 1: Look for readable text patterns
         let extractedTexts: string[] = [];
         
-        textStreamMatches.forEach(stream => {
-          // Extract text from Tj and TJ operators
-          const tjMatches = stream.match(/\((.*?)\)\s*Tj/g) || [];
-          const tjTexts = tjMatches.map(match => 
-            match.replace(/\((.*?)\)\s*Tj/, '$1').trim()
-          ).filter(text => text.length > 0);
-          extractedTexts.push(...tjTexts);
-        });
+        // Try to find actual readable text using multiple approaches
+        const approaches = [
+          // Look for text in parentheses that appears to be readable
+          () => {
+            const matches = pdfString.match(/\([^)]{1,100}\)/g) || [];
+            return matches
+              .map(match => match.replace(/[()]/g, '').trim())
+              .filter(text => {
+                // Filter for text that looks like actual words/content
+                const isReadable = /^[a-zA-Z0-9\s\-.,!?@#$%&*()]+$/.test(text);
+                const hasLetters = /[a-zA-Z]/.test(text);
+                const notTooShort = text.length >= 2;
+                const notTooLong = text.length <= 50;
+                const notJustSymbols = !/^[^a-zA-Z0-9\s]{3,}$/.test(text);
+                
+                return isReadable && hasLetters && notTooShort && notTooLong && notJustSymbols;
+              });
+          },
+          
+          // Look for words in the PDF structure
+          () => {
+            const wordMatches = pdfString.match(/\b[A-Za-z][A-Za-z\s]{2,20}\b/g) || [];
+            return wordMatches
+              .filter(word => word.length >= 3 && word.length <= 30)
+              .filter(word => !/^(obj|endobj|stream|endstream|xref|trailer|startxref|PDF)$/i.test(word));
+          },
+          
+          // Look for email-like patterns, names, common words
+          () => {
+            const patterns = [
+              /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, // emails
+              /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g, // names like "John Smith"
+              /\b(?:Dear|Hello|Hi|Sincerely|Best|Regards|From|To|Subject|Date|Phone|Email|Address)\b/gi, // common words
+              /\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g, // dates
+              /\b\d{3}-\d{3}-\d{4}\b/g // phone numbers
+            ];
+            
+            let results: string[] = [];
+            patterns.forEach(pattern => {
+              const matches = pdfString.match(pattern) || [];
+              results.push(...matches);
+            });
+            return results;
+          }
+        ];
         
-        // Method 2: Look for parenthesized text (fallback)
-        if (extractedTexts.length === 0) {
-          const textMatches = pdfString.match(/\([^)]{3,50}\)/g) || [];
-          extractedTexts = textMatches
-            .map(match => match.replace(/[()]/g, '').trim())
-            .filter(text => text.length > 2 && text.length < 50)
-            .filter(text => /[a-zA-Z0-9]/.test(text)); // Must contain alphanumeric
+        // Try each approach and use the best results
+        for (const approach of approaches) {
+          try {
+            const results = approach();
+            if (results.length > 0) {
+              extractedTexts.push(...results);
+            }
+          } catch (e) {
+            console.log('Approach failed:', e);
+          }
         }
         
         // Clean and deduplicate texts
         const cleanedTexts = [...new Set(extractedTexts)]
-          .map(text => text
-            .replace(/[\x00-\x1F\x7F-\x9F]/g, '') // Remove control chars
-            .replace(/[^\x20-\x7E]/g, '') // Keep only printable ASCII
-            .trim()
-          )
-          .filter(text => text.length > 1)
-          .slice(0, 15); // Limit to first 15 meaningful texts
+          .map(text => text.trim())
+          .filter(text => text.length > 1 && text.length <= 50)
+          .slice(0, 10); // Limit to first 10 meaningful texts
         
         console.log(`Extracted ${cleanedTexts.length} meaningful text elements`);
         
