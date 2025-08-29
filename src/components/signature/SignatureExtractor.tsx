@@ -73,7 +73,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       } else {
         toast({
           title: "Invalid File Type",
-          description: "Please upload an image file (JPG, PNG, HEIC) for best results. PDF conversion may not display properly.",
+          description: "Please upload an image file (JPG, PNG, HEIC) or PDF containing your signature.",
           variant: "destructive",
         });
       }

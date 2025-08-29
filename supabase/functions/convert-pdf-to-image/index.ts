@@ -26,101 +26,173 @@ serve(async (req) => {
 
     console.log(`Converting PDF: ${fileName}`);
 
-    // Try using CloudConvert API for PDF to PNG conversion
+    // Decode the base64 PDF file
+    const pdfBytes = Uint8Array.from(atob(file), c => c.charCodeAt(0));
+    
+    // Use PDF.js to render the PDF to canvas data
     try {
-      const cloudConvertUrl = 'https://api.cloudconvert.com/v2/convert';
+      // Import PDF.js
+      const pdfjs = await import('https://cdn.skypack.dev/pdfjs-dist@3.11.174');
       
-      const formData = new FormData();
+      // Configure PDF.js worker
+      pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.skypack.dev/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
       
-      // Decode base64 PDF and create blob
-      const pdfData = Uint8Array.from(atob(file), c => c.charCodeAt(0));
-      const pdfBlob = new Blob([pdfData], { type: 'application/pdf' });
+      console.log('Loading PDF document...');
+      const pdfDoc = await pdfjs.getDocument({ data: pdfBytes }).promise;
       
-      formData.append('file', pdfBlob, fileName);
-      formData.append('outputformat', 'png');
-      formData.append('input', 'upload');
-      formData.append('timeout', '30');
+      console.log(`PDF loaded with ${pdfDoc.numPages} pages`);
       
-      const response = await fetch(cloudConvertUrl, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': 'Bearer API_KEY_PLACEHOLDER' // Would need actual API key
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('CloudConvert result:', result);
-        // This would need proper implementation with API key
-      }
-    } catch (cloudConvertError) {
-      console.log('CloudConvert failed:', cloudConvertError);
-    }
-
-    // Try using PDF-lib to extract first page and render as PNG
-    try {
-      // Import PDF-lib via CDN
-      const { PDFDocument } = await import('https://cdn.skypack.dev/pdf-lib@^1.17.1');
+      // Get the first page
+      const page = await pdfDoc.getPage(1);
+      const viewport = page.getViewport({ scale: 1.5 }); // Scale for better quality
       
-      const pdfBytes = Uint8Array.from(atob(file), c => c.charCodeAt(0));
-      const pdfDoc = await PDFDocument.load(pdfBytes);
-      const pages = pdfDoc.getPages();
+      console.log(`Page viewport: ${viewport.width}x${viewport.height}`);
       
-      if (pages.length > 0) {
-        const firstPage = pages[0];
-        const { width, height } = firstPage.getSize();
+      // Create a virtual canvas using OffscreenCanvas if available, otherwise use a different approach
+      let imageData;
+      
+      try {
+        // Try using OffscreenCanvas
+        const canvas = new OffscreenCanvas(viewport.width, viewport.height);
+        const context = canvas.getContext('2d');
         
-        console.log(`PDF page size: ${width}x${height}`);
-        
-        // Create a canvas representation of the PDF page
-        const canvas = {
-          width: Math.min(width, 800),
-          height: Math.min(height, 600)
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport,
         };
         
-        // Create SVG with proper aspect ratio
-        const svg = `<svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100%" height="100%" fill="white"/>
-          <text x="${canvas.width/2}" y="50" text-anchor="middle" font-family="Arial" font-size="16" fill="#333">
-            ${fileName}
-          </text>
-          <text x="${canvas.width/2}" y="80" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">
-            Page 1 of ${pages.length} (${Math.round(width)}x${Math.round(height)})
-          </text>
-          <rect x="40" y="100" width="${canvas.width-80}" height="${canvas.height-150}" fill="white" stroke="#ddd" stroke-width="1"/>
-          <text x="${canvas.width/2}" y="${canvas.height-30}" text-anchor="middle" font-family="Arial" font-size="10" fill="#999">
-            Original PDF converted for signature cropping
-          </text>
-        </svg>`;
+        console.log('Rendering PDF page to canvas...');
+        await page.render(renderContext).promise;
         
-        const base64Svg = btoa(svg);
-        const dataUrl = `data:image/svg+xml;base64,${base64Svg}`;
-
-        console.log('PDF processed with pdf-lib');
+        // Convert canvas to PNG blob
+        const blob = await canvas.convertToBlob({ type: 'image/png' });
+        const arrayBuffer = await blob.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+        
+        // Convert to base64
+        const base64String = btoa(String.fromCharCode(...uint8Array));
+        imageData = `data:image/png;base64,${base64String}`;
+        
+        console.log('PDF successfully converted to PNG using OffscreenCanvas');
+        
+      } catch (canvasError) {
+        console.log('OffscreenCanvas not available, using alternative approach:', canvasError);
+        
+        // Alternative: Use node-canvas or create SVG representation
+        // For now, let's create a high-quality SVG representation of the PDF structure
+        const textContent = await page.getTextContent();
+        const items = textContent.items;
+        
+        console.log(`Found ${items.length} text items in PDF`);
+        
+        // Create SVG with actual text content positioned correctly
+        let svgContent = `<svg width="${viewport.width}" height="${viewport.height}" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="white"/>`;
+        
+        // Add text items with their actual positions and content
+        items.forEach((item: any, index: number) => {
+          if (item.str && item.str.trim() && index < 50) { // Limit to first 50 items for performance
+            const x = item.transform[4] || 0;
+            const y = viewport.height - (item.transform[5] || 0); // Flip Y coordinate
+            const fontSize = Math.abs(item.transform[0]) || 12;
+            
+            // Clean text content
+            const text = item.str.replace(/[<>&"']/g, (match: string) => {
+              const entities: { [key: string]: string } = {
+                '<': '&lt;',
+                '>': '&gt;',
+                '&': '&amp;',
+                '"': '&quot;',
+                "'": '&#39;'
+              };
+              return entities[match];
+            });
+            
+            svgContent += `<text x="${x}" y="${y}" font-size="${fontSize}" font-family="Arial, sans-serif" fill="#000">${text}</text>`;
+          }
+        });
+        
+        svgContent += '</svg>';
+        
+        // Convert SVG to base64
+        const base64Svg = btoa(svgContent);
+        imageData = `data:image/svg+xml;base64,${base64Svg}`;
+        
+        console.log('PDF converted to SVG with actual text content');
+      }
+      
+      return new Response(JSON.stringify({ 
+        imageData: imageData,
+        fileName: fileName.replace('.pdf', '.png'),
+        width: viewport.width,
+        height: viewport.height
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+      
+    } catch (pdfjsError) {
+      console.error('PDF.js conversion failed:', pdfjsError);
+      
+      // Final fallback: Try to use a simple PDF structure analysis
+      try {
+        const pdfString = new TextDecoder('latin1').decode(pdfBytes);
+        console.log('Analyzing PDF structure...');
+        
+        // Look for text content in PDF
+        const textMatches = pdfString.match(/\((.*?)\)/g) || [];
+        const cleanedTexts = textMatches
+          .map(match => match.replace(/[()]/g, '').trim())
+          .filter(text => text.length > 0 && text.length < 100)
+          .slice(0, 20);
+        
+        console.log(`Found ${cleanedTexts.length} text elements`);
+        
+        // Create SVG with extracted text
+        const width = 800;
+        const height = 600;
+        
+        let svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100%" height="100%" fill="white" stroke="#ddd" stroke-width="1"/>`;
+        
+        // Add extracted text at various positions
+        cleanedTexts.forEach((text, index) => {
+          const x = 50 + (index % 2) * 350;
+          const y = 80 + (Math.floor(index / 2) * 25);
+          const escapedText = text.replace(/[<>&"']/g, (match: string) => {
+            const entities: { [key: string]: string } = {
+              '<': '&lt;',
+              '>': '&gt;',
+              '&': '&amp;',
+              '"': '&quot;',
+              "'": '&#39;'
+            };
+            return entities[match];
+          });
+          
+          svgContent += `<text x="${x}" y="${y}" font-size="14" font-family="Arial" fill="#333">${escapedText}</text>`;
+        });
+        
+        svgContent += `<text x="400" y="${height - 50}" text-anchor="middle" font-size="12" fill="#666">
+          PDF: ${fileName} - Content extracted for signature cropping
+        </text></svg>`;
+        
+        const base64Svg = btoa(svgContent);
+        const imageData = `data:image/svg+xml;base64,${base64Svg}`;
+        
+        console.log('PDF content extracted and converted to SVG');
         
         return new Response(JSON.stringify({ 
-          imageData: dataUrl,
+          imageData: imageData,
           fileName: fileName.replace('.pdf', '.svg')
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+        
+      } catch (fallbackError) {
+        console.error('All conversion methods failed:', fallbackError);
+        throw new Error('Unable to process PDF file');
       }
-    } catch (pdfLibError) {
-      console.log('PDF-lib failed:', pdfLibError);
     }
-
-    // Final fallback - for now, let's just pass through the PDF as is
-    // and let the frontend handle it differently
-    console.log('Using PDF passthrough - frontend will handle display');
-    
-    return new Response(JSON.stringify({ 
-      imageData: `data:application/pdf;base64,${file}`,
-      fileName: fileName,
-      isPdf: true
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
 
   } catch (error) {
     console.error('Error converting PDF:', error);

@@ -25,11 +25,6 @@ export const convertPdfToImage = async (file: File): Promise<File> => {
       throw new Error('No image data returned from conversion');
     }
 
-    // Check if this is a PDF passthrough (conversion not possible)
-    if (data.isPdf) {
-      throw new Error('PDF conversion not available. Please upload an image file (JPG, PNG) of your signature instead.');
-    }
-
     // Handle SVG content returned from the edge function
     if (data.imageData.startsWith('data:image/svg+xml')) {
       // Extract SVG content from data URL
