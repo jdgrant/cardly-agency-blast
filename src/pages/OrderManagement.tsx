@@ -237,6 +237,8 @@ const OrderManagement = () => {
     if (!order?.id || !hashedOrderId) return;
 
     try {
+      console.log('Before upgrade - signature_purchased:', order.signature_purchased);
+      
       // Use secure function to upgrade signature for this order
       const { data, error } = await supabase
         .rpc('update_order_file_for_customer', {
@@ -247,12 +249,10 @@ const OrderManagement = () => {
 
       if (error) throw error;
 
-      // Update local order state
-      setOrder(prev => prev ? { 
-        ...prev, 
-        signature_purchased: true,
-        final_price: Number(prev.final_price) + 25 
-      } : null);
+      console.log('RPC call successful, data:', data);
+
+      // Refetch the order data to ensure we have the latest state
+      await fetchOrderByHashedId();
 
       toast({
         title: "Signature Upgrade Added!",
