@@ -61,6 +61,7 @@ interface Order {
   billing_address?: string;
   signature_purchased?: boolean;
   invoice_paid?: boolean;
+  signature_needs_review?: boolean;
 }
 
 interface Template {
@@ -878,6 +879,7 @@ const Admin = () => {
                     <TableHead>Status</TableHead>
                     <TableHead>Sig Purchase</TableHead>
                     <TableHead>Sig Submit</TableHead>
+                    <TableHead>Sig Review</TableHead>
                     <TableHead>Mailing List</TableHead>
                     <TableHead>Logo</TableHead>
                     <TableHead>Invoice Paid</TableHead>
@@ -916,20 +918,29 @@ const Admin = () => {
                           className={!order.signature_url ? 'opacity-50' : ''}
                         />
                       </TableCell>
-                      {/* Signature Submit - Grey out if signature not purchased */}
+                       {/* Signature Submit - Grey out if signature not purchased */}
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox 
+                            checked={!!order.signature_url}
+                            disabled={true}
+                          />
+                        </TableCell>
+                       {/* Signature Review - Only enabled if signature uploaded */}
                        <TableCell onClick={(e) => e.stopPropagation()}>
                          <Checkbox 
-                           checked={!!order.signature_url}
+                           checked={order.signature_needs_review || false}
+                           onCheckedChange={(checked) => updateOrderStatusField(order.id, 'signature_needs_review', !!checked)}
+                           disabled={!order.signature_url}
+                           className={!order.signature_url ? 'opacity-50' : ''}
+                         />
+                       </TableCell>
+                       {/* Mailing List Uploaded */}
+                       <TableCell onClick={(e) => e.stopPropagation()}>
+                         <Checkbox
+                           checked={!!order.csv_file_url}
                            disabled={true}
                          />
                        </TableCell>
-                      {/* Mailing List Uploaded */}
-                      <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={!!order.csv_file_url}
-                          disabled={true}
-                        />
-                      </TableCell>
                       {/* Logo Uploaded */}
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox

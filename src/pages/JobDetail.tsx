@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import SignatureExtractor from '@/components/signature/SignatureExtractor';
 import { ClientListUploader } from '@/components/admin/ClientListUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import SignatureReviewCard from '@/components/admin/SignatureReviewCard';
 
 interface Order {
   id: string;
@@ -64,6 +65,7 @@ interface Order {
   // Status checkboxes
   signature_purchased?: boolean;
   invoice_paid?: boolean;
+  signature_needs_review?: boolean;
 }
 
 interface OrderWithId extends Order {
@@ -1501,6 +1503,16 @@ const JobDetail = () => {
                 </CollapsibleContent>
               </Card>
             </Collapsible>
+
+            {/* Signature Review Card */}
+            <SignatureReviewCard 
+              order={{
+                id: order.id,
+                signature_url: order.signature_url,
+                signature_needs_review: order.signature_needs_review
+              }}
+              onOrderUpdate={fetchOrderDetails}
+            />
 
             {/* Uploaded Files */}
             <Card>
