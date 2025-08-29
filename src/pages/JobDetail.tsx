@@ -142,6 +142,17 @@ const JobDetail = () => {
       console.log('Order details response:', { orderDetails, orderError });
 
       if (orderError || !orderDetails || orderDetails.length === 0) {
+        if (orderError?.message?.includes('Invalid admin session')) {
+          // Clear invalid session and redirect to admin login
+          localStorage.removeItem('admin_session_id');
+          toast({
+            title: "Session Expired",
+            description: "Your admin session has expired. Please login again.",
+            variant: "destructive"
+          });
+          navigate('/admin');
+          return;
+        }
         throw new Error('Order not found');
       }
       
@@ -221,9 +232,21 @@ const JobDetail = () => {
 
     } catch (error) {
       console.error('Error fetching order details:', error);
+      
+      // Handle admin session errors
+      if (error instanceof Error && error.message.includes('Admin session not found')) {
+        toast({
+          title: "Authentication Required",
+          description: "Please login as admin to access this page.",
+          variant: "destructive"
+        });
+        navigate('/admin');
+        return;
+      }
+      
       toast({
         title: "Error",
-        description: "Failed to fetch order details",
+        description: error instanceof Error ? error.message : "Failed to fetch order details",
         variant: "destructive"
       });
     } finally {
