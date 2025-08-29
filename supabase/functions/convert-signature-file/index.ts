@@ -93,14 +93,34 @@ async function convertPdfToImage(file: string, fileName: string): Promise<Respon
       // Decode the base64 PDF file
       const pdfBytes = Uint8Array.from(atob(file), c => c.charCodeAt(0));
       
-      // Use Gotenberg LibreOffice conversion (which can handle PDFs to images)
+      // Use Gotenberg Chromium conversion (more reliable for PDFs)
       const form = new FormData();
-      const pdfFile = new File([pdfBytes], fileName, { type: 'application/pdf' });
-      form.append('files', pdfFile);
       
-      // Set landscape to false and specify paper size
+      // Create HTML that embeds the PDF for Chromium to screenshot
+      const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
+      const htmlContent = `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; }
+          embed { width: 100%; height: 100%; border: none; }
+        </style>
+      </head>
+      <body>
+        <embed src="data:application/pdf;base64,${pdfBase64}" type="application/pdf" />
+      </body>
+      </html>`;
+      
+      form.append('files', new File([htmlContent], 'index.html', { type: 'text/html' }));
+      form.append('paperWidth', '8.5');
+      form.append('paperHeight', '11');
+      form.append('marginTop', '0');
+      form.append('marginBottom', '0');
+      form.append('marginLeft', '0');
+      form.append('marginRight', '0');
       form.append('landscape', 'false');
-      form.append('nativePageRanges', '1-1'); // Only convert first page
+      form.append('format', 'png');
       
       const headers: Record<string, string> = {};
       if (GOTENBERG_API_KEY) {
@@ -108,9 +128,9 @@ async function convertPdfToImage(file: string, fileName: string): Promise<Respon
         headers['X-Api-Key'] = GOTENBERG_API_KEY;
       }
 
-      // Use LibreOffice convert endpoint which supports PDF to image
-      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/libreoffice/convert`;
-      console.log('Calling Gotenberg LibreOffice conversion at:', url);
+      // Use Chromium screenshot endpoint (more reliable for PDF rendering)
+      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/screenshot`;
+      console.log('Calling Gotenberg Chromium screenshot for PDF at:', url);
       
       const gotenbergResp = await fetch(url, {
         method: 'POST',
