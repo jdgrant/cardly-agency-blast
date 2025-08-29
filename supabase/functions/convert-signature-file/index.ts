@@ -86,8 +86,7 @@ async function convertPdfToImage(file: string, fileName: string): Promise<Respon
     console.log('API Key configured:', !!GOTENBERG_API_KEY);
 
     if (!GOTENBERG_URL || !GOTENBERG_API_KEY) {
-      console.log('Gotenberg not configured, using SVG fallback');
-      return createPdfPlaceholder(fileName);
+      throw new Error('Gotenberg service is not configured. Cannot convert PDF files.');
     }
 
     try {
@@ -124,8 +123,7 @@ async function convertPdfToImage(file: string, fileName: string): Promise<Respon
       if (!gotenbergResp.ok) {
         const errText = await gotenbergResp.text();
         console.error('Gotenberg error response:', errText);
-        console.log('Falling back to SVG placeholder');
-        return createPdfPlaceholder(fileName);
+        throw new Error(`Gotenberg conversion failed: ${errText}`);
       }
 
       // Get the PNG data from Gotenberg
@@ -154,71 +152,11 @@ async function convertPdfToImage(file: string, fileName: string): Promise<Respon
       
     } catch (gotenbergError) {
       console.error('Gotenberg conversion failed:', gotenbergError);
-      console.log('Falling back to SVG placeholder');
-      return createPdfPlaceholder(fileName);
+      throw new Error(`PDF conversion failed: ${gotenbergError.message}`);
     }
 
   } catch (error) {
     console.error('PDF conversion error:', error);
     throw new Error(`PDF conversion failed: ${error.message}`);
   }
-}
-
-function createPdfPlaceholder(fileName: string): Response {
-  console.log('Creating PDF placeholder for cropping');
-  
-  // Create a clean SVG placeholder that can be cropped
-  const width = 800;
-  const height = 600;
-  const cleanFileName = fileName.replace(/[^\w\-_.]/g, '').substring(0, 40);
-  
-  const svgContent = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f0f0f0" stroke-width="1"/>
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="white" stroke="#e0e0e0" stroke-width="2"/>
-    <rect width="100%" height="100%" fill="url(#grid)" opacity="0.5"/>
-    <rect x="60" y="80" width="${width-120}" height="${height-160}" fill="white" stroke="#ccc" stroke-width="2" rx="8"/>
-    <text x="${width/2}" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#333">
-      PDF Document
-    </text>
-    <text x="${width/2}" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#666">
-      ${cleanFileName}
-    </text>
-    <text x="${width/2}" y="300" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#888">
-      Use the crop tool to select your signature area
-    </text>
-    <text x="${width/2}" y="330" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#aaa">
-      This placeholder represents your PDF content
-    </text>
-    <rect x="200" y="380" width="400" height="80" fill="#f8f9fa" stroke="#ddd" stroke-width="1" rx="4"/>
-    <text x="${width/2}" y="410" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#555">
-      Signature Area Example
-    </text>
-    <text x="${width/2}" y="430" text-anchor="middle" font-family="cursive" font-size="18" fill="#333">
-      Your Name Here
-    </text>
-  </svg>`;
-  
-  const base64Svg = btoa(unescape(encodeURIComponent(svgContent)));
-  const imageData = `data:image/svg+xml;base64,${base64Svg}`;
-  
-  const response = {
-    success: true,
-    imageData: imageData,
-    fileName: fileName.replace('.pdf', '.svg'),
-    originalFormat: 'application/pdf',
-    convertedFormat: 'image/svg+xml',
-    width: width,
-    height: height,
-    isPdfPlaceholder: true
-  };
-
-  console.log('PDF placeholder created successfully');
-  
-  return new Response(JSON.stringify(response), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
 }
