@@ -43,25 +43,44 @@ serve(async (req) => {
       // Decode the base64 PDF file
       const pdfBytes = Uint8Array.from(atob(file), c => c.charCodeAt(0));
       
-      // Use Gotenberg to convert PDF to image
+      // Use Gotenberg to convert PDF to image via Chromium screenshot
       const form = new FormData();
       
-      // Create a File object from the PDF bytes
-      const pdfFile = new File([pdfBytes], fileName, { type: 'application/pdf' });
-      form.append('files', pdfFile);
+      // Create HTML that embeds the PDF for screenshot
+      const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
+      const htmlContent = `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { margin: 0; padding: 0; width: 100vw; height: 100vh; }
+          embed { width: 100%; height: 100%; border: none; }
+        </style>
+      </head>
+      <body>
+        <embed src="data:application/pdf;base64,${pdfBase64}" type="application/pdf" />
+      </body>
+      </html>`;
       
-      // Set output format to PNG
-      form.append('quality', '100');
+      form.append('files', new File([htmlContent], 'index.html', { type: 'text/html' }));
+      form.append('paperWidth', '8.5');
+      form.append('paperHeight', '11');
+      form.append('marginTop', '0');
+      form.append('marginBottom', '0');
+      form.append('marginLeft', '0');
+      form.append('marginRight', '0');
+      form.append('landscape', 'false');
       form.append('format', 'png');
-      
+
       const headers: Record<string, string> = {};
       if (GOTENBERG_API_KEY) {
         headers['Authorization'] = `Bearer ${GOTENBERG_API_KEY}`;
         headers['X-Api-Key'] = GOTENBERG_API_KEY;
       }
 
-      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/pdfengines/convert`;
-      console.log('Calling Gotenberg PDF to image conversion at:', url);
+      // Use Chromium screenshot endpoint
+      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/screenshot`;
+      console.log('Calling Gotenberg Chromium screenshot for PDF at:', url);
       
       const gotenbergResp = await fetch(url, {
         method: 'POST',
