@@ -237,9 +237,24 @@ const JobDetail = () => {
     try {
       console.log('Attempting to download file:', filePath, 'as:', fileName);
       
+      // Check if filePath is a full URL or just a file path
+      let actualPath = filePath;
+      if (filePath.startsWith('https://')) {
+        // Extract file path from full URL
+        const urlParts = filePath.split('/');
+        const bucketIndex = urlParts.findIndex(part => part === 'holiday-cards');
+        if (bucketIndex !== -1 && bucketIndex < urlParts.length - 1) {
+          actualPath = urlParts.slice(bucketIndex + 1).join('/');
+        } else {
+          throw new Error('Invalid file URL format');
+        }
+      }
+      
+      console.log('Using file path:', actualPath);
+      
       const { data, error } = await supabase.storage
         .from('holiday-cards')
-        .download(filePath);
+        .download(actualPath);
 
       console.log('Download response:', { data, error });
 

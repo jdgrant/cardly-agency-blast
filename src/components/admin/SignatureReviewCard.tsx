@@ -26,16 +26,29 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
     if (!order.signature_url) return;
 
     try {
+      // Check if signature_url is a full URL or just a file path
+      let actualPath = order.signature_url;
+      if (order.signature_url.startsWith('https://')) {
+        // Extract file path from full URL
+        const urlParts = order.signature_url.split('/');
+        const bucketIndex = urlParts.findIndex(part => part === 'holiday-cards');
+        if (bucketIndex !== -1 && bucketIndex < urlParts.length - 1) {
+          actualPath = urlParts.slice(bucketIndex + 1).join('/');
+        } else {
+          throw new Error('Invalid file URL format');
+        }
+      }
+
       const { data, error } = await supabase.storage
         .from('holiday-cards')
-        .download(order.signature_url);
+        .download(actualPath);
 
       if (error) throw error;
 
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `signature-${order.id.slice(0, 8)}.png`;
+      a.download = `signature-${order.id.slice(0, 8)}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
 
