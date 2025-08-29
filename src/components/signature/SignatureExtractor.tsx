@@ -6,7 +6,7 @@ import { Upload, Download, FileText, Image, CheckCircle, Scissors } from 'lucide
 import { useToast } from '@/hooks/use-toast';
 import FilePreview from './FilePreview';
 import ImageCropper from './ImageCropper';
-import { convertPdfToImage } from '@/utils/pdfToImage';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SignatureExtractorProps {
   onSignatureExtracted: (imageBlob: Blob) => void;
@@ -27,37 +27,51 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/heic', 'image/heif', 'application/pdf'];
       
       if (validTypes.includes(file.type)) {
-        setIsConverting(file.type === 'application/pdf');
+        setIsConverting(true);
         setFileUploaded(false);
         setCroppedSignature(null);
         setShowCropper(false);
         
         try {
-          let processedFile = file;
+          toast({
+            title: "Processing File",
+            description: "Converting your file for cropping...",
+          });
+
+          // Convert file to base64 for server-side processing
+          const fileBase64 = await fileToBase64(file);
           
-          // Convert PDF to image if needed
-          if (file.type === 'application/pdf') {
-            toast({
-              title: "Converting PDF",
-              description: "Converting PDF to image for cropping...",
-            });
-            
-            processedFile = await convertPdfToImage(file);
-            
-            toast({
-              title: "PDF Converted",
-              description: "PDF successfully converted to image.",
-            });
+          // Call our server-side conversion function
+          const { data, error } = await supabase.functions.invoke('convert-signature-file', {
+            body: {
+              file: fileBase64,
+              fileName: file.name,
+              fileType: file.type
+            }
+          });
+
+          if (error) throw error;
+          
+          if (!data.success) {
+            throw new Error(data.error || 'Conversion failed');
           }
+
+          // Create a new File object from the converted data
+          const convertedBlob = await dataUrlToBlob(data.imageData);
+          const processedFile = new File([convertedBlob], data.fileName, { 
+            type: data.convertedFormat 
+          });
           
-          // Set the processed file for display and processing
           setUploadedFile(processedFile);
           setFileUploaded(true);
           
           toast({
-            title: "File Uploaded Successfully",
-            description: "Your file is ready. Click 'Crop Signature' to select the signature area.",
+            title: "File Ready",
+            description: data.isPdfPlaceholder 
+              ? "PDF converted to placeholder. Use cropping tool to select signature area."
+              : "Your file is ready. Click 'Crop Signature' to select the signature area.",
           });
+
         } catch (error) {
           console.error('Error processing file:', error);
           toast({
@@ -78,6 +92,27 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         });
       }
     }
+  };
+
+  // Helper function to convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove data URL prefix to get just the base64 string
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+    });
+  };
+
+  // Helper function to convert data URL to blob
+  const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
+    const response = await fetch(dataUrl);
+    return response.blob();
   };
 
   const handleChooseFileClick = () => {
@@ -212,7 +247,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             {isConverting ? (
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                <span>Converting PDF...</span>
+                <span>Processing File...</span>
               </div>
             ) : (
               uploadedFile ? 'Change File' : 'Choose File'

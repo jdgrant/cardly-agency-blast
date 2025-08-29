@@ -3,6 +3,9 @@ project_id = "wsibvneidsmtsazfbmgc"
 [functions.convert-pdf-to-image]
 verify_jwt = false
 
+[functions.convert-signature-file]
+verify_jwt = false
+
 [functions.send-order-status-email]
 verify_jwt = false
 
