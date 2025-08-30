@@ -722,6 +722,24 @@ const JobDetail = () => {
     if (!order?.id) return;
     setGeneratingProduction(true);
     try {
+      // Generate front PDF (page 1)
+      console.log('Generating production front PDF...');
+      const frontResponse = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId: order.id, format: 'production', only: 'front', mode: 'html', origin: window.location.origin }
+      });
+      if (frontResponse.error) throw frontResponse.error;
+      if (!frontResponse.data?.downloadUrl) throw new Error('No front PDF URL returned');
+
+      // Generate inside PDF (page 2)
+      console.log('Generating production inside PDF...');
+      const insideResponse = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId: order.id, format: 'production', only: 'inside', mode: 'html', origin: window.location.origin }
+      });
+      if (insideResponse.error) throw insideResponse.error;
+      if (!insideResponse.data?.downloadUrl) throw new Error('No inside PDF URL returned');
+
+      // Generate combined PDF with front+inside
+      console.log('Generating combined production PDF...');
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
         body: { orderId: order.id, format: 'production', only: 'front+inside' }
       });
@@ -735,7 +753,7 @@ const JobDetail = () => {
       // Use our PDF serving function instead of direct URL
       const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
       window.open(servePdfUrl, '_blank');
-      toast({ title: 'Production Combined PDF Ready', description: 'Public URL saved and opened in a new tab.' });
+      toast({ title: 'Production Combined PDF Ready', description: 'Combined PDF with front (page 1) and inside (page 2) opened in a new tab.' });
     } catch (error: any) {
       console.error('Error generating Production Combined PDF:', error);
       toast({
