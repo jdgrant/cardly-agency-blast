@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
+import { generateInsideCardHTML } from "../_shared/pdf-layouts.ts";
 import { downloadAndEncodeImageForGotenberg } from "../_shared/image-utils.ts";
 
 const corsHeaders = {
@@ -167,7 +168,8 @@ serve(async (req) => {
     } else if (mode === 'debug') {
       // Return the HTML content for debugging
       const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
-      const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl, format, paperWidth, paperHeight);
+    // Generate HTML content for inside card using shared layout
+    const insideHTML = generateInsideCardHTML(order, logoDataUrl, signatureDataUrl, 'portrait', format);
       
       let debugHTML = '';
       
@@ -187,7 +189,7 @@ serve(async (req) => {
       // Build HTML and convert (supports multi-page)
       const form = new FormData();
       const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
-      const insideHTML = buildInsideHTML(order, logoDataUrl, signatureDataUrl, format, paperWidth, paperHeight);
+      const insideHTML = generateInsideCardHTML(order, logoDataUrl, signatureDataUrl, 'portrait', format);
 
       if (includeFront && !includeInside) {
         form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
@@ -366,109 +368,6 @@ function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview
     <div class="wrap">
       <div class="frame">
         ${imgSrc ? `<img class="img" src="${imgSrc}" alt="${escapeHtml(template.name || 'Card front preview')}"/>` : ''}
-      </div>
-    </div>
-  </body>
-  </html>`;
-}
-
-function buildInsideHTML(order: any, logoDataUrl: string, signatureDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7') {
-  const message = order?.custom_message || order?.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
-  
-  if (format === 'production') {
-    // Production format: 10.25" x 7" landscape with left half blank, inside content on right half
-    // Match Inside Preview: split message into two lines by halfway point
-    const text = String(message || '');
-    const halfLength = Math.floor(text.length / 2);
-    const words = text.split(' ');
-    let characterCount = 0;
-    let splitIndex = 0;
-    for (let i = 0; i < words.length; i++) {
-      const wordLength = words[i].length + (i > 0 ? 1 : 0);
-      if (characterCount + wordLength >= halfLength) {
-        const beforeSplit = characterCount;
-        const afterSplit = characterCount + wordLength;
-        splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
-        break;
-      }
-      characterCount += wordLength;
-    }
-    let first = escapeHtml(text);
-    let second = '';
-    if (splitIndex > 0 && splitIndex < words.length && text.length > 30) {
-      first = escapeHtml(words.slice(0, splitIndex).join(' '));
-      second = escapeHtml(words.slice(splitIndex).join(' '));
-    }
-    return `<!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8" />
-      <style>
-        @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-        html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
-        body { font-family: Georgia, serif; background: #ffffff; }
-        .production-layout { width: 100%; height: 100%; display: flex; }
-        .blank-half { width: 5.125in; height: 7in; background: #ffffff; }
-        .inside-half { width: 5.125in; height: 7in; position: relative; }
-        .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: none; border-radius: 0; overflow: hidden; background: #ffffff; }
-        .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
-        .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
-        .msg { text-align: center; max-width: 85%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
-        .msgRow { position: absolute; left: 50%; transform: translateX(-50%); top: 28%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
-        .logoRow { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
-        .logo { max-width: 180px; max-height: 56px; object-fit: contain; }
-        .sigRow { position: absolute; left: 0; right: 0; top: 68%; display: flex; justify-content: center; }
-        .sig { width: 380px; object-fit: contain; }
-      </style>
-    </head>
-    <body>
-      <div class="production-layout">
-        <div class="blank-half"></div>
-        <div class="inside-half">
-          <div class="inside-content">
-            <div class="grid">
-              <div class="msgRow">
-                <p class="msg">${first}${second ? '<br />' + second : ''}</p>
-              </div>
-              ${logoDataUrl ? `<div class=\"logoRow\"><img class=\"logo\" src=\"${logoDataUrl}\" alt=\"Logo\"/></div>` : ``}
-              ${signatureDataUrl ? `<div class=\"sigRow\"><img class=\"sig\" src=\"${signatureDataUrl}\" alt=\"Signature\"/></div>` : ``}
-            </div>
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>`;
-  }
-  
-  // Preview format (original)
-  return `<!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-      html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
-      body { font-family: Georgia, serif; background: #ffffff; }
-      .wrap { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
-      .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 32px; box-sizing: border-box; }
-      .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
-      .msg { text-align: center; max-width: 80%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
-      .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; width: 100%; padding: 0 32px; box-sizing: border-box; }
-      .logo { max-width: 180px; max-height: 56px; object-fit: contain; }
-      .sig { max-width: 160px; max-height: 48px; object-fit: contain; }
-      .ph { color: #9ca3af; font-size: 12px; }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="grid">
-        <div class="top">
-          <p class="msg">${escapeHtml(message)}</p>
-        </div>
-        <div class="brand">
-          ${logoDataUrl ? `<img class="logo" src="${logoDataUrl}" alt="Logo"/>` : `<div class="ph">Company Logo</div>`}
-          ${signatureDataUrl ? `<img class="sig" src="${signatureDataUrl}" alt="Signature"/>` : ``}
-        </div>
       </div>
     </div>
   </body>

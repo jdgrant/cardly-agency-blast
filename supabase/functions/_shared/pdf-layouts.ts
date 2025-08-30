@@ -8,14 +8,95 @@
  * @param logoDataUrl - Base64 encoded logo image
  * @param signatureDataUrl - Base64 encoded signature image
  * @param orientation - 'portrait' for 5.125"x7" or 'landscape' for 7"x5.125"
+ * @param format - 'preview' for standard layout or 'production' for print layout
  */
 export function generateInsideCardHTML(
   order: any,
   logoDataUrl: string | null,
   signatureDataUrl: string | null,
-  orientation: 'portrait' | 'landscape' = 'portrait'
+  orientation: 'portrait' | 'landscape' = 'portrait',
+  format: 'preview' | 'production' = 'preview'
 ): string {
   const message = order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.';
+  
+  // Helper function to escape HTML
+  const escapeHtml = (str: string) => {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  if (format === 'production') {
+    // Production format: 10.25" x 7" landscape with left half blank, inside content on right half
+    const text = String(message || '');
+    const halfLength = Math.floor(text.length / 2);
+    const words = text.split(' ');
+    let characterCount = 0;
+    let splitIndex = 0;
+    
+    for (let i = 0; i < words.length; i++) {
+      const wordLength = words[i].length + (i > 0 ? 1 : 0);
+      if (characterCount + wordLength >= halfLength) {
+        const beforeSplit = characterCount;
+        const afterSplit = characterCount + wordLength;
+        splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
+        break;
+      }
+      characterCount += wordLength;
+    }
+    
+    let first = escapeHtml(text);
+    let second = '';
+    if (splitIndex > 0 && splitIndex < words.length && text.length > 30) {
+      first = escapeHtml(words.slice(0, splitIndex).join(' '));
+      second = escapeHtml(words.slice(splitIndex).join(' '));
+    }
+
+    return `<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8" />
+      <style>
+        @page { size: 10.25in 7in; margin: 0; }
+        html, body { margin: 0; padding: 0; width: 10.25in; height: 7in; }
+        body { font-family: Georgia, serif; background: #ffffff; }
+        .production-layout { width: 100%; height: 100%; display: flex; }
+        .blank-half { width: 5.125in; height: 7in; background: #ffffff; }
+        .inside-half { width: 5.125in; height: 7in; position: relative; }
+        .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: none; border-radius: 0; overflow: hidden; background: #ffffff; }
+        .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
+        .top { grid-row: 1 / 2; display: flex; align-items: center; justify-content: center; }
+        .msg { text-align: center; max-width: 85%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
+        .msgRow { position: absolute; left: 50%; transform: translateX(-50%); top: 28%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
+        .logoRow { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
+        .logo { max-width: 180px; max-height: 56px; object-fit: contain; }
+        .sigRow { position: absolute; left: 0; right: 0; top: 68%; display: flex; justify-content: center; }
+        .sig { width: 380px; object-fit: contain; }
+      </style>
+    </head>
+    <body>
+      <div class="production-layout">
+        <div class="blank-half"></div>
+        <div class="inside-half">
+          <div class="inside-content">
+            <div class="grid">
+              <div class="msgRow">
+                <p class="msg">${first}${second ? '<br />' + second : ''}</p>
+              </div>
+              ${logoDataUrl ? `<div class="logoRow"><img class="logo" src="${logoDataUrl}" alt="Logo"/></div>` : ``}
+              ${signatureDataUrl ? `<div class="sigRow"><img class="sig" src="${signatureDataUrl}" alt="Signature"/></div>` : ``}
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>`;
+  }
+
+  // Preview format - unified layout for both orientations
   const pageSize = orientation === 'portrait' ? '5.125in 7in' : '7in 5.125in';
   const containerDimensions = orientation === 'portrait' 
     ? { width: '5.125in', height: '7in' }
@@ -77,7 +158,7 @@ export function generateInsideCardHTML(
       <div class="w-full h-full grid grid-rows-3 p-8 relative">
         <div class="row-start-1 row-end-2 flex items-center justify-center">
           <div class="text-center max-w-4xl">
-            <p class="text-lg leading-relaxed italic text-foreground opacity-90">${message}</p>
+            <p class="text-lg leading-relaxed italic text-foreground opacity-90">${escapeHtml(message)}</p>
           </div>
         </div>
         
