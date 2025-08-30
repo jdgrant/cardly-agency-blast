@@ -1501,19 +1501,14 @@ const JobDetail = () => {
                     Generate and open a combined PDF with Front then Inside at 7" × 10.25" production format.
                   </p>
                   <Button
-                    onClick={handleGenerateProductionCombinedPDF}
-                    disabled={generatingProduction}
+                    onClick={() => order?.id && navigate(`/preview/inside/${order.id}?spread=true`)}
+                    disabled={!order?.id}
                     className="w-full"
                   >
-                    {generatingProduction ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Generating Combined Production PDF...</span>
-                      </div>
-                    ) : (
+                    {(
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
-                        <span>Generate / Open Combined Production PDF</span>
+                        <span>Preview Combined Production Layout</span>
                       </div>
                     )}
                   </Button>
