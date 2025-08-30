@@ -74,7 +74,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       // Call the parent callback with the signature image data URL
       onSignatureExtracted(data.signatureImage);
       
-      toast.success('Signature uploaded successfully! This will be reviewed manually before processing.');
+      toast.success('Cropped signature uploaded successfully!');
       
     } catch (error) {
       console.error('SignatureExtractor: Error processing signature:', error);
@@ -107,16 +107,16 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Upload className="w-5 h-5" />
-          <span>Upload Your Signature</span>
+          <span>Upload Cropped Signature</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="text-sm text-gray-600">
-          <p className="mb-2">Upload your signature file for manual review and processing:</p>
+          <p className="mb-2">Upload the cropped signature for this order:</p>
           <ul className="list-disc list-inside space-y-1">
             <li>Supported formats: JPG, PNG, GIF, PDF</li>
             <li>Maximum file size: 10MB</li>
-            <li>Your signature will be reviewed manually before being added to your cards</li>
+            <li>This signature will be used directly in the customer's cards</li>
           </ul>
         </div>
 
@@ -130,10 +130,10 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
               <div>
                 <label htmlFor="signature-upload" className="cursor-pointer">
                   <span className="block text-lg font-medium text-gray-900 mb-2">
-                    Choose your signature file
+                    Choose cropped signature file
                   </span>
                   <span className="text-sm text-gray-500">
-                    Click here to select a file from your device
+                    Click here to select the processed signature file
                   </span>
                   <input
                     id="signature-upload"
@@ -177,7 +177,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
                 ) : (
                   <div className="flex items-center space-x-2">
                     <Upload className="w-4 h-4" />
-                    <span>Upload for Review</span>
+                    <span>Upload Cropped Signature</span>
                   </div>
                 )}
               </Button>
@@ -190,9 +190,9 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
             <div className="flex items-center space-x-3">
               <CheckCircle className="w-8 h-8 text-green-600" />
               <div>
-                <p className="font-medium text-green-900">Signature uploaded successfully!</p>
+                <p className="font-medium text-green-900">Cropped signature uploaded successfully!</p>
                 <p className="text-sm text-green-700">
-                  Your signature will be reviewed manually and prepared for your order.
+                  The signature is now saved and will be used in the customer's cards.
                 </p>
               </div>
             </div>
