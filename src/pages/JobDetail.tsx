@@ -43,6 +43,7 @@ interface Order {
   status: string;
   logo_url: string | null;
   signature_url: string | null;
+  cropped_signature_url?: string | null;
   csv_file_url: string | null;
   created_at: string;
   updated_at: string;

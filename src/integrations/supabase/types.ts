@@ -481,6 +481,7 @@ export type Database = {
           contact_lastname: string
           contact_phone: string
           created_at: string
+          cropped_signature_url: string
           csv_file_url: string
           custom_message: string
           early_bird_discount: boolean
@@ -509,6 +510,7 @@ export type Database = {
         Args: { order_id: string }
         Returns: {
           card_quantity: number
+          cropped_signature_url: string
           custom_message: string
           id: string
           logo_url: string
