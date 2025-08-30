@@ -218,7 +218,9 @@ serve(async (req) => {
             .page { page-break-after: always; }
             .page:last-child { page-break-after: auto; }
           </style>
+          <!-- Front page styles -->
           <style>${frontStyle}</style>
+          <!-- Inside page styles - these should take precedence for conflicts -->
           <style>${insideStyle}</style>
         </head>
         <body>
