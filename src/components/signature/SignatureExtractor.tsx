@@ -43,42 +43,45 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
     setIsUploading(true);
     
     try {
-      console.log('SignatureExtractor: Converting and uploading signature file');
+      console.log('SignatureExtractor: Uploading cropped signature file');
       
-      // Convert file to base64
-      const base64File = await fileToBase64(uploadedFile);
-      
-      // Call the edge function to extract and process the signature
-      const { data, error } = await supabase.functions.invoke('extract-signature', {
-        body: {
-          file: base64File,
-          fileName: uploadedFile.name,
-          fileType: uploadedFile.type
-        }
-      });
+      // Generate unique filename for the cropped signature
+      const timestamp = Date.now();
+      const fileExtension = uploadedFile.type === 'application/pdf' ? 'pdf' : 
+                           uploadedFile.name.split('.').pop() || 'png';
+      const fileName = `signatures/cropped_signature_${timestamp}.${fileExtension}`;
 
-      if (error) {
-        console.error('SignatureExtractor: Conversion error:', error);
-        throw error;
+      // Upload directly to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('holiday-cards')
+        .upload(fileName, uploadedFile, {
+          contentType: uploadedFile.type,
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('SignatureExtractor: Upload error:', uploadError);
+        throw uploadError;
       }
 
-      if (!data?.signatureImage) {
-        throw new Error('No signature image returned from extraction');
-      }
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('holiday-cards')
+        .getPublicUrl(fileName);
 
-      console.log('SignatureExtractor: Signature extracted and processed successfully');
+      console.log('SignatureExtractor: File uploaded successfully to:', publicUrl);
       
-      // The signatureImage is a base64 data URL that can be displayed directly
-      setUploadedImageUrl(data.signatureImage);
+      // Set the uploaded image URL for preview
+      setUploadedImageUrl(publicUrl);
       
-      // Call the parent callback with the signature image data URL
-      onSignatureExtracted(data.signatureImage);
+      // Call the parent callback with the file path (not public URL)
+      onSignatureExtracted(fileName);
       
       toast.success('Cropped signature uploaded successfully!');
       
     } catch (error) {
-      console.error('SignatureExtractor: Error processing signature:', error);
-      toast.error('Failed to process signature file. Please try again.');
+      console.error('SignatureExtractor: Error uploading signature:', error);
+      toast.error('Failed to upload signature file. Please try again.');
     } finally {
       setIsUploading(false);
     }
