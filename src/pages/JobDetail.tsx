@@ -571,10 +571,18 @@ const JobDetail = () => {
     if (!order?.id) return;
     setGeneratingPDFs(true);
     try {
+      console.log('Inside PDF generation request:', { orderId: order.id, only: 'inside', mode: 'url', origin: window.location.origin });
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
         body: { orderId: order.id, only: 'inside', mode: 'url', origin: window.location.origin }
       });
       if (error) throw error;
+      
+      console.log('Inside PDF response:', data);
+      if (data?.debug?.targetUrl) {
+        console.log('Target URL for Gotenberg:', data.debug.targetUrl);
+        console.log('You can test this URL directly at:', data.debug.targetUrl);
+      }
+      
       const downloadUrl = data?.downloadUrl;
       if (!downloadUrl) throw new Error('No download URL returned');
       
@@ -597,10 +605,18 @@ const JobDetail = () => {
     if (!order?.id) return;
     setGeneratingFront(true);
     try {
+      console.log('Front PDF generation request:', { orderId: order.id, only: 'front', mode: 'html', origin: window.location.origin });
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
         body: { orderId: order.id, only: 'front', mode: 'html', origin: window.location.origin }
       });
       if (error) throw error;
+      
+      console.log('Front PDF response:', data);
+      if (data?.debug?.targetUrl) {
+        console.log('Target URL for Gotenberg:', data.debug.targetUrl);
+        console.log('You can test this URL directly at:', data.debug.targetUrl);
+      }
+      
       const downloadUrl = data?.downloadUrl;
       if (!downloadUrl) throw new Error('No download URL returned');
       

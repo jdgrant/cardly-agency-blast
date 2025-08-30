@@ -159,6 +159,14 @@ serve(async (req) => {
         throw new Error('No target URL provided; pass origin or fullUrl');
       }
 
+      console.log('=== GOTENBERG URL MODE DEBUG ===');
+      console.log('Target URL being sent to Gotenberg:', targetUrl);
+      console.log('Route:', route);
+      console.log('Order ID:', orderId);
+      console.log('Base origin:', base);
+      console.log('Only parameter:', only);
+      console.log('Paper dimensions:', paperWidth, 'x', paperHeight);
+
       const form = new FormData();
       form.append('url', targetUrl);
       form.append('paperWidth', paperWidth);
@@ -172,9 +180,11 @@ serve(async (req) => {
       form.append('emulatedMediaType', 'print');
       form.append('waitDelay', '2000ms');
 
-      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/url`;
-      console.log('Calling Gotenberg (url) at:', url, 'for:', targetUrl);
-      gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
+      const gotenbergUrl = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/url`;
+      console.log('Gotenberg API endpoint:', gotenbergUrl);
+      console.log('Request headers:', Object.keys(headers));
+      
+      gotenbergResp = await fetch(gotenbergUrl, { method: 'POST', headers, body: form as any });
     } else if (mode === 'debug') {
       // Return the HTML content for debugging
       const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
@@ -293,11 +303,22 @@ serve(async (req) => {
       if (updErr) console.log('Failed to store production combined PDF URL:', updErr.message);
     }
 
+    // Include debug info for URL mode
+    const debugInfo: any = {};
+    if (mode === 'url') {
+      const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
+      const route = only === 'inside' ? 'inside' : 'front';
+      const targetUrl = fullUrl || (base ? `${base}/#/preview/${route}/${orderId}` : '');
+      debugInfo.targetUrl = targetUrl;
+      debugInfo.gotenbergEndpoint = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/url`;
+    }
+
     return new Response(JSON.stringify({
       success: true,
       pdfPath,
       downloadUrl: signed?.signedUrl || null,
       publicUrl: publicData?.publicUrl || null,
+      debug: debugInfo,
       message: (includeFront && includeInside)
         ? 'Gotenberg PDF generated successfully (2 pages: front + inside)'
         : includeFront
