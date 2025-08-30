@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -13,6 +13,7 @@ interface Order {
   card_quantity?: number | null;
   logo_url?: string | null;
   signature_url?: string | null;
+  cropped_signature_url?: string | null;
 }
 
 interface TemplateRow {
@@ -40,6 +41,7 @@ const getPublicUrl = (path?: string | null) => {
 export default function PreviewCard() {
   const { which, orderId } = useParams<{ which: "front" | "inside"; orderId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<Order | null>(null);
@@ -47,6 +49,9 @@ export default function PreviewCard() {
   const [logoUrl, setLogoUrl] = useState<string>("");
   const [sigUrl, setSigUrl] = useState<string>("");
   const whichSafe = (which === "front" || which === "inside") ? which : "front";
+  
+  // Parse spread parameter from URL
+  const isSpread = searchParams.get('spread') === 'true';
 
   useEffect(() => {
     const t = whichSafe === "front" ? "Card Front Preview" : "Card Inside Preview";
@@ -155,6 +160,7 @@ export default function PreviewCard() {
           card_quantity: found.card_quantity ?? null,
           logo_url: found.logo_url ?? null,
           signature_url: found.signature_url ?? null,
+          cropped_signature_url: found.cropped_signature_url ?? null,
         });
 
         // Fetch template
@@ -281,10 +287,14 @@ export default function PreviewCard() {
   }
 
   const isFront = whichSafe === "front";
+  const isInside = whichSafe === "inside";
+
+  // Calculate aspect ratio based on spread setting
+  const aspectRatio = isFront ? 41/56 : (isSpread ? 10.25/7 : 5.125/7);
 
   return (
     <div className="min-h-screen bg-white">
-      <AspectRatio ratio={41/56}>
+      <AspectRatio ratio={aspectRatio}>
         {isFront ? (
           <div className="w-full h-full border-2 border-border rounded-md overflow-hidden bg-card">
             <img
@@ -294,7 +304,50 @@ export default function PreviewCard() {
               loading="lazy"
             />
           </div>
+        ) : isSpread ? (
+          // Spread layout: 10.25" x 7" with left blank and right content
+          <div className="w-full h-full bg-background border-2 border-border rounded-md overflow-hidden flex">
+            {/* Left half: blank */}
+            <div className="w-1/2 h-full bg-background" />
+            
+            {/* Right half: inside content */}
+            <div className="w-1/2 h-full bg-background">
+              <div className="w-full h-full grid grid-rows-3 p-6 relative">
+                {/* Top third: message */}
+                <div className="row-start-1 row-end-2 flex items-center justify-center">
+                  <div className="text-center max-w-[85%]">
+                    <p className="text-lg leading-relaxed italic text-foreground/90">
+                      {formattedMessage}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Middle third: spacer (empty) */}
+                <div className="row-start-2 row-end-3" />
+
+                {/* Logo positioning */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-[56%] flex items-center justify-center">
+                  {logoUrl && (
+                    <img
+                      src={logoUrl}
+                      alt="Company logo"
+                      className="max-h-14 max-w-[180px] object-contain"
+                      loading="lazy"
+                    />
+                  )}
+                </div>
+
+                {/* Signature positioning - centered */}
+                {sigUrl && (
+                  <div className="absolute left-0 right-0 top-[68%] flex justify-center">
+                    <img src={sigUrl} alt="Signature" loading="lazy" style={{width: "380px"}} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         ) : (
+          // Normal inside layout: 5.125" x 7"
           <div className="w-full h-full bg-background border-2 border-border rounded-md overflow-hidden">
             <div className="w-full h-full grid grid-rows-3 p-8 relative">
               {/* Top third: message */}
