@@ -722,26 +722,16 @@ const JobDetail = () => {
     if (!order?.id) return;
     setGeneratingProduction(true);
     try {
-      // Generate front PDF (page 1)
-      console.log('Generating production front PDF...');
-      const frontResponse = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, format: 'production', only: 'front', mode: 'html', origin: window.location.origin }
-      });
-      if (frontResponse.error) throw frontResponse.error;
-      if (!frontResponse.data?.downloadUrl) throw new Error('No front PDF URL returned');
-
-      // Generate inside PDF (page 2)
-      console.log('Generating production inside PDF...');
-      const insideResponse = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, format: 'production', only: 'inside', mode: 'html', origin: window.location.origin }
-      });
-      if (insideResponse.error) throw insideResponse.error;
-      if (!insideResponse.data?.downloadUrl) throw new Error('No inside PDF URL returned');
-
-      // Generate combined PDF with front+inside
+      // Generate combined PDF using the same parameters as individual buttons
       console.log('Generating combined production PDF...');
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId: order.id, format: 'production', only: 'front+inside' }
+        body: { 
+          orderId: order.id, 
+          format: 'production', 
+          only: 'front+inside',
+          mode: 'html',
+          origin: window.location.origin
+        }
       });
       if (error) throw error;
       const pdfPath = data?.pdfPath;
