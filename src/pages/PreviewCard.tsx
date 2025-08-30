@@ -321,9 +321,9 @@ export default function PreviewCard() {
                 )}
               </div>
 
-              {/* Signature positioning - nearly full width */}
+              {/* Signature positioning - absolute full width */}
               {sigUrl && (
-                <div className="absolute left-0 right-0 top-[68%] px-4">
+                <div className="absolute left-0 right-0 top-[68%]">
                   <img
                     src={sigUrl}
                     alt="Signature"
