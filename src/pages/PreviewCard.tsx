@@ -291,9 +291,24 @@ export default function PreviewCard() {
 
   // Calculate aspect ratio based on spread setting
   const aspectRatio = isFront ? 41/56 : (isSpread ? 10.25/7 : 5.125/7);
+  
+  // Debug logging
+  console.log('Preview Debug:', { 
+    whichSafe, 
+    isSpread, 
+    aspectRatio, 
+    searchParams: Object.fromEntries(searchParams.entries()) 
+  });
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Debug info */}
+      {isInside && (
+        <div className="fixed top-4 right-4 bg-black text-white p-2 rounded text-xs z-50">
+          {isSpread ? 'SPREAD MODE (10.25" x 7")' : 'NORMAL MODE (5.125" x 7")'}
+        </div>
+      )}
+      
       <AspectRatio ratio={aspectRatio}>
         {isFront ? (
           <div className="w-full h-full border-2 border-border rounded-md overflow-hidden bg-card">
@@ -308,7 +323,9 @@ export default function PreviewCard() {
           // Spread layout: 10.25" x 7" with left blank and right content
           <div className="w-full h-full bg-background border-2 border-border rounded-md overflow-hidden flex">
             {/* Left half: blank */}
-            <div className="w-1/2 h-full bg-background" />
+            <div className="w-1/2 h-full bg-gray-100 border-r border-dashed border-gray-300 flex items-center justify-center">
+              <span className="text-gray-400 text-sm rotate-45">BLANK SIDE</span>
+            </div>
             
             {/* Right half: inside content */}
             <div className="w-1/2 h-full bg-background">
