@@ -323,9 +323,7 @@ export default function PreviewCard() {
           // Spread layout: 10.25" x 7" with left blank and right content
           <div className="w-full h-full bg-background border-2 border-border rounded-md overflow-hidden flex">
             {/* Left half: blank */}
-            <div className="w-1/2 h-full bg-gray-100 border-r border-dashed border-gray-300 flex items-center justify-center">
-              <span className="text-gray-400 text-sm rotate-45">BLANK SIDE</span>
-            </div>
+            <div className="w-1/2 h-full bg-white" />
             
             {/* Right half: inside content */}
             <div className="w-1/2 h-full bg-background">
