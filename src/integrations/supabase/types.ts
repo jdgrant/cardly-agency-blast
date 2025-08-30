@@ -107,6 +107,7 @@ export type Database = {
           contact_lastname: string | null
           contact_phone: string | null
           created_at: string
+          cropped_signature_url: string | null
           csv_file_url: string | null
           custom_message: string | null
           early_bird_discount: boolean | null
@@ -143,6 +144,7 @@ export type Database = {
           contact_lastname?: string | null
           contact_phone?: string | null
           created_at?: string
+          cropped_signature_url?: string | null
           csv_file_url?: string | null
           custom_message?: string | null
           early_bird_discount?: boolean | null
@@ -179,6 +181,7 @@ export type Database = {
           contact_lastname?: string | null
           contact_phone?: string | null
           created_at?: string
+          cropped_signature_url?: string | null
           csv_file_url?: string | null
           custom_message?: string | null
           early_bird_discount?: boolean | null
@@ -349,6 +352,7 @@ export type Database = {
           contact_lastname: string | null
           contact_phone: string | null
           created_at: string
+          cropped_signature_url: string | null
           csv_file_url: string | null
           custom_message: string | null
           early_bird_discount: boolean | null
@@ -400,6 +404,7 @@ export type Database = {
           contact_lastname: string | null
           contact_phone: string | null
           created_at: string
+          cropped_signature_url: string | null
           csv_file_url: string | null
           custom_message: string | null
           early_bird_discount: boolean | null
@@ -498,6 +503,18 @@ export type Database = {
           template_id: string
           tier_name: string
           updated_at: string
+        }[]
+      }
+      get_order_for_preview: {
+        Args: { order_id: string }
+        Returns: {
+          card_quantity: number
+          custom_message: string
+          id: string
+          logo_url: string
+          selected_message: string
+          signature_url: string
+          template_id: string
         }[]
       }
       get_promocode: {

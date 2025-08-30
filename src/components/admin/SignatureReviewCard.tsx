@@ -12,6 +12,7 @@ interface SignatureReviewCardProps {
   order: {
     id: string;
     signature_url: string | null;
+    cropped_signature_url?: string | null;
     signature_needs_review?: boolean;
   };
   onOrderUpdate: () => void;
@@ -71,11 +72,11 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
 
     setUploading(true);
     try {
-      // Update order record with new signature URL and clear review flag
+      // Update order record with cropped signature URL and clear review flag
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
-          signature_url: signatureUrl,
+          cropped_signature_url: signatureUrl,
           signature_needs_review: false
         })
         .eq('id', order.id);
@@ -193,7 +194,7 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
                 disabled={uploading}
               >
                 <Upload className="w-4 h-4 mr-2" />
-                Upload Cropped Signature
+                {order.cropped_signature_url ? 'Replace Cropped Signature' : 'Upload Cropped Signature'}
               </Button>
               
               {order.signature_needs_review && (
@@ -205,6 +206,12 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
                   <CheckCircle className="w-4 h-4 mr-2" />
                   Mark Review Complete
                 </Button>
+              )}
+              
+              {order.cropped_signature_url && (
+                <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
+                  ✓ Cropped signature available - this will be used in cards
+                </div>
               )}
             </div>
           </div>

@@ -160,7 +160,10 @@ export default function PreviewCard() {
 
         // Resolve storage public URLs
         setLogoUrl(getPublicUrl(found.logo_url));
-        setSigUrl(getPublicUrl(found.signature_url));
+        
+        // Use cropped signature if available, otherwise use original signature
+        const signatureUrl = found.cropped_signature_url || found.signature_url;
+        setSigUrl(getPublicUrl(signatureUrl));
       } finally {
         setLoading(false);
       }
