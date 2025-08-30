@@ -87,11 +87,13 @@ serve(async (req) => {
       }
     }
 
-    if (order.signature_url) {
+    // Use cropped signature if available, otherwise use original signature (same logic as gotenberg)
+    const signatureUrl = order.cropped_signature_url || order.signature_url;
+    if (signatureUrl) {
       try {
         const { data: signatureData } = await supabase.storage
           .from('holiday-cards')
-          .download(order.signature_url);
+          .download(signatureUrl);
         if (signatureData) {
           const signatureBlob = await signatureData.arrayBuffer();
           const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signatureBlob)));
@@ -313,130 +315,60 @@ function generateBackCardHTML(order: any, logoDataUrl: string, signatureDataUrl:
           background: white;
           overflow: hidden;
         }
-        .card-back {
-          width: 100%;
-          height: 100%;
-          padding: 30px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          box-sizing: border-box;
-          background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-          border: 2px solid #e5e7eb;
-        }
-        .message-section {
-          text-align: center;
-          margin-bottom: 30px;
-          flex-grow: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .message {
-          font-size: 22px;
-          line-height: 1.6;
-          color: #1e293b;
-          font-style: italic;
-          max-width: 80%;
-          padding: 20px;
-          background: rgba(255,255,255,0.8);
-          border-radius: 12px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        .bottom-section {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 20px;
-          margin-bottom: 20px;
-        }
-        .branding-row {
-          display: flex;
-          align-items: center;
-          gap: 40px;
-        }
-        .logo {
-          max-width: 180px;
-          max-height: 60px;
-          object-fit: contain;
-        }
-        .signature {
-          max-width: 120px;
-          max-height: 40px;
-          object-fit: contain;
-        }
-        .address-section {
-          font-size: 11px;
-          line-height: 1.4;
-          border: 1px solid #d1d5db;
-          padding: 15px;
-          background: rgba(255,255,255,0.9);
-          border-radius: 8px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .address-section h4 {
-          margin: 0 0 12px 0;
-          font-size: 12px;
-          color: #374151;
-          font-weight: bold;
-          border-bottom: 1px solid #e5e7eb;
-          padding-bottom: 8px;
-        }
-        .address-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 10px;
-        }
-        .address-item {
-          padding: 8px;
-          background: #f9fafb;
-          border-radius: 4px;
-          border: 1px solid #e5e7eb;
-        }
-        .order-info {
-          font-size: 10px;
-          color: #6b7280;
-          text-align: center;
-          margin-top: 15px;
-          padding: 10px;
-          background: rgba(255,255,255,0.7);
-          border-radius: 6px;
-        }
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        .grid { display: grid; }
+        .grid-rows-3 { grid-template-rows: repeat(3, minmax(0, 1fr)); }
+        .p-8 { padding: 2rem; }
+        .relative { position: relative; }
+        .row-start-1 { grid-row-start: 1; }
+        .row-end-2 { grid-row-end: 2; }
+        .row-start-2 { grid-row-start: 2; }
+        .row-end-3 { grid-row-end: 3; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .text-center { text-align: center; }
+        .max-w-4xl { max-width: 80%; }
+        .text-lg { font-size: 1.125rem; }
+        .leading-relaxed { line-height: 1.625; }
+        .italic { font-style: italic; }
+        .text-foreground { color: #0f172a; }
+        .opacity-90 { opacity: 0.9; }
+        .absolute { position: absolute; }
+        .left-1-2 { left: 50%; }
+        .transform { transform: translateX(-50%); }
+        .top-56 { top: 56%; }
+        .top-68 { top: 68%; }
+        .left-0 { left: 0; }
+        .right-0 { right: 0; }
+        .max-h-14 { max-height: 3.5rem; }
+        .max-w-180 { max-width: 180px; }
+        .object-contain { object-fit: contain; }
+        .w-380 { width: 380px; }
       </style>
     </head>
     <body>
-      <div class="card-back">
-        <div class="message-section">
-          <div class="message">${message}</div>
+      <div class="w-full h-full grid grid-rows-3 p-8 relative">
+        <div class="row-start-1 row-end-2 flex items-center justify-center">
+          <div class="text-center max-w-4xl">
+            <p class="text-lg leading-relaxed italic text-foreground opacity-90">${message}</p>
+          </div>
         </div>
         
-        <div class="bottom-section">
-          <div class="branding-row">
-            ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="logo" />` : '<div style="height: 60px; display: flex; align-items: center; color: #9ca3af; font-size: 14px;">Company Logo</div>'}
-            ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Signature" class="signature" />` : ''}
-          </div>
-        </div>
-
-        ${clients.length > 0 ? `
-        <div class="address-section">
-          <h4>Recipients (${clients.length} clients):</h4>
-          <div class="address-grid">
-            ${clients.slice(0, 9).map(client => `
-              <div class="address-item">
-                <strong>${client.first_name} ${client.last_name}</strong><br>
-                ${client.address}<br>
-                ${client.city}, ${client.state} ${client.zip}
-              </div>
-            `).join('')}
-            ${clients.length > 9 ? `<div class="address-item" style="display: flex; align-items: center; justify-content: center; font-weight: bold; color: #6b7280;">... and ${clients.length - 9} more recipients</div>` : ''}
-          </div>
+        <div class="row-start-2 row-end-3"></div>
+        
+        ${logoDataUrl ? `
+        <div class="absolute left-1-2 transform top-56 flex items-center justify-center">
+          <img src="${logoDataUrl}" alt="Company logo" class="max-h-14 max-w-180 object-contain" loading="lazy">
         </div>
         ` : ''}
         
-        <div class="order-info">
-          <strong>Order:</strong> ${order.readable_order_id || order.id} | <strong>Quantity:</strong> ${order.card_quantity} cards | <strong>Generated:</strong> ${new Date().toLocaleDateString()} | <strong>Size:</strong> 7" × 5.125"
+        ${signatureDataUrl ? `
+        <div class="absolute left-0 right-0 top-68 flex justify-center">
+          <img src="${signatureDataUrl}" alt="Signature" loading="lazy" class="w-380">
         </div>
+        ` : ''}
       </div>
     </body>
     </html>
