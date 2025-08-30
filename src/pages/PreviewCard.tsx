@@ -74,32 +74,60 @@ export default function PreviewCard() {
 
         let found: any = null;
 
-        // 1) Exact UUID match (only if a valid UUID string)
+        // Try to get order data using the public preview function
         if (isUuid) {
-          const byIdResp = await supabase
-            .from("orders")
-            .select("*")
-            .eq("id", orderId)
-            .maybeSingle();
-          if (byIdResp.data) found = byIdResp.data;
-        }
-
-        // 2) Short-id prefix (first 8 hex chars of UUID)
-        if (!found && /^[0-9a-fA-F]{6,12}$/.test(orderId)) {
-          const shortResp = await supabase.rpc("find_order_by_short_id", { short_id: orderId });
-          if (shortResp.data && shortResp.data.length > 0) {
-            found = shortResp.data[0];
+          try {
+            // Use the SQL REST API directly since the function isn't in types yet
+            const response = await fetch(
+              `https://wsibvneidsmtsazfbmgc.supabase.co/rest/v1/rpc/get_order_for_preview`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndzaWJ2bmVpZHNtdHNhemZibWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwNzM2NTQsImV4cCI6MjA2NjY0OTY1NH0.wqh-oGLHEeSTx-7pUuzk4yRDfV7VZxoaFx-1bwAdLZQ'
+                },
+                body: JSON.stringify({ order_id: orderId })
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              if (data && data.length > 0) {
+                found = data[0];
+              }
+            }
+          } catch (err) {
+            console.error('Preview function error:', err);
           }
         }
 
-        // 3) Fallback by readable_order_id (exact or contains)
-        if (!found) {
-          const byReadable = await supabase
-            .from("orders")
-            .select("*")
-            .or(`readable_order_id.eq.${orderId},readable_order_id.ilike.%${orderId}%`)
-            .limit(1);
-          found = byReadable.data?.[0] || null;
+        // 2) Short-id prefix (first 8 hex chars of UUID) - need to find full UUID first
+        if (!found && /^[0-9a-fA-F]{6,12}$/.test(orderId)) {
+          try {
+            const shortResp = await supabase.rpc("find_order_by_short_id", { short_id: orderId });
+            if (shortResp.data && Array.isArray(shortResp.data) && shortResp.data.length > 0) {
+              // Now get the preview data using the found UUID
+              const fullId = shortResp.data[0].id;
+              const response = await fetch(
+                `https://wsibvneidsmtsazfbmgc.supabase.co/rest/v1/rpc/get_order_for_preview`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndzaWJ2bmVpZHNtdHNhemZibWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwNzM2NTQsImV4cCI6MjA2NjY0OTY1NH0.wqh-oGLHEeSTx-7pUuzk4yRDfV7VZxoaFx-1bwAdLZQ'
+                  },
+                  body: JSON.stringify({ order_id: fullId })
+                }
+              );
+              if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                  found = data[0];
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Short ID lookup error:', err);
+          }
         }
 
         if (!found) {
