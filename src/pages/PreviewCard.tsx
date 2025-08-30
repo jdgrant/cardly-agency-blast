@@ -26,6 +26,13 @@ const bucket = "holiday-cards";
 
 const getPublicUrl = (path?: string | null) => {
   if (!path) return "";
+  
+  // If it's already a full URL, return it as-is
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Otherwise, generate the public URL using Supabase
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
 };
@@ -163,6 +170,7 @@ export default function PreviewCard() {
         
         // Use cropped signature if available, otherwise use original signature
         const signatureUrl = found.cropped_signature_url || found.signature_url;
+        console.log('Signature URLs:', { cropped: found.cropped_signature_url, original: found.signature_url, selected: signatureUrl });
         setSigUrl(getPublicUrl(signatureUrl));
       } finally {
         setLoading(false);
@@ -317,6 +325,13 @@ export default function PreviewCard() {
                     alt="Signature"
                     className="max-h-12 max-w-[160px] object-contain"
                     loading="lazy"
+                    onError={(e) => {
+                      console.error('Signature image failed to load:', sigUrl);
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    onLoad={() => {
+                      console.log('Signature image loaded successfully:', sigUrl);
+                    }}
                   />
                 )}
               </div>
