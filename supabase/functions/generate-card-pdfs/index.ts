@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
 import { downloadAndEncodeImage } from "../_shared/image-utils.ts";
-import { generateBackCardHTML } from "../_shared/pdf-layouts.ts";
+import { generateInsideCardHTML } from "../_shared/pdf-layouts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -78,9 +78,9 @@ serve(async (req) => {
     const logoDataUrl = logoUrl ? await downloadAndEncodeImage(supabase, logoUrl) || '' : '';
     const signatureDataUrl = signatureUrl ? await downloadAndEncodeImage(supabase, signatureUrl) || '' : '';
 
-    // Generate HTML content for cards using shared layout
+    // Generate HTML content for cards using shared layout (portrait orientation like Inside PDF)
     const frontHTML = generateFrontCardHTML(template);
-    const backHTML = generateBackCardHTML(order, logoDataUrl, signatureDataUrl);
+    const backHTML = generateInsideCardHTML(order, logoDataUrl, signatureDataUrl, 'portrait');
     
     console.log('Using signature URL:', signatureUrl);
     console.log('Signature data URL available:', !!signatureDataUrl);
