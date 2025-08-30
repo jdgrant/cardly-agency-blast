@@ -324,7 +324,7 @@ export default function PreviewCard() {
               {/* Signature positioning - centered */}
               {sigUrl && (
                 <div className="absolute left-0 right-0 top-[68%] flex justify-center">
-                  <img src={sigUrl} alt="Signature" loading="lazy" style={{width: "400px"}} />
+                  <img src={sigUrl} alt="Signature" loading="lazy" style={{width: "380px"}} />
                 </div>
               )}
             </div>
