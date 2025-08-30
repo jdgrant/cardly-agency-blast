@@ -309,8 +309,8 @@ export default function PreviewCard() {
               {/* Middle third: spacer (empty) */}
               <div className="row-start-2 row-end-3" />
 
-              {/* Logo + signature positioning */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-[56%] flex flex-col items-center justify-center gap-4 w-full px-8">
+              {/* Logo positioning */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-[56%] flex items-center justify-center">
                 {logoUrl && (
                   <img
                     src={logoUrl}
@@ -319,7 +319,11 @@ export default function PreviewCard() {
                     loading="lazy"
                   />
                 )}
-                {sigUrl && (
+              </div>
+
+              {/* Signature positioning - full width */}
+              {sigUrl && (
+                <div className="absolute left-0 right-0 top-[68%] px-8">
                   <img
                     src={sigUrl}
                     alt="Signature"
@@ -333,8 +337,8 @@ export default function PreviewCard() {
                       console.log("Signature image loaded successfully:", sigUrl);
                     }}
                   />
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         )}
