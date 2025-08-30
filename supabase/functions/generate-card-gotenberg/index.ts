@@ -2,6 +2,8 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
+import { downloadAndEncodeImageForGotenberg } from "../_shared/image-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -63,37 +65,12 @@ serve(async (req) => {
       .single();
     if (templateError || !template) throw new Error(templateError?.message || 'Template not found');
 
-    // Download logo/signature and inline as data URLs so Gotenberg doesn't need external access
-    let logoDataUrl = '';
-    let signatureDataUrl = '';
-
-    if (order.logo_url) {
-      try {
-        const { data } = await supabase.storage.from('holiday-cards').download(order.logo_url);
-        if (data) {
-          const buf = await data.arrayBuffer();
-          const base64 = encodeBase64(new Uint8Array(buf));
-          logoDataUrl = `data:image/png;base64,${base64}`;
-        }
-      } catch (e) {
-        console.log('Logo download failed, continuing without logo:', e?.message);
-      }
-    }
-
-    // Use cropped signature if available, otherwise use original signature (same logic as preview)
-    const signatureUrl = order.cropped_signature_url || order.signature_url;
-    if (signatureUrl) {
-      try {
-        const { data } = await supabase.storage.from('holiday-cards').download(signatureUrl);
-        if (data) {
-          const buf = await data.arrayBuffer();
-          const base64 = encodeBase64(new Uint8Array(buf));
-          signatureDataUrl = `data:image/png;base64,${base64}`;
-        }
-      } catch (e) {
-        console.log('Signature download failed, continuing without signature:', e?.message);
-      }
-    }
+    // Download logo/signature using shared utilities
+    const logoUrl = getLogoUrl(order);
+    const signatureUrl = getSignatureUrl(order);
+    
+    const logoDataUrl = logoUrl ? await downloadAndEncodeImageForGotenberg(supabase, logoUrl) || '' : '';
+    const signatureDataUrl = signatureUrl ? await downloadAndEncodeImageForGotenberg(supabase, signatureUrl) || '' : '';
 
     // Inline template preview image for reliable rendering in Gotenberg
     let previewDataUrl = '';
