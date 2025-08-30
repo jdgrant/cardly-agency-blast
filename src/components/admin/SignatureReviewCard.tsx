@@ -72,12 +72,11 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
 
     setUploading(true);
     try {
-      // Update order record with cropped signature URL and clear review flag
+      // Update order record with cropped signature URL
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
-          cropped_signature_url: signatureUrl,
-          signature_needs_review: false
+          cropped_signature_url: signatureUrl
         })
         .eq('id', order.id);
 
@@ -88,7 +87,7 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
 
       toast({
         title: "Success",
-        description: "Cropped signature uploaded successfully and review completed",
+        description: "Cropped signature uploaded successfully",
       });
 
     } catch (error) {
@@ -174,7 +173,7 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <p className="text-sm text-gray-600">
-              Review and manage the uploaded signature file. Download the original signature, then upload a cropped version if needed.
+              Manage the uploaded signature file. Download the original signature, then upload a cropped version for use in cards.
             </p>
             
             <div className="flex flex-col space-y-2">
