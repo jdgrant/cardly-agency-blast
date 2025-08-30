@@ -1375,19 +1375,13 @@ const JobDetail = () => {
                     Generate and open a printable PDF of the inside page with message, logo, and signature.
                   </p>
                   <Button
-                    onClick={handleViewInsidePDF}
-                    disabled={generatingPDFs}
+                    onClick={() => navigate(`/#/preview/inside/${order.id}?spread=false`)}
                     className="w-full"
                   >
-                    {generatingPDFs ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Generating Inside PDF...</span>
-                      </div>
-                    ) : (
+                    {(
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
-                        <span>View Inside PDF</span>
+                        <span>Preview Inside Layout</span>
                       </div>
                     )}
                   </Button>
@@ -1477,19 +1471,13 @@ const JobDetail = () => {
                     Generate and open a printable PDF of the inside page at 7" × 10.25" production format.
                   </p>
                   <Button
-                    onClick={handleGenerateProductionInsidePDF}
-                    disabled={generatingProduction}
+                    onClick={() => navigate(`/#/preview/inside/${order.id}?spread=true`)}
                     className="w-full"
                   >
-                    {generatingProduction ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Generating Inside Production PDF...</span>
-                      </div>
-                    ) : (
+                    {(
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
-                        <span>View Inside Production PDF</span>
+                        <span>Preview Production Inside Layout</span>
                       </div>
                     )}
                   </Button>
