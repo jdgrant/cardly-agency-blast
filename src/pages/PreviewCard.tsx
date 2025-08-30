@@ -160,33 +160,7 @@ export default function PreviewCard() {
 
         // Resolve storage public URLs
         setLogoUrl(getPublicUrl(found.logo_url));
-        
-        // Handle signature URL - convert PDF to image if needed
-        if (found.signature_url) {
-          const publicSigUrl = getPublicUrl(found.signature_url);
-          if (found.signature_url.toLowerCase().endsWith('.pdf')) {
-            // Convert PDF signature to image
-            try {
-              const { data: imageData, error: convertError } = await supabase.functions.invoke('convert-pdf-to-image', {
-                body: { fileUrl: publicSigUrl }
-              });
-              
-              if (convertError) {
-                console.error('Error converting signature PDF:', convertError);
-                setSigUrl(publicSigUrl); // Fallback to original URL
-              } else if (imageData?.imageUrl) {
-                setSigUrl(imageData.imageUrl);
-              } else {
-                setSigUrl(publicSigUrl); // Fallback to original URL
-              }
-            } catch (error) {
-              console.error('Error calling convert-pdf-to-image:', error);
-              setSigUrl(publicSigUrl); // Fallback to original URL
-            }
-          } else {
-            setSigUrl(publicSigUrl);
-          }
-        }
+        setSigUrl(getPublicUrl(found.signature_url));
       } finally {
         setLoading(false);
       }
