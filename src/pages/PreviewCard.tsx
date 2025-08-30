@@ -323,7 +323,7 @@ export default function PreviewCard() {
                   <img
                     src={sigUrl}
                     alt="Signature"
-                    className="max-h-20 w-[432px] max-w-full object-contain"
+                    className="max-h-20 w-full object-contain"
                     loading="lazy"
                     onError={(e) => {
                       console.error("Signature image failed to load:", sigUrl);
