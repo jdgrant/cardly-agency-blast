@@ -324,7 +324,7 @@ export default function PreviewCard() {
               {/* Signature positioning - absolute full width */}
               {sigUrl && (
                 <div className="absolute left-0 right-0 top-[68%]">
-                  <img src="https://wsibvneidsmtsazfbmgc.supabase.co/storage/v1/object/public/holiday-cards/signatures/signature_1756494016335.png" alt="Signature" loading="lazy" style={{width: "100%"}} />
+                  <img src="https://wsibvneidsmtsazfbmgc.supabase.co/storage/v1/object/public/holiday-cards/signatures/signature_1756494016335.png" alt="Signature" loading="lazy" style={{width: "400px"}} />
                 </div>
               )}
             </div>
