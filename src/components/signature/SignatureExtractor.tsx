@@ -48,8 +48,8 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       // Convert file to base64
       const base64File = await fileToBase64(uploadedFile);
       
-      // Call the edge function to convert the file if needed
-      const { data, error } = await supabase.functions.invoke('convert-signature-file', {
+      // Call the edge function to extract and process the signature
+      const { data, error } = await supabase.functions.invoke('extract-signature', {
         body: {
           file: base64File,
           fileName: uploadedFile.name,
@@ -62,17 +62,17 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         throw error;
       }
 
-      if (!data?.processedFileUrl) {
-        throw new Error('No processed file URL returned from conversion');
+      if (!data?.signatureImage) {
+        throw new Error('No signature image returned from extraction');
       }
 
-      console.log('SignatureExtractor: File processed successfully:', data.processedFileUrl);
+      console.log('SignatureExtractor: Signature extracted and processed successfully');
       
-      // Set the uploaded image URL
-      setUploadedImageUrl(data.processedFileUrl);
+      // The signatureImage is a base64 data URL that can be displayed directly
+      setUploadedImageUrl(data.signatureImage);
       
-      // Call the parent callback with the URL
-      onSignatureExtracted(data.processedFileUrl);
+      // Call the parent callback with the signature image data URL
+      onSignatureExtracted(data.signatureImage);
       
       toast.success('Signature uploaded successfully! This will be reviewed manually before processing.');
       
