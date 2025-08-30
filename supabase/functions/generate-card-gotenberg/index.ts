@@ -80,9 +80,11 @@ serve(async (req) => {
       }
     }
 
-    if (order.signature_url) {
+    // Use cropped signature if available, otherwise use original signature (same logic as preview)
+    const signatureUrl = order.cropped_signature_url || order.signature_url;
+    if (signatureUrl) {
       try {
-        const { data } = await supabase.storage.from('holiday-cards').download(order.signature_url);
+        const { data } = await supabase.storage.from('holiday-cards').download(signatureUrl);
         if (data) {
           const buf = await data.arrayBuffer();
           const base64 = encodeBase64(new Uint8Array(buf));
