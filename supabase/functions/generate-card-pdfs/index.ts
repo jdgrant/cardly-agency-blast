@@ -81,51 +81,54 @@ serve(async (req) => {
     // Generate HTML content for cards using shared layout
     const frontHTML = generateFrontCardHTML(template);
     const backHTML = generateBackCardHTML(order, logoDataUrl, signatureDataUrl);
+    
+    console.log('Using signature URL:', signatureUrl);
+    console.log('Signature data URL available:', !!signatureDataUrl);
 
-    // Create SVG files instead of PNG for better compatibility
-    const frontSVG = await generateHTMLToSVG(frontHTML, `${order.readable_order_id || orderId}_front.svg`);
-    const backSVG = await generateHTMLToSVG(backHTML, `${order.readable_order_id || orderId}_back.svg`);
+    // Convert HTML to PDF using the actual HTML content with signatures
+    const frontPDF = await convertHTMLToPDF(frontHTML);
+    const backPDF = await convertHTMLToPDF(backHTML);
 
-    // Upload SVGs to storage
-    const frontSVGPath = `cards/${orderId}_front_${Date.now()}.svg`;
-    const backSVGPath = `cards/${orderId}_back_${Date.now()}.svg`;
+    // Upload PDFs to storage
+    const frontPDFPath = `cards/${orderId}_front_${Date.now()}.pdf`;
+    const backPDFPath = `cards/${orderId}_back_${Date.now()}.pdf`;
 
     const { error: frontUploadError } = await supabase.storage
       .from('holiday-cards')
-      .upload(frontSVGPath, frontSVG, {
-        contentType: 'image/svg+xml',
+      .upload(frontPDFPath, frontPDF, {
+        contentType: 'application/pdf',
         upsert: true
       });
 
     const { error: backUploadError } = await supabase.storage
       .from('holiday-cards')
-      .upload(backSVGPath, backSVG, {
-        contentType: 'image/svg+xml',
+      .upload(backPDFPath, backPDF, {
+        contentType: 'application/pdf',
         upsert: true
       });
 
     if (frontUploadError || backUploadError) {
-      throw new Error(`SVG upload failed: ${frontUploadError?.message || backUploadError?.message}`);
+      throw new Error(`PDF upload failed: ${frontUploadError?.message || backUploadError?.message}`);
     }
 
-    console.log(`SVG cards generated successfully for order ${orderId}`);
+    console.log(`PDF cards generated successfully for order ${orderId}`);
 
     // Generate public download URLs
     const { data: frontSignedUrl } = await supabase.storage
       .from('holiday-cards')
-      .createSignedUrl(frontSVGPath, 3600); // 1 hour expiry
+      .createSignedUrl(frontPDFPath, 3600); // 1 hour expiry
 
     const { data: backSignedUrl } = await supabase.storage
       .from('holiday-cards')
-      .createSignedUrl(backSVGPath, 3600); // 1 hour expiry
+      .createSignedUrl(backPDFPath, 3600); // 1 hour expiry
 
     return new Response(JSON.stringify({ 
       success: true,
-      frontImagePath: frontSVGPath,
-      backImagePath: backSVGPath,
+      frontImagePath: frontPDFPath,
+      backImagePath: backPDFPath,
       frontDownloadUrl: frontSignedUrl?.signedUrl || null,
       backDownloadUrl: backSignedUrl?.signedUrl || null,
-      message: 'SVG cards generated successfully with 7" x 5.125" dimensions'
+      message: 'PDF cards generated successfully with 7" x 5.125" dimensions'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -133,7 +136,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-card-pdfs function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message || 'Failed to generate SVG cards' 
+      error: error.message || 'Failed to generate PDF cards' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -267,175 +270,40 @@ function generateFrontCardHTML(template: any): string {
   `;
 }
 
-async function generateHTMLToSVG(htmlContent: string, filename: string): Promise<Uint8Array> {
-  console.log('Generating SVG for:', filename);
-  
-  // Create SVG with proper dimensions (7" x 5.125" at 96 DPI for web display)
-  const width = 672; // 7 inches * 96 DPI
-  const height = 492; // 5.125 inches * 96 DPI
-  
-  // Determine if this is front or back card based on filename
-  const isBackCard = filename.includes('_back');
+async function convertHTMLToPDF(htmlContent: string): Promise<Uint8Array> {
+  console.log('Converting HTML to PDF');
   
   try {
-    // Extract text content from HTML for display
-    const textContent = htmlContent
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // Use gotenberg API for HTML to PDF conversion
+    const gotenbergUrl = Deno.env.get('GOTENBERG_URL') || 'https://pdf.sendyourcards.io';
+    const apiKey = Deno.env.get('GOTENBERG_API_KEY');
     
-    // Create different SVG content for front vs back cards
-    let svg: string;
+    const formData = new FormData();
+    formData.append('files', new Blob([htmlContent], { type: 'text/html' }), 'index.html');
     
-    if (isBackCard) {
-      // Back card design with message and address information
-      svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
-  <!-- Background gradient -->
-  <defs>
-    <linearGradient id="backGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#fafafa;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#f5f5f5;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect width="100%" height="100%" fill="url(#backGrad)"/>
-  
-  <!-- Border -->
-  <rect x="2" y="2" width="${width - 4}" height="${height - 4}" fill="none" stroke="#e5e7eb" stroke-width="2"/>
-  
-  <!-- Header -->
-  <text x="${width / 2}" y="40" text-anchor="middle" font-family="Georgia, serif" font-size="24" font-weight="bold" fill="#1e293b">Holiday Card - Back</text>
-  
-  <!-- Message section -->
-  <rect x="50" y="60" width="${width - 100}" height="120" fill="rgba(255,255,255,0.8)" stroke="#e5e7eb" stroke-width="1" rx="6"/>
-  <text x="${width / 2}" y="85" text-anchor="middle" font-family="Georgia, serif" font-size="16" font-style="italic" fill="#1e293b">Holiday Message</text>
-  <text x="${width / 2}" y="110" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#374151">Warmest wishes for a joyful</text>
-  <text x="${width / 2}" y="125" text-anchor="middle" font-family="Georgia, serif" font-size="12" fill="#374151">and restful holiday season.</text>
-  <text x="${width / 2}" y="150" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#6b7280">From your friends at [Company Name]</text>
-  
-  <!-- Branding section -->
-  <rect x="100" y="200" width="200" height="40" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="4"/>
-  <text x="200" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9ca3af">Company Logo</text>
-  
-  <rect x="320" y="200" width="200" height="40" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="4"/>
-  <text x="420" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#9ca3af">Additional Branding</text>
-  
-  <!-- Recipients info -->
-  <rect x="50" y="260" width="${width - 100}" height="150" fill="rgba(255,255,255,0.9)" stroke="#d1d5db" stroke-width="1" rx="4"/>
-  <text x="${width / 2}" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#374151">Recipients (325 clients)</text>
-  
-  <!-- Sample addresses grid -->
-  <g>
-    <rect x="70" y="290" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
-    <text x="75" y="305" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">NextGen Inc.</text>
-    <text x="75" y="315" font-family="Arial, sans-serif" font-size="7" fill="#374151">3327 Oak St</text>
-    <text x="75" y="323" font-family="Arial, sans-serif" font-size="7" fill="#374151">Springfield, PA 20068</text>
+    const headers: Record<string, string> = {
+      'Accept': 'application/pdf'
+    };
     
-    <rect x="240" y="290" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
-    <text x="245" y="305" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">Olivia Clark</text>
-    <text x="245" y="315" font-family="Arial, sans-serif" font-size="7" fill="#374151">8937 Sunset Blvd</text>
-    <text x="245" y="323" font-family="Arial, sans-serif" font-size="7" fill="#374151">Springfield, OH 91718</text>
-    
-    <rect x="410" y="290" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
-    <text x="415" y="305" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">John Harris</text>
-    <text x="415" y="315" font-family="Arial, sans-serif" font-size="7" fill="#374151">6067 Cedar Blvd</text>
-    <text x="415" y="323" font-family="Arial, sans-serif" font-size="7" fill="#374151">Bristol, NY 38401</text>
-    
-    <rect x="70" y="335" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
-    <text x="75" y="350" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">John Taylor</text>
-    <text x="75" y="360" font-family="Arial, sans-serif" font-size="7" fill="#374151">8088 Elm St</text>
-    <text x="75" y="368" font-family="Arial, sans-serif" font-size="7" fill="#374151">Greenville, TX 50049</text>
-    
-    <rect x="240" y="335" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
-    <text x="245" y="350" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">Laura Lee</text>
-    <text x="245" y="360" font-family="Arial, sans-serif" font-size="7" fill="#374151">7978 Cedar Blvd</text>
-    <text x="245" y="368" font-family="Arial, sans-serif" font-size="7" fill="#374151">Bristol, NY 23733</text>
-    
-    <rect x="410" y="335" width="150" height="35" fill="#f9fafb" stroke="#e5e7eb" stroke-width="1" rx="2"/>
-    <text x="415" y="350" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="#1f2937">+ 320 more clients</text>
-    <text x="415" y="365" font-family="Arial, sans-serif" font-size="7" fill="#6b7280">View full list in order details</text>
-  </g>
-  
-  <!-- Footer -->
-  <text x="${width / 2}" y="440" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#374151">Order: ${filename.replace('_back.svg', '')} | 325 cards | 7" × 5.125"</text>
-  <text x="${width / 2}" y="455" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
-  <text x="${width / 2}" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#9ca3af">Professional Holiday Card Service</text>
-</svg>`;
-    } else {
-      // Front card design
-      svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
-  <!-- White background -->
-  <rect width="100%" height="100%" fill="white"/>
-  
-  <!-- Border -->
-  <rect x="2" y="2" width="${width - 4}" height="${height - 4}" fill="none" stroke="#e5e7eb" stroke-width="2"/>
-  
-  <!-- Title -->
-  <text x="${width / 2}" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#1e293b">Holiday Card</text>
-  
-  <!-- Filename -->
-  <text x="${width / 2}" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="#475569">${filename.replace('.svg', '')}</text>
-  
-  <!-- Decorative line -->
-  <rect x="${width / 2 - 100}" y="100" width="200" height="3" fill="#3b82f6"/>
-  
-  <!-- Card dimensions -->
-  <text x="${width / 2}" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#64748b">7" × 5.125" Holiday Card</text>
-  
-  <!-- Template preview area background -->
-  <rect x="50" y="150" width="${width - 100}" height="${height - 200}" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"/>
-  
-  <!-- Template preview placeholder -->
-  <text x="${width / 2}" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#6b7280">Template Preview</text>
-  <text x="${width / 2}" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#9ca3af">Merry Christmas Snowfall</text>
-  
-  <!-- Content lines to represent the card design -->
-  <g>
-    <rect x="80" y="250" width="180" height="8" fill="#e5e7eb"/>
-    <rect x="80" y="270" width="220" height="8" fill="#e5e7eb"/>
-    <rect x="80" y="290" width="160" height="8" fill="#e5e7eb"/>
-    <rect x="80" y="310" width="200" height="8" fill="#e5e7eb"/>
-    <rect x="320" y="250" width="150" height="8" fill="#e5e7eb"/>
-    <rect x="320" y="270" width="190" height="8" fill="#e5e7eb"/>
-    <rect x="320" y="290" width="170" height="8" fill="#e5e7eb"/>
-    <rect x="320" y="310" width="180" height="8" fill="#e5e7eb"/>
-  </g>
-  
-  <!-- Snowflake decorations -->
-  <g fill="#3b82f6" opacity="0.3">
-    <text x="150" y="360" font-family="Arial, sans-serif" font-size="20">❄</text>
-    <text x="400" y="340" font-family="Arial, sans-serif" font-size="16">❄</text>
-    <text x="500" y="380" font-family="Arial, sans-serif" font-size="18">❄</text>
-    <text x="120" y="380" font-family="Arial, sans-serif" font-size="14">❄</text>
-  </g>
-  
-  <!-- Generation info -->
-  <text x="${width / 2}" y="450" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#9ca3af">Generated: ${new Date().toLocaleDateString()}</text>
-  <text x="${width / 2}" y="465" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#9ca3af">Professional Holiday Card Front</text>
-</svg>`;
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
     }
     
-    // Convert SVG string to Uint8Array
-    const svgBytes = new TextEncoder().encode(svg);
+    const response = await fetch(`${gotenbergUrl}/forms/chromium/convert/html`, {
+      method: 'POST',
+      headers,
+      body: formData
+    });
     
-    console.log('Generated SVG size:', svgBytes.length, 'bytes');
-    return svgBytes;
+    if (!response.ok) {
+      throw new Error(`Gotenberg conversion failed: ${response.status} ${response.statusText}`);
+    }
+    
+    const pdfBuffer = await response.arrayBuffer();
+    return new Uint8Array(pdfBuffer);
     
   } catch (error) {
-    console.error('Error generating SVG:', error);
-    
-    // Fallback: Create a simple SVG
-    const fallbackSvg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="white"/>
-  <rect x="2" y="2" width="${width - 4}" height="${height - 4}" fill="none" stroke="#ddd" stroke-width="2"/>
-  <text x="${width / 2}" y="${height / 2}" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#333">Holiday Card</text>
-  <text x="${width / 2}" y="${height / 2 + 30}" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#666">${filename.replace('.svg', '')}</text>
-</svg>`;
-    
-    return new TextEncoder().encode(fallbackSvg);
+    console.error('Error converting HTML to PDF:', error);
+    throw new Error(`PDF conversion failed: ${error.message}`);
   }
 }
