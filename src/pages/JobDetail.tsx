@@ -1375,7 +1375,7 @@ const JobDetail = () => {
                     Generate and open a printable PDF of the inside page with message, logo, and signature.
                   </p>
                   <Button
-                    onClick={() => navigate(`/#/preview/inside/${order.id}?spread=false`)}
+                    onClick={() => navigate(`/preview/inside/${order.id}?spread=false`)}
                     className="w-full"
                   >
                     {(
@@ -1471,7 +1471,7 @@ const JobDetail = () => {
                     Generate and open a printable PDF of the inside page at 7" × 10.25" production format.
                   </p>
                   <Button
-                    onClick={() => navigate(`/#/preview/inside/${order.id}?spread=true`)}
+                    onClick={() => navigate(`/preview/inside/${order.id}?spread=true`)}
                     className="w-full"
                   >
                     {(
