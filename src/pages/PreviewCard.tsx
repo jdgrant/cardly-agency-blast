@@ -301,8 +301,8 @@ export default function PreviewCard() {
               {/* Middle third: spacer (empty) */}
               <div className="row-start-2 row-end-3" />
 
-              {/* Logo + signature slightly above midline */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-[56%] flex items-center justify-center gap-10 w-full px-8">
+              {/* Logo + signature positioning */}
+              <div className="absolute left-1/2 -translate-x-1/2 top-[56%] flex flex-col items-center justify-center gap-4 w-full px-8">
                 {logoUrl && (
                   <img
                     src={logoUrl}
