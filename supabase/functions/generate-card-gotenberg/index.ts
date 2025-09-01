@@ -189,12 +189,53 @@ serve(async (req) => {
       // Build HTML and convert (supports multi-page)
       const form = new FormData();
       const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
-      const insideHTML = generateInsideCardHTML(order, logoDataUrl, signatureDataUrl, 'portrait', format);
+      
+      // For inside pages, check if we can use URL mode for consistency with preview
+      const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
+      let insideHTML = '';
+      let useInsideUrl = false;
+      
+      if (base && includeInside && !includeFront) {
+        // For inside-only generation, use URL mode to match preview exactly
+        const spreadParam = format === 'production' ? '?spread=true' : '';
+        const insideUrl = `${base}/#/preview/inside/${orderId}${spreadParam}`;
+        
+        console.log('Generating inside PDF using preview URL for consistency:', insideUrl);
+        
+        const insideForm = new FormData();
+        insideForm.append('url', insideUrl);
+        insideForm.append('paperWidth', paperWidth);
+        insideForm.append('paperHeight', paperHeight);
+        insideForm.append('marginTop', '0');
+        insideForm.append('marginBottom', '0');
+        insideForm.append('marginLeft', '0');
+        insideForm.append('marginRight', '0');
+        insideForm.append('landscape', 'false');
+        insideForm.append('preferCssPageSize', 'true');
+        insideForm.append('emulatedMediaType', 'print');
+        insideForm.append('waitDelay', '2000ms');
+
+        const gotenbergUrl = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/url`;
+        gotenbergResp = await fetch(gotenbergUrl, { method: 'POST', headers, body: insideForm as any });
+        useInsideUrl = true;
+      } else {
+        // Fallback to HTML generation for combined pages or when no origin
+        insideHTML = generateInsideCardHTML(order, logoDataUrl, signatureDataUrl, 'portrait', format);
+      }
 
       if (includeFront && !includeInside) {
         form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
+        const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
+        console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
+        gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
+      } else if (includeInside && !includeFront && useInsideUrl) {
+        // Inside URL mode was already handled above - gotenbergResp is already set
+        console.log('Inside PDF generated using URL mode for consistency with preview');
       } else if (includeInside && !includeFront) {
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
+        const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
+        console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
+        gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
         // both pages, build a single HTML with two pages (front then inside)
         const extract = (html: string, tag: 'style' | 'body') => {
