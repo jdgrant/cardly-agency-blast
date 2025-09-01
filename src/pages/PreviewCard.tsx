@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { CardRenderer } from "@/shared/card-renderer";
+import { getLayoutConfig } from "@/shared/layout-config";
 
 interface Order {
   id: string;
@@ -185,50 +186,12 @@ export default function PreviewCard() {
     load();
   }, [orderId]);
 
-  // Business rule for splitting message at halfway point by character length (same as order processing preview)
-  const formatMessageWithLineBreak = (msg: string) => {
-    if (!msg) return '' as any;
-
-    const halfLength = Math.floor(msg.length / 2);
-    const words = msg.split(' ');
-
-    let characterCount = 0;
-    let splitIndex = 0;
-
-    for (let i = 0; i < words.length; i++) {
-      const wordLength = words[i].length + (i > 0 ? 1 : 0); // +1 for space
-      if (characterCount + wordLength >= halfLength) {
-        const beforeSplit = characterCount;
-        const afterSplit = characterCount + wordLength;
-        splitIndex = Math.abs(halfLength - beforeSplit) <= Math.abs(halfLength - afterSplit) ? i : i + 1;
-        break;
-      }
-      characterCount += wordLength;
-    }
-
-    if (splitIndex > 0 && splitIndex < words.length && msg.length > 30) {
-      const firstLine = words.slice(0, splitIndex).join(' ');
-      const secondLine = words.slice(splitIndex).join(' ');
-      return (
-        <>
-          {firstLine}
-          <br />
-          {secondLine}
-        </>
-      );
-    }
-
-    return msg as any;
-  };
-
   const message = useMemo(() => {
     return (
       order?.custom_message || order?.selected_message ||
       "Warmest wishes for a joyful and restful holiday season."
     );
   }, [order]);
-
-  const formattedMessage = useMemo(() => formatMessageWithLineBreak(message), [message]);
 
   if (!orderId) {
     return (
@@ -288,15 +251,23 @@ export default function PreviewCard() {
 
   const isFront = whichSafe === "front";
   const isInside = whichSafe === "inside";
-
-  // Calculate aspect ratio based on spread setting
-  const aspectRatio = isFront ? 41/56 : (isSpread ? 10.25/7 : 5.125/7);
+  
+  // Get unified layout configuration
+  const layout = getLayoutConfig(whichSafe, 'preview', isSpread);
+  
+  // Prepare content for unified renderer
+  const content = {
+    message,
+    logoUrl: logoUrl || undefined,
+    signatureUrl: sigUrl || undefined,
+    templatePreviewUrl: template?.preview_url || undefined,
+  };
   
   // Debug logging
   console.log('Preview Debug:', { 
     whichSafe, 
     isSpread, 
-    aspectRatio, 
+    layout, 
     searchParams: Object.fromEntries(searchParams.entries()) 
   });
 
@@ -305,100 +276,15 @@ export default function PreviewCard() {
       {/* Debug info */}
       {isInside && (
         <div className="fixed top-4 right-4 bg-black text-white p-2 rounded text-xs z-50">
-          {isSpread ? 'SPREAD MODE (10.25" x 7")' : 'NORMAL MODE (5.125" x 7")'}
+          {isSpread ? `SPREAD MODE (${layout.overallWidth} x ${layout.overallHeight})` : `NORMAL MODE (${layout.overallWidth} x ${layout.overallHeight})`}
         </div>
       )}
       
-      <AspectRatio ratio={aspectRatio}>
-        {isFront ? (
-          <div className="w-full h-full border-2 border-border rounded-md overflow-hidden bg-card">
-            <img
-              src={template.preview_url}
-              alt={`${template.name} card front preview`}
-              className="w-full h-full object-contain"
-              loading="lazy"
-            />
-          </div>
-        ) : isSpread ? (
-          // Spread layout: 10.25" x 7" with left blank and right content
-          <div className="w-full h-full bg-background border-2 border-border rounded-md overflow-hidden flex">
-            {/* Left half: blank */}
-            <div className="w-1/2 h-full bg-white" />
-            
-            {/* Right half: inside content */}
-            <div className="w-1/2 h-full bg-background">
-              <div className="w-full h-full grid grid-rows-3 p-6 relative">
-                {/* Top third: message */}
-                <div className="row-start-1 row-end-2 flex items-center justify-center">
-                  <div className="text-center max-w-[85%]">
-                    <p className="text-lg leading-relaxed italic text-foreground/90">
-                      {formattedMessage}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Middle third: spacer (empty) */}
-                <div className="row-start-2 row-end-3" />
-
-                {/* Logo positioning */}
-                <div className="absolute left-1/2 -translate-x-1/2 top-[56%] flex items-center justify-center">
-                  {logoUrl && (
-                    <img
-                      src={logoUrl}
-                      alt="Company logo"
-                      className="max-h-14 max-w-[180px] object-contain"
-                      loading="lazy"
-                    />
-                  )}
-                </div>
-
-                {/* Signature positioning - centered */}
-                {sigUrl && (
-                  <div className="absolute left-0 right-0 top-[68%] flex justify-center">
-                    <img src={sigUrl} alt="Signature" loading="lazy" style={{width: "380px"}} />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          // Normal inside layout: 5.125" x 7"
-          <div className="w-full h-full bg-background border-2 border-border rounded-md overflow-hidden">
-            <div className="w-full h-full grid grid-rows-3 p-8 relative">
-              {/* Top third: message */}
-              <div className="row-start-1 row-end-2 flex items-center justify-center">
-                <div className="text-center max-w-[80%]">
-                  <p className="text-lg leading-relaxed italic text-foreground/90">
-                    {formattedMessage}
-                  </p>
-                </div>
-              </div>
-
-              {/* Middle third: spacer (empty) */}
-              <div className="row-start-2 row-end-3" />
-
-              {/* Logo positioning */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-[56%] flex items-center justify-center">
-                {logoUrl && (
-                  <img
-                    src={logoUrl}
-                    alt="Company logo"
-                    className="max-h-14 max-w-[180px] object-contain"
-                    loading="lazy"
-                  />
-                )}
-              </div>
-
-              {/* Signature positioning - centered */}
-              {sigUrl && (
-                <div className="absolute left-0 right-0 top-[68%] flex justify-center">
-                  <img src={sigUrl} alt="Signature" loading="lazy" style={{width: "380px"}} />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </AspectRatio>
+      <CardRenderer 
+        layout={layout}
+        content={content}
+        type={whichSafe}
+      />
     </div>
   );
 }

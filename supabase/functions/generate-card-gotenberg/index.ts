@@ -3,7 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
-import { generateInsideCardHTML } from "../_shared/pdf-layouts.ts";
+import { generateUnifiedCardHTML } from "../_shared/unified-layouts.ts";
 import { downloadAndEncodeImageForGotenberg } from "../_shared/image-utils.ts";
 
 const corsHeaders = {
@@ -168,8 +168,13 @@ serve(async (req) => {
     } else if (mode === 'debug') {
       // Return the HTML content for debugging
       const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
-    // Generate HTML content for inside card using shared layout
-    const insideHTML = generateInsideCardHTML(order, logoDataUrl, signatureDataUrl, 'portrait', format);
+      // Generate HTML content for inside card using unified layout
+      const insideHTML = generateUnifiedCardHTML('inside', {
+        message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
+        logoDataUrl,
+        signatureDataUrl,
+        templatePreviewUrl: previewDataUrl,
+      }, format, format === 'production');
       
       let debugHTML = '';
       
@@ -220,7 +225,12 @@ serve(async (req) => {
         useInsideUrl = true;
       } else {
         // Fallback to HTML generation for combined pages or when no origin
-        insideHTML = generateInsideCardHTML(order, logoDataUrl, signatureDataUrl, 'portrait', format);
+        insideHTML = generateUnifiedCardHTML('inside', {
+          message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
+          logoDataUrl,
+          signatureDataUrl,
+          templatePreviewUrl: previewDataUrl,
+        }, format, format === 'production');
       }
 
       if (includeFront && !includeInside) {
@@ -362,59 +372,12 @@ serve(async (req) => {
 
 function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7') {
   const imgSrc = previewDataUrl || template.preview_url || '';
+  const isSpread = format === 'production';
   
-  if (format === 'production') {
-    // Production format: 10.25" x 7" landscape with front filling left half (5.125" x 7")
-    return `<!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8" />
-      <style>
-        @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-        html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
-        body { font-family: Arial, sans-serif; background: #ffffff; }
-        .production-layout { width: 100%; height: 100%; display: flex; }
-        .front-half { width: 5.125in; height: 7in; overflow: hidden; }
-        .back-half { width: 5.125in; height: 7in; display: flex; align-items: center; justify-content: center; }
-        .front-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .back-template { width: 100%; height: 100%; background: #ffffff; }
-      </style>
-    </head>
-    <body>
-      <div class="production-layout">
-        <div class="front-half">
-          ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="${escapeHtml(template.name || 'Card front')}"/>` : ''}
-        </div>
-        <div class="back-half">
-          <div class="back-template"></div>
-        </div>
-      </div>
-    </body>
-    </html>`;
-  }
-  
-  // Preview format (original)
-  return `<!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8" />
-    <style>
-      @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-      html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
-      body { font-family: Arial, sans-serif; background: #ffffff; }
-      .wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-      .frame { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
-      .img { width: 100%; height: 100%; object-fit: contain; display: block; background: #ffffff; }
-    </style>
-  </head>
-  <body>
-    <div class="wrap">
-      <div class="frame">
-        ${imgSrc ? `<img class="img" src="${imgSrc}" alt="${escapeHtml(template.name || 'Card front preview')}"/>` : ''}
-      </div>
-    </div>
-  </body>
-  </html>`;
+  return generateUnifiedCardHTML('front', {
+    message: '', // Front cards don't have messages
+    templatePreviewUrl: imgSrc,
+  }, format, isSpread);
 }
 
 function escapeHtml(str: string) {
