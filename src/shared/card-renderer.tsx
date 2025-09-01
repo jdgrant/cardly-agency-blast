@@ -118,7 +118,7 @@ function InsideContent({ firstLine, secondLine, shouldBreakLine, logoUrl, signat
             src={signatureUrl} 
             alt="Signature" 
             loading="lazy" 
-            style={{width: "380px"}} 
+            style={{width: "480px"}} 
           />
         </div>
       )}

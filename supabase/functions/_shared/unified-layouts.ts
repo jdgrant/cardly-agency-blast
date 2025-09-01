@@ -195,7 +195,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
     .logoRow { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; width: 100%; padding: 0 20px; box-sizing: border-box; }
     .logo { max-width: 180px; max-height: 56px; object-fit: contain; }
     .sigRow { position: absolute; left: 0; right: 0; top: 68%; display: flex; justify-content: center; }
-    .sig { width: 380px; object-fit: contain; }
+    .sig { width: 480px; object-fit: contain; }
     .grid { position: relative; display: grid; grid-template-rows: 1fr 1fr 1fr; width: 100%; height: 100%; padding: 24px; box-sizing: border-box; }
   `;
 
