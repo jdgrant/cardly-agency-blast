@@ -26,7 +26,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, only, mode, format = 'preview', origin, fullUrl } = await req.json() as GenerateRequest;
+    const { orderId, only, mode = 'url', format = 'preview', origin, fullUrl } = await req.json() as GenerateRequest;
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
         status: 400,
@@ -133,7 +133,8 @@ serve(async (req) => {
       // Use full order ID instead of shortened version
       const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
       const route = only === 'inside' ? 'inside' : 'front';
-      const targetUrl = fullUrl || (base ? `${base}/#/preview/${route}/${orderId}` : '');
+      const spreadParam = (format === 'production' && route === 'inside') ? '?spread=true' : '';
+      const targetUrl = fullUrl || (base ? `${base}/#/preview/${route}/${orderId}${spreadParam}` : '');
 
       if (!targetUrl) {
         throw new Error('No target URL provided; pass origin or fullUrl');

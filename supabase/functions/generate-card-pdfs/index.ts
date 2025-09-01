@@ -1,9 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
-import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
-import { downloadAndEncodeImage } from "../_shared/image-utils.ts";
-import { generateInsideCardHTML } from "../_shared/pdf-layouts.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +9,7 @@ const corsHeaders = {
 
 interface GeneratePDFRequest {
   orderId: string;
+  format?: 'preview' | 'production';
 }
 
 serve(async (req) => {
@@ -20,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId } = await req.json() as GeneratePDFRequest;
+    const { orderId, format = 'preview' } = await req.json() as GeneratePDFRequest;
     
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
@@ -71,23 +69,17 @@ serve(async (req) => {
       throw new Error(`Clients not found: ${clientsError.message}`);
     }
 
-    // Download logo and signature files using shared utilities
-    const logoUrl = getLogoUrl(order);
-    const signatureUrl = getSignatureUrl(order);
+    // Use preview URLs instead of generating HTML
+    const origin = req.headers.get('origin') || 'https://e84fd20e-7cca-4259-84ad-12452c25e301.sandbox.lovable.dev';
+    const frontPreviewUrl = `${origin}/#/preview/front/${orderId}`;
+    const insidePreviewUrl = `${origin}/#/preview/inside/${orderId}`;
     
-    const logoDataUrl = logoUrl ? await downloadAndEncodeImage(supabase, logoUrl) || '' : '';
-    const signatureDataUrl = signatureUrl ? await downloadAndEncodeImage(supabase, signatureUrl) || '' : '';
+    console.log('Using front preview URL:', frontPreviewUrl);
+    console.log('Using inside preview URL:', insidePreviewUrl);
 
-    // Generate HTML content for cards using shared layout (portrait orientation like Inside PDF)
-    const frontHTML = generateFrontCardHTML(template);
-    const backHTML = generateInsideCardHTML(order, logoDataUrl, signatureDataUrl, 'portrait');
-    
-    console.log('Using signature URL:', signatureUrl);
-    console.log('Signature data URL available:', !!signatureDataUrl);
-
-    // Convert HTML to PDF using the actual HTML content with signatures
-    const frontPDF = await convertHTMLToPDF(frontHTML);
-    const backPDF = await convertHTMLToPDF(backHTML);
+    // Convert preview URLs to PDF using Gotenberg
+    const frontPDF = await convertURLToPDF(frontPreviewUrl, 'front', format);
+    const backPDF = await convertURLToPDF(insidePreviewUrl, 'inside', format);
 
     // Upload PDFs to storage
     const frontPDFPath = `cards/${orderId}_front_${Date.now()}.pdf`;
@@ -128,7 +120,7 @@ serve(async (req) => {
       backImagePath: backPDFPath,
       frontDownloadUrl: frontSignedUrl?.signedUrl || null,
       backDownloadUrl: backSignedUrl?.signedUrl || null,
-      message: 'PDF cards generated successfully with 7" x 5.125" dimensions'
+      message: `PDF cards generated successfully using preview URLs - ${format === 'production' ? '10.25" x 7"' : '5.125" x 7"'} dimensions`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -144,142 +136,30 @@ serve(async (req) => {
   }
 });
 
-function generateFrontCardHTML(template: any): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <style>
-        @page {
-          size: 7in 5.125in;
-          margin: 0;
-        }
-        body {
-          margin: 0;
-          padding: 0;
-          width: 7in;
-          height: 5.125in;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: white;
-          font-family: Arial, sans-serif;
-          overflow: hidden;
-        }
-        .card-front {
-          width: 100%;
-          height: 100%;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          background: white;
-          border: 2px solid #e5e7eb;
-          box-sizing: border-box;
-        }
-        .template-preview {
-          width: calc(100% - 40px);
-          height: calc(100% - 40px);
-          background-image: url('${template.preview_url}');
-          background-size: cover;
-          background-position: center;
-          background-repeat: no-repeat;
-          border-radius: 8px;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-          position: relative;
-        }
-        .template-overlay {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background: linear-gradient(transparent, rgba(0,0,0,0.8));
-          color: white;
-          padding: 20px;
-          border-radius: 0 0 8px 8px;
-        }
-        .template-name {
-          font-size: 24px;
-          font-weight: bold;
-          margin-bottom: 8px;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .template-description {
-          font-size: 14px;
-          opacity: 0.9;
-          line-height: 1.4;
-        }
-        .fallback-content {
-          width: 100%;
-          height: 100%;
-          border: 3px solid #e5e7eb;
-          border-radius: 12px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          padding: 40px;
-          box-sizing: border-box;
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        }
-        .card-info {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          background: rgba(255,255,255,0.9);
-          padding: 8px 12px;
-          border-radius: 6px;
-          font-size: 10px;
-          color: #64748b;
-          backdrop-filter: blur(4px);
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .template-id {
-          position: absolute;
-          bottom: 20px;
-          left: 20px;
-          background: rgba(255,255,255,0.9);
-          padding: 6px 10px;
-          border-radius: 4px;
-          font-size: 9px;
-          color: #6b7280;
-          font-family: monospace;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="card-front">
-        <div class="template-preview">
-          <div class="template-overlay">
-            <div class="template-name">${template.name}</div>
-            <div class="template-description">${template.description || 'Holiday Card Template'}</div>
-          </div>
-        </div>
-        <div class="card-info">
-          7" × 5.125" Card Front
-        </div>
-        <div class="template-id">
-          Template: ${template.id}
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-async function convertHTMLToPDF(htmlContent: string): Promise<Uint8Array> {
-  console.log('Converting HTML to PDF');
+async function convertURLToPDF(url: string, type: string, format: string = 'preview'): Promise<Uint8Array> {
+  // Add spread parameter for inside production PDFs
+  const spreadParam = (format === 'production' && type === 'inside') ? '?spread=true' : '';
+  const fullUrl = `${url}${spreadParam}`;
+  
+  console.log(`Converting ${type} preview URL to PDF:`, fullUrl);
   
   try {
-    // Use gotenberg API for HTML to PDF conversion
+    // Use gotenberg API for URL to PDF conversion
     const gotenbergUrl = Deno.env.get('GOTENBERG_URL') || 'https://pdf.sendyourcards.io';
     const apiKey = Deno.env.get('GOTENBERG_API_KEY');
     
     const formData = new FormData();
-    formData.append('files', new Blob([htmlContent], { type: 'text/html' }), 'index.html');
+    formData.append('url', fullUrl);
+    formData.append('paperWidth', format === 'production' ? '10.25' : '5.125');
+    formData.append('paperHeight', '7');
+    formData.append('marginTop', '0');
+    formData.append('marginBottom', '0');
+    formData.append('marginLeft', '0');
+    formData.append('marginRight', '0');
+    formData.append('landscape', 'false');
+    formData.append('preferCssPageSize', 'true');
+    formData.append('emulatedMediaType', 'print');
+    formData.append('waitDelay', '2000ms');
     
     const headers: Record<string, string> = {
       'Accept': 'application/pdf'
@@ -287,23 +167,25 @@ async function convertHTMLToPDF(htmlContent: string): Promise<Uint8Array> {
     
     if (apiKey) {
       headers['Authorization'] = `Bearer ${apiKey}`;
+      headers['X-Api-Key'] = apiKey;
     }
     
-    const response = await fetch(`${gotenbergUrl}/forms/chromium/convert/html`, {
+    const response = await fetch(`${gotenbergUrl}/forms/chromium/convert/url`, {
       method: 'POST',
       headers,
       body: formData
     });
     
     if (!response.ok) {
-      throw new Error(`Gotenberg conversion failed: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      throw new Error(`Gotenberg conversion failed for ${type}: ${response.status} ${response.statusText} - ${errorText}`);
     }
     
     const pdfBuffer = await response.arrayBuffer();
     return new Uint8Array(pdfBuffer);
     
   } catch (error) {
-    console.error('Error converting HTML to PDF:', error);
-    throw new Error(`PDF conversion failed: ${error.message}`);
+    console.error(`Error converting ${type} URL to PDF:`, error);
+    throw new Error(`PDF conversion failed for ${type}: ${error.message}`);
   }
 }
