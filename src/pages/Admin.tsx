@@ -686,6 +686,17 @@ const Admin = () => {
       }
 
       console.log('Updating template in database...');
+      
+      // First set the admin session context using the RPC function
+      const { error: sessionError } = await supabase.rpc('set_and_check_admin_session', {
+        session_id_param: sessionId
+      });
+      
+      if (sessionError) {
+        console.error('Session context error:', sessionError);
+        throw new Error('Failed to set admin session context');
+      }
+      
       const { error: updateError } = await supabase
         .from('templates')
         .update({ preview_url: publicUrl })
@@ -707,7 +718,13 @@ const Admin = () => {
         console.error('Error fetching refreshed templates:', fetchError);
       } else {
         console.log('Templates refreshed successfully');
+        console.log('Updated template data:', refreshedTemplates?.find(t => t.id === templateId));
         setTemplates(refreshedTemplates || []);
+        
+        // Force a re-render by updating a timestamp
+        setTimeout(() => {
+          setTemplates(prev => [...prev]);
+        }, 100);
       }
 
       toast({
@@ -1090,13 +1107,20 @@ const Admin = () => {
                       <CardContent className="p-4">
                          <div className="space-y-3">
                            <div className="relative group">
-                             <img 
-                               src={`${template.preview_url}?t=${Date.now()}`}
-                               alt={template.name}
-                               className="w-full h-24 object-cover rounded cursor-pointer"
-                               onClick={() => setPreviewTemplate(template)}
-                               key={template.preview_url} // Force re-render when URL changes
-                             />
+                              <img 
+                                src={`${template.preview_url}?v=${Date.now()}&cache=bust`}
+                                alt={template.name}
+                                className="w-full h-24 object-cover rounded cursor-pointer"
+                                onClick={() => setPreviewTemplate(template)}
+                                key={`${template.id}-${template.preview_url}-${Date.now()}`} // Force re-render when URL changes
+                                onLoad={() => console.log('Image loaded:', template.preview_url)}
+                                onError={(e) => console.error('Image load error:', e)}
+                                style={{ 
+                                  backgroundImage: 'none',
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center'
+                                }}
+                              />
                              <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                <Button
                                  size="sm"
