@@ -296,23 +296,58 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
-        // both pages - use separate HTML files to ensure identical rendering to individual PDFs
-        console.log('Combined PDF: Generating separate HTML files for identical rendering');
+        // both pages, build a single HTML with two pages (front then inside)
+        // Ensure we have inside HTML for combined generation
+        if (!insideHTML) {
+          console.log('Generating inside HTML for combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+          insideHTML = generateUnifiedCardHTML('inside', {
+            message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
+            logoDataUrl,
+            signatureDataUrl,
+            templatePreviewUrl: previewDataUrl,
+          }, format, format === 'production');
+        }
         
-        // Generate front HTML using same method as front-only PDF
-        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
-        form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
+        // Use existing frontHTML or generate it if needed
+        let frontHTML = '';
+        if (includeFront) {
+          frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+        }
         
-        // Generate inside HTML using same method as inside-only PDF
-        console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
-        const insideHTML = generateUnifiedCardHTML('inside', {
-          message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
-          logoDataUrl,
-          signatureDataUrl,
-          templatePreviewUrl: previewDataUrl,
-        }, format, format === 'production');
-        form.append('files', new File([insideHTML], 'inside.html', { type: 'text/html' }));
-        
+        const extract = (html: string, tag: 'style' | 'body') => {
+          const m = html.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+          return m ? m[1] : '';
+        };
+        const frontStyle = extract(frontHTML, 'style');
+        const insideStyle = extract(insideHTML, 'style');
+        const frontBody = extract(frontHTML, 'body');
+        const insideBody = extract(insideHTML, 'body');
+
+        const combinedHTML = `<!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+            html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+            body { background: #ffffff; }
+            .page { width: ${paperWidth}in; height: ${paperHeight}in; }
+            .page { page-break-after: always; }
+            .page:last-child { page-break-after: auto; }
+          </style>
+          <!-- Front page styles -->
+          <style>${frontStyle}</style>
+          <!-- Inside page styles - these should take precedence for conflicts -->
+          <style>${insideStyle}</style>
+        </head>
+        <body>
+          <div class="page">${frontBody}</div>
+          <div class="page">${insideBody}</div>
+        </body>
+        </html>`;
+
+        // For combined pages, add form parameters here before calling Gotenberg
+        form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
         form.append('paperHeight', paperHeight);
         form.append('marginTop', '0');
