@@ -33,7 +33,9 @@ import {
   Settings,
   Tags,
   X,
-  FileText
+  FileText,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PromoCodeForm } from '@/components/admin/PromoCodeForm';
@@ -97,6 +99,7 @@ const Admin = () => {
   const { toast } = useToast();
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
+  const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({});
   const navigate = useNavigate();
 
   // Persist admin access for the current browser session
@@ -634,6 +637,83 @@ const Admin = () => {
     }
   };
 
+  // Handle template image upload
+  const handleTemplateImageUpload = async (templateId: string, file: File) => {
+    setUploadingImages(prev => ({ ...prev, [templateId]: true }));
+    
+    try {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        throw new Error('Please select an image file');
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('Image must be less than 5MB');
+      }
+
+      const fileName = `template-${templateId}-${Date.now()}.${file.name.split('.').pop()}`;
+      const filePath = `templates/${fileName}`;
+
+      // Upload to Supabase storage
+      const { error: uploadError } = await supabase.storage
+        .from('holiday-cards')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('holiday-cards')
+        .getPublicUrl(filePath);
+
+      // Update template in database
+      const { error: updateError } = await supabase
+        .from('templates')
+        .update({ preview_url: publicUrl })
+        .eq('id', templateId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setTemplates(prev => prev.map(t => 
+        t.id === templateId 
+          ? { ...t, preview_url: publicUrl }
+          : t
+      ));
+
+      toast({
+        title: "Image Updated",
+        description: "Template image updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload image",
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingImages(prev => ({ ...prev, [templateId]: false }));
+    }
+  };
+
+  // Trigger file input for template image
+  const triggerImageUpload = (templateId: string) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handleTemplateImageUpload(templateId, file);
+      }
+    };
+    input.click();
+  };
+
   const createPromoCode = async (formData: { code: string; discount_percentage: number; expires_at?: string; max_uses?: number }) => {
     try {
       const { error } = await supabase
@@ -982,23 +1062,39 @@ const Admin = () => {
                   {templates.map((template) => (
                     <Card key={template.id} className="border">
                       <CardContent className="p-4">
-                        <div className="space-y-3">
-                          <div className="relative group">
-                            <img 
-                              src={template.preview_url} 
-                              alt={template.name}
-                              className="w-full h-24 object-cover rounded cursor-pointer"
-                              onClick={() => setPreviewTemplate(template)}
-                            />
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => setPreviewTemplate(template)}
-                            >
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                          </div>
+                         <div className="space-y-3">
+                           <div className="relative group">
+                             <img 
+                               src={template.preview_url} 
+                               alt={template.name}
+                               className="w-full h-24 object-cover rounded cursor-pointer"
+                               onClick={() => setPreviewTemplate(template)}
+                             />
+                             <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                               <Button
+                                 size="sm"
+                                 variant="secondary"
+                                 onClick={() => setPreviewTemplate(template)}
+                               >
+                                 <Eye className="w-3 h-3" />
+                               </Button>
+                               <Button
+                                 size="sm"
+                                 variant="secondary"
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   triggerImageUpload(template.id);
+                                 }}
+                                 disabled={uploadingImages[template.id]}
+                               >
+                                 {uploadingImages[template.id] ? (
+                                   <RefreshCw className="w-3 h-3 animate-spin" />
+                                 ) : (
+                                   <Upload className="w-3 h-3" />
+                                 )}
+                               </Button>
+                             </div>
+                           </div>
                           <div className="space-y-2">
                             <div className="space-y-2">
                               <label className="text-xs font-medium text-gray-600">Name:</label>
