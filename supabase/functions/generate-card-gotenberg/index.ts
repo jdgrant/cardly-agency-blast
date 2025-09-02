@@ -333,13 +333,10 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
-        // Combined PDF: Use EXACT same generation approach as working individual PDFs
-        
-        // Generate both pages separately using the exact same calls
-        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
-        
-        // Use EXACT same signature data logging and generation as working individual inside PDF
+        // Combined PDF: Generate as single HTML document with both pages
         console.log('Combined PDF Inside page: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+        
+        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
         const insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
@@ -347,9 +344,36 @@ serve(async (req) => {
           templatePreviewUrl: previewDataUrl,
         }, format, format === 'production');
         
-        // Add both HTML files as separate files, let Gotenberg handle the combination
-        form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
-        form.append('files', new File([insideHTML], 'inside.html', { type: 'text/html' }));
+        // Combine both HTML pages into a single document
+        const combinedHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    @page { 
+      size: ${paperWidth}in ${paperHeight}in; 
+      margin: 0;
+    }
+    .page-break { 
+      page-break-after: always; 
+    }
+    body { 
+      margin: 0; 
+      padding: 0; 
+    }
+  </style>
+</head>
+<body>
+  ${frontHTML.replace('<!DOCTYPE html>', '').replace(/<html[^>]*>/, '').replace('<head>', '').replace('</head>', '').replace('<body>', '').replace('</body>', '').replace('</html>', '')}
+  <div class="page-break"></div>
+  ${insideHTML.replace('<!DOCTYPE html>', '').replace(/<html[^>]*>/, '').replace('<head>', '').replace('</head>', '').replace('<body>', '').replace('</body>', '').replace('</html>', '')}
+</body>
+</html>
+        `;
+        
+        form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
         form.append('paperHeight', paperHeight);
         form.append('marginTop', '0');
