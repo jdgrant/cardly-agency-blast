@@ -697,6 +697,9 @@ const Admin = () => {
         throw new Error('Failed to set admin session context');
       }
       
+      // Add a small delay to ensure session is properly set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const { error: updateError } = await supabase
         .from('templates')
         .update({ preview_url: publicUrl })
@@ -707,6 +710,9 @@ const Admin = () => {
         throw updateError;
       }
       console.log('Database updated successfully');
+
+      // Add delay before refetching to ensure consistency
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Force refresh templates from database to ensure consistency
       console.log('Refreshing templates from database...');
@@ -721,10 +727,12 @@ const Admin = () => {
         console.log('Updated template data:', refreshedTemplates?.find(t => t.id === templateId));
         setTemplates(refreshedTemplates || []);
         
-        // Force a re-render by updating a timestamp
-        setTimeout(() => {
-          setTemplates(prev => [...prev]);
-        }, 100);
+        // Update local state immediately with the new URL to force UI update
+        setTemplates(prev => prev.map(t => 
+          t.id === templateId 
+            ? { ...t, preview_url: publicUrl }
+            : t
+        ));
       }
 
       toast({
