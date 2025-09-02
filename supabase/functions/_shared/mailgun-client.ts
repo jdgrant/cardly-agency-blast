@@ -15,7 +15,7 @@ export async function sendEmailViaMailgun(options: EmailOptions): Promise<any> {
     throw new Error("MAILGUN_API_KEY is not configured");
   }
 
-  const { to, subject, html, from = `Holiday Cards <noreply@${MAILGUN_DOMAIN}>` } = options;
+  const { to, subject, html, from = `SendYourCards.io <orders@${MAILGUN_DOMAIN}>` } = options;
 
   // Send email via Mailgun
   const formData = new FormData();

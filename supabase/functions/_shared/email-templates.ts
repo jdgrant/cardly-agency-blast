@@ -58,9 +58,9 @@ export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUr
     <body>
       <div class="container">
         <div class="header">
-          <h1>Order Status Update</h1>
+          <h1>🎄 Your Holiday Card Order Update</h1>
           <p>Hello ${contactName || 'Customer'},</p>
-          <p>Here's an update on your holiday card order <strong>#${readableOrderId}</strong></p>
+          <p>We wanted to update you on your holiday card order <strong>#${readableOrderId}</strong> from SendYourCards.io</p>
         </div>
 
         <div class="progress">
@@ -88,8 +88,11 @@ export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUr
 
         <div class="footer">
           <p><strong>Current Status:</strong> ${orderStatus}</p>
-          <p>If you have any questions, please don't hesitate to contact us.</p>
+          <p>Questions? Reply to this email or contact us at support@sendyourcards.io</p>
           <p>You can manage your order and upload any missing files by clicking the button above.</p>
+          <p><strong>SendYourCards.io</strong><br>
+          Professional Holiday Card Services<br>
+          This email was sent regarding your order #${readableOrderId}</p>
           ${unsubscribeUrl ? `
           <hr style="margin: 20px 0; border: none; border-top: 1px solid #dee2e6;">
           <p style="font-size: 12px; color: #888;">
