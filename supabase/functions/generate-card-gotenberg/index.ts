@@ -239,6 +239,7 @@ serve(async (req) => {
         useInsideUrl = true;
       } else {
         // For combined pages, always generate inside HTML regardless of URL preferences  
+        console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
         insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
@@ -283,6 +284,7 @@ serve(async (req) => {
         // both pages, build a single HTML with two pages (front then inside)
         // Ensure we have inside HTML for combined generation
         if (!insideHTML) {
+          console.log('Generating inside HTML for combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
           insideHTML = generateUnifiedCardHTML('inside', {
             message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
             logoDataUrl,
