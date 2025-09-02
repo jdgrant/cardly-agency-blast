@@ -296,58 +296,27 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
-        // both pages - properly combine the working HTML from individual PDFs
-        console.log('Combined PDF: Properly combining working HTML from individual PDFs');
+        // COMBINED PDF: Call the EXACT same functions as working individual PDFs
+        console.log('Combined PDF: Using EXACT same functions as working individual PDFs - no HTML manipulation');
         
-        // Generate the EXACT same HTML as working individual PDFs
-        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
-        console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
-        const insideHTML = generateUnifiedCardHTML('inside', {
+        // Page 1: Call buildFrontHTML() - same as "Production Front PDF"
+        const frontPageHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+        
+        // Page 2: Call generateUnifiedCardHTML() - EXACT same as "Production Inside PDF"  
+        console.log('Combined PDF Page 2: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+        const insidePageHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
-          signatureDataUrl,
+          signatureDataUrl, 
           templatePreviewUrl: previewDataUrl,
         }, format, format === 'production');
         
-        // Extract styles and body content properly
-        const extractStyles = (html: string) => {
-          const styleMatches = html.match(/<style[^>]*>([\s\S]*?)<\/style>/gi);
-          return styleMatches ? styleMatches.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n') : '';
-        };
+        // Create separate files for Gotenberg - let it handle the multi-page rendering
+        form.append('files', new File([frontPageHTML], 'page1.html', { type: 'text/html' }));
+        form.append('files', new File([insidePageHTML], 'page2.html', { type: 'text/html' }));
         
-        const extractBody = (html: string) => {
-          const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-          return bodyMatch ? bodyMatch[1] : html;
-        };
-        
-        const frontStyles = extractStyles(frontHTML);
-        const insideStyles = extractStyles(insideHTML);
-        const frontBody = extractBody(frontHTML);
-        const insideBody = extractBody(insideHTML);
-        
-        // Create properly structured combined HTML
-        const combinedHTML = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <style>
-    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-    html, body { margin: 0; padding: 0; }
-    .page { page-break-after: always; }
-    .page:last-child { page-break-after: auto; }
-    ${frontStyles}
-    ${insideStyles}
-  </style>
-</head>
-<body>
-  <div class="page">${frontBody}</div>
-  <div class="page">${insideBody}</div>
-</body>
-</html>`;
-        
-        form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
-        form.append('paperHeight', paperHeight);
+        form.append('paperHeight', paperHeight); 
         form.append('marginTop', '0');
         form.append('marginBottom', '0');
         form.append('marginLeft', '0');
@@ -356,7 +325,7 @@ serve(async (req) => {
         form.append('preferCssPageSize', 'true');
 
         const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
-        console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
+        console.log('Calling Gotenberg (html) with 2 separate files:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       }
     }
