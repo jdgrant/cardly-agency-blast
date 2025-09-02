@@ -13,7 +13,7 @@ const occasions = [
   { id: 'hanukkah', label: 'Hanukkah', color: 'bg-blue-100 text-blue-800' },
   { id: 'kwanzaa', label: 'Kwanzaa', color: 'bg-green-100 text-green-800' },
   { id: 'new-year', label: 'New Year', color: 'bg-purple-100 text-purple-800' },
-  { id: 'holidays', label: 'General Holidays', color: 'bg-orange-100 text-orange-800' }
+  { id: 'general-holiday', label: 'General Holidays', color: 'bg-orange-100 text-orange-800' }
 ];
 
 const Step1ChooseTemplate = () => {
