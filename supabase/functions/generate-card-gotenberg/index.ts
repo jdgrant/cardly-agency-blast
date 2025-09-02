@@ -337,12 +337,15 @@ serve(async (req) => {
         console.log('Combined PDF Inside page: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
         
         const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
-        const insideHTML = generateUnifiedCardHTML('inside', {
+        let insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
           signatureDataUrl,
           templatePreviewUrl: previewDataUrl,
         }, format, format === 'production');
+        
+        // Make signature smaller for combined PDF
+        insideHTML = insideHTML.replace('.sig { width: 480px;', '.sig { width: 320px;');
         
         // Combine both HTML pages into a single document
         const combinedHTML = `
