@@ -1,0 +1,1 @@
+SELECT cron.unschedule('daily-status-emails-10am-et');
