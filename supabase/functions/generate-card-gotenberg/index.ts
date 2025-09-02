@@ -133,8 +133,15 @@ serve(async (req) => {
       // Use full order ID instead of shortened version
       const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
       const route = only === 'inside' ? 'inside' : 'front';
-      const spreadParam = (format === 'production' && route === 'inside') ? '?spread=true' : '';
-      const targetUrl = fullUrl || (base ? `${base}/#/preview/${route}/${orderId}${spreadParam}` : '');
+      let urlParams = '';
+      if (format === 'production') {
+        if (route === 'inside') {
+          urlParams = '?spread=true&format=production';
+        } else {
+          urlParams = '?format=production';
+        }
+      }
+      const targetUrl = fullUrl || (base ? `${base}/#/preview/${route}/${orderId}${urlParams}` : '');
 
       if (!targetUrl) {
         throw new Error('No target URL provided; pass origin or fullUrl');

@@ -51,8 +51,9 @@ export default function PreviewCard() {
   const [sigUrl, setSigUrl] = useState<string>("");
   const whichSafe = (which === "front" || which === "inside") ? which : "front";
   
-  // Parse spread parameter from URL
+  // Parse spread and format parameters from URL
   const isSpread = searchParams.get('spread') === 'true';
+  const previewFormat = searchParams.get('format') === 'production' ? 'production' : 'preview';
 
   useEffect(() => {
     const t = whichSafe === "front" ? "Card Front Preview" : "Card Inside Preview";
@@ -253,7 +254,7 @@ export default function PreviewCard() {
   const isInside = whichSafe === "inside";
   
   // Get unified layout configuration
-  const layout = getLayoutConfig(whichSafe, 'preview', isSpread);
+  const layout = getLayoutConfig(whichSafe, previewFormat, isSpread || (previewFormat === 'production' && whichSafe === 'front'));
   
   // Prepare content for unified renderer
   const content = {
