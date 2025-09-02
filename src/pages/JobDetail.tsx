@@ -729,7 +729,7 @@ const JobDetail = () => {
           orderId: order.id, 
           format: 'production', 
           only: 'front+inside',
-          mode: 'url',
+          mode: 'html',  // Use HTML mode for combined PDFs
           origin: window.location.origin
         }
       });
