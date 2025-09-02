@@ -138,7 +138,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
   const imgSrc = content.templatePreviewUrl || '';
   
   if (layout.isSpread) {
-    // Production format: blank on left half, front on right half
+    // Production format: front on left half, blank on right half
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -148,17 +148,17 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         html, body { margin: 0; padding: 0; width: ${layout.overallWidth}; height: ${layout.overallHeight}; }
         body { font-family: Arial, sans-serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
-        .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; }
         .front-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; overflow: hidden; }
+        .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; }
         .front-img { width: 100%; height: 100%; object-fit: cover; display: block; }
       </style>
     </head>
     <body>
       <div class="production-layout">
-        <div class="blank-half"></div>
         <div class="front-half">
           ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="Card front"/>` : ''}
         </div>
+        <div class="blank-half"></div>
       </div>
     </body>
     </html>`;
