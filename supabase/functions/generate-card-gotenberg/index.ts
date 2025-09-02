@@ -128,8 +128,9 @@ serve(async (req) => {
     const paperWidth = format === 'production' ? '10.25' : '5.125';
     const paperHeight = format === 'production' ? '7' : '7';
 
-    if (mode === 'url') {
-      // Render the live preview URL directly to PDF (single page)
+    if (mode === 'url' && only === 'inside') {
+      // Only use URL mode for inside cards to maintain consistency
+      // Front cards should use HTML mode to avoid badges and ensure proper positioning
       // Use full order ID instead of shortened version
       const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
       const route = only === 'inside' ? 'inside' : 'front';
@@ -199,9 +200,14 @@ serve(async (req) => {
         },
       });
     } else {
-      // Build HTML and convert (supports multi-page)
+      // Build HTML and convert (front cards always use HTML, inside can use URL for consistency)
       const form = new FormData();
-      const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+      
+      if (includeFront) {
+        // Always generate clean HTML for front cards to avoid badges and ensure proper positioning
+        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+        form.append('files', new Blob([frontHTML], { type: 'text/html' }), 'front.html');
+      }
       
       // For inside pages, check if we can use URL mode for consistency with preview
       const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
@@ -242,7 +248,17 @@ serve(async (req) => {
       }
 
       if (includeFront && !includeInside) {
-        form.append('files', new File([frontHTML], 'index.html', { type: 'text/html' }));
+        // Front-only generation always uses HTML mode for clean output
+        form.append('files', new File([buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight)], 'index.html', { type: 'text/html' }));
+        form.append('paperWidth', paperWidth);
+        form.append('paperHeight', paperHeight);
+        form.append('marginTop', '0');
+        form.append('marginBottom', '0');
+        form.append('marginLeft', '0');
+        form.append('marginRight', '0');
+        form.append('landscape', 'false');
+        form.append('preferCssPageSize', 'true');
+        
         const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
@@ -251,6 +267,15 @@ serve(async (req) => {
         console.log('Inside PDF generated using URL mode for consistency with preview');
       } else if (includeInside && !includeFront) {
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
+        form.append('paperWidth', paperWidth);
+        form.append('paperHeight', paperHeight);
+        form.append('marginTop', '0');
+        form.append('marginBottom', '0');
+        form.append('marginLeft', '0');
+        form.append('marginRight', '0');
+        form.append('landscape', 'false');
+        form.append('preferCssPageSize', 'true');
+        
         const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
@@ -288,22 +313,21 @@ serve(async (req) => {
         </body>
         </html>`;
 
+        // For combined pages, add form parameters here before calling Gotenberg
         form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
+        form.append('paperWidth', paperWidth);
+        form.append('paperHeight', paperHeight);
+        form.append('marginTop', '0');
+        form.append('marginBottom', '0');
+        form.append('marginLeft', '0');
+        form.append('marginRight', '0');
+        form.append('landscape', 'false');
+        form.append('preferCssPageSize', 'true');
+
+        const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
+        console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
+        gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       }
-
-      form.append('paperWidth', paperWidth);
-      form.append('paperHeight', paperHeight);
-      form.append('marginTop', '0');
-      form.append('marginBottom', '0');
-      form.append('marginLeft', '0');
-      form.append('marginRight', '0');
-      form.append('landscape', 'false');
-      form.append('preferCssPageSize', 'true');
-
-      const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
-      console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
-      gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
-    }
 
     console.log('Gotenberg response status:', gotenbergResp.status);
     if (!gotenbergResp.ok) {
