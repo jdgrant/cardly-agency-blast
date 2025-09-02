@@ -238,7 +238,7 @@ serve(async (req) => {
         gotenbergResp = await fetch(gotenbergUrl, { method: 'POST', headers, body: insideForm as any });
         useInsideUrl = true;
       } else {
-        // Fallback to HTML generation for combined pages or when no origin
+        // For combined pages, always generate inside HTML regardless of URL preferences  
         insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
@@ -281,6 +281,22 @@ serve(async (req) => {
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
         // both pages, build a single HTML with two pages (front then inside)
+        // Ensure we have inside HTML for combined generation
+        if (!insideHTML) {
+          insideHTML = generateUnifiedCardHTML('inside', {
+            message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
+            logoDataUrl,
+            signatureDataUrl,
+            templatePreviewUrl: previewDataUrl,
+          }, format, format === 'production');
+        }
+        
+        // Use existing frontHTML or generate it if needed
+        let frontHTML = '';
+        if (includeFront) {
+          frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+        }
+        
         const extract = (html: string, tag: 'style' | 'body') => {
           const m = html.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
           return m ? m[1] : '';
