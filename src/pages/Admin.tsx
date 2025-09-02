@@ -1091,10 +1091,11 @@ const Admin = () => {
                          <div className="space-y-3">
                            <div className="relative group">
                              <img 
-                               src={template.preview_url} 
+                               src={`${template.preview_url}?t=${Date.now()}`}
                                alt={template.name}
                                className="w-full h-24 object-cover rounded cursor-pointer"
                                onClick={() => setPreviewTemplate(template)}
+                               key={template.preview_url} // Force re-render when URL changes
                              />
                              <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                <Button
@@ -1289,12 +1290,13 @@ const Admin = () => {
             {previewTemplate && (
                 <div className="space-y-4">
                 <div className="flex justify-center">
-                  <div className="max-w-md">
-                    <img 
-                      src={previewTemplate.preview_url} 
-                      alt={previewTemplate.name}
-                      className="w-full h-auto rounded-lg shadow-lg"
-                    />
+                   <div className="max-w-md">
+                     <img 
+                       src={`${previewTemplate.preview_url}?t=${Date.now()}`}
+                       alt={previewTemplate.name}
+                       className="w-full h-auto rounded-lg shadow-lg"
+                       key={previewTemplate.preview_url} // Force re-render when URL changes
+                     />
                   </div>
                 </div>
                 <div className="space-y-2">
