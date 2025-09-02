@@ -73,13 +73,20 @@ serve(async (req) => {
     console.log('Order signatures - signature_url:', order.signature_url, 'cropped_signature_url:', order.cropped_signature_url);
     console.log('Selected signature URL:', signatureUrl, 'Selected logo URL:', logoUrl);
     
-    const logoDataUrl = logoUrl ? await downloadAndEncodeImageForGotenberg(supabase, logoUrl) || '' : '';
+    // Extract storage path from full URL if needed
+    let logoPath = logoUrl;
+    if (logoUrl && logoUrl.includes('/storage/v1/object/public/holiday-cards/')) {
+      logoPath = logoUrl.split('/storage/v1/object/public/holiday-cards/')[1];
+    }
     
-    // Extract path from signature URL if it's a full URL
     let signaturePath = signatureUrl;
     if (signatureUrl && signatureUrl.includes('/storage/v1/object/public/holiday-cards/')) {
       signaturePath = signatureUrl.split('/storage/v1/object/public/holiday-cards/')[1];
     }
+    
+    console.log('Extracted paths - Logo:', logoPath, 'Signature:', signaturePath);
+    
+    const logoDataUrl = logoPath ? await downloadAndEncodeImageForGotenberg(supabase, logoPath) || '' : '';
     const signatureDataUrl = signaturePath ? await downloadAndEncodeImageForGotenberg(supabase, signaturePath) || '' : '';
 
     console.log('Encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
