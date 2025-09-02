@@ -296,50 +296,50 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
-        // COMBINED PDF: Generate single HTML with identical content as individual PDFs
-        console.log('Combined PDF: Single HTML with identical content generation as individual PDFs');
+        // both pages, build a single HTML with two pages (front then inside)
+        // Use EXACT same code as individual PDFs - no extraction
+        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
         
-        // Generate exact same content as individual PDFs (but don't use the full HTML structure)
-        const frontContent = generateUnifiedCardHTML('front', {
-          message: '', // Front cards don't have messages
-          templatePreviewUrl: previewDataUrl || template.preview_url || '',
-        }, format, format === 'production');
-        
-        console.log('Combined PDF Page 2: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
-        const insideContent = generateUnifiedCardHTML('inside', {
+        console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+        const insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
           signatureDataUrl,
           templatePreviewUrl: previewDataUrl,
         }, format, format === 'production');
         
-        // Extract just the body content from each
-        const frontBody = frontContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || frontContent;
-        const insideBody = insideContent.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || insideContent;
-        
-        // Extract styles from each 
-        const frontStyles = frontContent.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n') || '';
-        const insideStyles = insideContent.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n') || '';
-        
+        const extract = (html: string, tag: 'style' | 'body') => {
+          const m = html.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+          return m ? m[1] : '';
+        };
+        const frontStyle = extract(frontHTML, 'style');
+        const insideStyle = extract(insideHTML, 'style');
+        const frontBody = extract(frontHTML, 'body');
+        const insideBody = extract(insideHTML, 'body');
+
         const combinedHTML = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <style>
-    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-    html, body { margin: 0; padding: 0; }
-    .page { page-break-after: always; }
-    .page:last-child { page-break-after: auto; }
-    ${frontStyles}
-    ${insideStyles}
-  </style>
-</head>
-<body>
-  <div class="page">${frontBody}</div>
-  <div class="page">${insideBody}</div>
-</body>
-</html>`;
-        
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+            html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+            body { background: #ffffff; }
+            .page { width: ${paperWidth}in; height: ${paperHeight}in; }
+            .page { page-break-after: always; }
+            .page:last-child { page-break-after: auto; }
+          </style>
+          <!-- Front page styles -->
+          <style>${frontStyle}</style>
+          <!-- Inside page styles - these should take precedence for conflicts -->
+          <style>${insideStyle}</style>
+        </head>
+        <body>
+          <div class="page">${frontBody}</div>
+          <div class="page">${insideBody}</div>
+        </body>
+        </html>`;
+
         form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
         form.append('paperHeight', paperHeight);
@@ -351,7 +351,7 @@ serve(async (req) => {
         form.append('preferCssPageSize', 'true');
 
         const url = `${GOTENBERG_URL.replace(/\/$/, '')}/forms/chromium/convert/html`;
-        console.log('Calling Gotenberg (html) single file:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
+        console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       }
     }
