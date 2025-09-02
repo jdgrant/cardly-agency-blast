@@ -296,14 +296,14 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
-        // Combined PDF: Use EXACT same approach as working individual PDFs
+        // Combined PDF: Use EXACT same code as working "Production Inside PDF" for inside page
         
-        // Front page: Use exact same approach as "Production Front PDF"
+        // Front page
         const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
         
-        // Inside page: Use EXACT same code as working "Production Inside PDF" 
-        console.log('Combined PDF Inside page: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
-        const insideHTML = generateUnifiedCardHTML('inside', {
+        // Inside page: Copy EXACT code from lines 276-284 (working individual inside PDF)
+        console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+        let insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
           signatureDataUrl,
