@@ -6,6 +6,16 @@ import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
 import { generateUnifiedCardHTML } from "../_shared/unified-layouts.ts";
 import { downloadAndEncodeImageForGotenberg } from "../_shared/image-utils.ts";
 
+function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7') {
+  const imgSrc = previewDataUrl || template.preview_url || '';
+  const isSpread = format === 'production';
+  
+  return generateUnifiedCardHTML('front', {
+    message: '', // Front cards don't have messages
+    templatePreviewUrl: imgSrc,
+  }, format, isSpread);
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -427,16 +437,6 @@ serve(async (req) => {
     });
   }
 });
-
-function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7') {
-  const imgSrc = previewDataUrl || template.preview_url || '';
-  const isSpread = format === 'production';
-  
-  return generateUnifiedCardHTML('front', {
-    message: '', // Front cards don't have messages
-    templatePreviewUrl: imgSrc,
-  }, format, isSpread);
-}
 
 function escapeHtml(str: string) {
   return String(str)
