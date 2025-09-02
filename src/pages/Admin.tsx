@@ -642,6 +642,8 @@ const Admin = () => {
     setUploadingImages(prev => ({ ...prev, [templateId]: true }));
     
     try {
+      console.log('Starting image upload for template:', templateId);
+      
       // Validate file type
       if (!file.type.startsWith('image/')) {
         throw new Error('Please select an image file');
@@ -654,6 +656,7 @@ const Admin = () => {
 
       const fileName = `template-${templateId}-${Date.now()}.${file.name.split('.').pop()}`;
       const filePath = `templates/${fileName}`;
+      console.log('Uploading to path:', filePath);
 
       // Upload to Supabase storage
       const { error: uploadError } = await supabase.storage
@@ -663,33 +666,56 @@ const Admin = () => {
           upsert: false
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+      console.log('File uploaded successfully');
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('holiday-cards')
         .getPublicUrl(filePath);
+      
+      console.log('Generated public URL:', publicUrl);
 
-      // Update template in database
+      // Update template in database with admin session
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
+      console.log('Updating template in database...');
       const { error: updateError } = await supabase
         .from('templates')
         .update({ preview_url: publicUrl })
         .eq('id', templateId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Database update error:', updateError);
+        throw updateError;
+      }
+      console.log('Database updated successfully');
 
-      // Update local state
-      setTemplates(prev => prev.map(t => 
-        t.id === templateId 
-          ? { ...t, preview_url: publicUrl }
-          : t
-      ));
+      // Force refresh templates from database to ensure consistency
+      console.log('Refreshing templates from database...');
+      const { data: refreshedTemplates, error: fetchError } = await supabase
+        .from('templates')
+        .select('*');
+
+      if (fetchError) {
+        console.error('Error fetching refreshed templates:', fetchError);
+      } else {
+        console.log('Templates refreshed successfully');
+        setTemplates(refreshedTemplates || []);
+      }
 
       toast({
         title: "Image Updated",
         description: "Template image updated successfully",
       });
     } catch (error: any) {
+      console.error('Upload process error:', error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload image",
