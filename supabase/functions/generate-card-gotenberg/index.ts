@@ -86,10 +86,24 @@ serve(async (req) => {
     
     console.log('Extracted paths - Logo:', logoPath, 'Signature:', signaturePath);
     
-    const logoDataUrl = logoPath ? await downloadAndEncodeImageForGotenberg(supabase, logoPath) || '' : '';
-    const signatureDataUrl = signaturePath ? await downloadAndEncodeImageForGotenberg(supabase, signaturePath) || '' : '';
+    let logoDataUrl = '';
+    let signatureDataUrl = '';
+    
+    try {
+      logoDataUrl = logoPath ? await downloadAndEncodeImageForGotenberg(supabase, logoPath) || '' : '';
+      console.log('Logo download result - length:', logoDataUrl?.length || 0);
+    } catch (error) {
+      console.error('Error downloading logo:', error);
+    }
+    
+    try {
+      signatureDataUrl = signaturePath ? await downloadAndEncodeImageForGotenberg(supabase, signaturePath) || '' : '';
+      console.log('Signature download result - length:', signatureDataUrl?.length || 0);
+    } catch (error) {
+      console.error('Error downloading signature:', error);
+    }
 
-    console.log('Encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
+    console.log('Final encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
 
     // Inline template preview image for reliable rendering in Gotenberg
     let previewDataUrl = '';
