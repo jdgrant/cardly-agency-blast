@@ -687,19 +687,18 @@ const Admin = () => {
 
       console.log('Updating template in database...');
       
-      // First set the admin session context using the RPC function
-      const { error: sessionError } = await supabase.rpc('set_and_check_admin_session', {
-        session_id_param: sessionId
+      // Set the session variable for this connection
+      const { error: configError } = await supabase.rpc('set_config', {
+        setting_name: 'app.admin_session_id',
+        setting_value: sessionId,
+        is_local: true
       });
-      
-      if (sessionError) {
-        console.error('Session context error:', sessionError);
-        throw new Error('Failed to set admin session context');
+
+      if (configError) {
+        console.error('Config error:', configError);
+        throw new Error('Failed to set session config');
       }
-      
-      // Add a small delay to ensure session is properly set
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       const { error: updateError } = await supabase
         .from('templates')
         .update({ preview_url: publicUrl })
