@@ -551,10 +551,6 @@ export type Database = {
         Args: { session_id_param: string }
         Returns: boolean
       }
-      set_config: {
-        Args: { is_local: boolean; setting_name: string; setting_value: string }
-        Returns: undefined
-      }
       update_admin_order_status: {
         Args: {
           new_status_param: string
@@ -579,6 +575,14 @@ export type Database = {
       update_order_file_for_customer: {
         Args: { file_type: string; file_url: string; short_id: string }
         Returns: boolean
+      }
+      update_template_preview_url: {
+        Args: {
+          new_preview_url: string
+          session_id_param: string
+          template_id_param: string
+        }
+        Returns: undefined
       }
       use_promocode: {
         Args: { code_param: string }

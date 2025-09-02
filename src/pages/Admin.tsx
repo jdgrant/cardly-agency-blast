@@ -687,30 +687,12 @@ const Admin = () => {
 
       console.log('Updating template in database...');
       
-      // First ensure the admin session is recorded in the database
-      const { error: sessionError } = await supabase.rpc('set_admin_session', {
-        session_id: sessionId
+      // Use the new atomic function to update template with admin session
+      const { error: updateError } = await supabase.rpc('update_template_preview_url', {
+        session_id_param: sessionId,
+        template_id_param: templateId,
+        new_preview_url: publicUrl
       });
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error('Failed to set admin session');
-      }
-
-      // Set the session variable for this connection using raw SQL
-      const { error: configError } = await supabase.sql`
-        SELECT set_config('app.admin_session_id', ${sessionId}, false)
-      `;
-
-      if (configError) {
-        console.error('Config error:', configError);
-        throw new Error('Failed to set session config');
-      }
-
-      const { error: updateError } = await supabase
-        .from('templates')
-        .update({ preview_url: publicUrl })
-        .eq('id', templateId);
 
       if (updateError) {
         console.error('Database update error:', updateError);
