@@ -74,7 +74,13 @@ serve(async (req) => {
     console.log('Selected signature URL:', signatureUrl, 'Selected logo URL:', logoUrl);
     
     const logoDataUrl = logoUrl ? await downloadAndEncodeImageForGotenberg(supabase, logoUrl) || '' : '';
-    const signatureDataUrl = signatureUrl ? await downloadAndEncodeImageForGotenberg(supabase, signatureUrl) || '' : '';
+    
+    // Extract path from signature URL if it's a full URL
+    let signaturePath = signatureUrl;
+    if (signatureUrl && signatureUrl.includes('/storage/v1/object/public/holiday-cards/')) {
+      signaturePath = signatureUrl.split('/storage/v1/object/public/holiday-cards/')[1];
+    }
+    const signatureDataUrl = signaturePath ? await downloadAndEncodeImageForGotenberg(supabase, signaturePath) || '' : '';
 
     console.log('Encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
 
