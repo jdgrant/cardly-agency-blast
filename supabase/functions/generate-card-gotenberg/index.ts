@@ -296,11 +296,13 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
-        // both pages, build a single HTML with two pages (front then inside)
-        // Use EXACT same code as individual PDFs - no extraction
+        // Combined PDF: Use EXACT same approach as working individual PDFs
+        
+        // Front page: Use exact same approach as "Production Front PDF"
         const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
         
-        console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+        // Inside page: Use EXACT same code as working "Production Inside PDF" 
+        console.log('Combined PDF Inside page: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
         const insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
@@ -308,38 +310,30 @@ serve(async (req) => {
           templatePreviewUrl: previewDataUrl,
         }, format, format === 'production');
         
-        const extract = (html: string, tag: 'style' | 'body') => {
-          const m = html.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
-          return m ? m[1] : '';
-        };
-        const frontStyle = extract(frontHTML, 'style');
-        const insideStyle = extract(insideHTML, 'style');
-        const frontBody = extract(frontHTML, 'body');
-        const insideBody = extract(insideHTML, 'body');
+        // Now combine these two COMPLETE HTML documents properly
+        const frontBody = frontHTML.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || '';
+        const insideBody = insideHTML.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || '';
+        const frontStyles = frontHTML.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.join('') || '';
+        const insideStyles = insideHTML.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.join('') || '';
 
         const combinedHTML = `<!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8" />
-          <style>
-            @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-            html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
-            body { background: #ffffff; }
-            .page { width: ${paperWidth}in; height: ${paperHeight}in; }
-            .page { page-break-after: always; }
-            .page:last-child { page-break-after: auto; }
-          </style>
-          <!-- Front page styles -->
-          <style>${frontStyle}</style>
-          <!-- Inside page styles - these should take precedence for conflicts -->
-          <style>${insideStyle}</style>
-        </head>
-        <body>
-          <div class="page">${frontBody}</div>
-          <div class="page">${insideBody}</div>
-        </body>
-        </html>`;
-
+<html>
+<head>
+  <meta charset="utf-8" />
+  ${frontStyles}
+  ${insideStyles}
+  <style>
+    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+    .page { page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+  </style>
+</head>
+<body>
+  <div class="page">${frontBody}</div>
+  <div class="page">${insideBody}</div>
+</body>
+</html>`;
+        
         form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
         form.append('paperHeight', paperHeight);
