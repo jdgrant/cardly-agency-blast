@@ -70,8 +70,13 @@ serve(async (req) => {
     const logoUrl = getLogoUrl(order);
     const signatureUrl = getSignatureUrl(order);
     
+    console.log('Order signatures - signature_url:', order.signature_url, 'cropped_signature_url:', order.cropped_signature_url);
+    console.log('Selected signature URL:', signatureUrl, 'Selected logo URL:', logoUrl);
+    
     const logoDataUrl = logoUrl ? await downloadAndEncodeImageForGotenberg(supabase, logoUrl) || '' : '';
     const signatureDataUrl = signatureUrl ? await downloadAndEncodeImageForGotenberg(supabase, signatureUrl) || '' : '';
+
+    console.log('Encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
 
     // Inline template preview image for reliable rendering in Gotenberg
     let previewDataUrl = '';
