@@ -296,45 +296,23 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
-        // Combined PDF: Use EXACT same code as working "Production Inside PDF" for inside page
+        // Combined PDF: Use EXACT same generation approach as working individual PDFs
         
-        // Front page
+        // Generate both pages separately using the exact same calls
         const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
         
-        // Inside page: Copy EXACT code from lines 276-284 (working individual inside PDF)
-        console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
-        let insideHTML = generateUnifiedCardHTML('inside', {
+        // Use EXACT same signature data logging and generation as working individual inside PDF
+        console.log('Combined PDF Inside page: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+        const insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
           signatureDataUrl,
           templatePreviewUrl: previewDataUrl,
         }, format, format === 'production');
         
-        // Now combine these two COMPLETE HTML documents properly
-        const frontBody = frontHTML.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || '';
-        const insideBody = insideHTML.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || '';
-        const frontStyles = frontHTML.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.join('') || '';
-        const insideStyles = insideHTML.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.join('') || '';
-
-        const combinedHTML = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  ${frontStyles}
-  ${insideStyles}
-  <style>
-    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
-    .page { page-break-after: always; }
-    .page:last-child { page-break-after: auto; }
-  </style>
-</head>
-<body>
-  <div class="page">${frontBody}</div>
-  <div class="page">${insideBody}</div>
-</body>
-</html>`;
-        
-        form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
+        // Add both HTML files as separate files, let Gotenberg handle the combination
+        form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
+        form.append('files', new File([insideHTML], 'inside.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
         form.append('paperHeight', paperHeight);
         form.append('marginTop', '0');
