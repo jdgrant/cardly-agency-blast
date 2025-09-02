@@ -303,7 +303,7 @@ serve(async (req) => {
     .msg { text-align: center; max-width: 80%; font-size: 20px; line-height: 1.6; color: #111827; font-style: italic; margin: 0 auto; }
     .brand { position: absolute; left: 50%; transform: translateX(-50%); top: 56%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; width: 100%; padding: 0 32px; box-sizing: border-box; }
     .logo { max-width: 180px; max-height: 56px; object-fit: contain; }
-    .sig { width: 480px; object-fit: contain; }
+    .sig { width: 320px; object-fit: contain; }
     .ph { color: #9ca3af; font-size: 12px; }
   </style>
 </head>
