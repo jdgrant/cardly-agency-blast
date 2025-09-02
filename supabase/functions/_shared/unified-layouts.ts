@@ -26,6 +26,13 @@ const LAYOUT_CONFIGS = {
     overallHeight: '7in',
     isSpread: false,
   },
+  frontSpread: {
+    contentWidth: '5.125in',
+    contentHeight: '7in',
+    overallWidth: '10.25in',
+    overallHeight: '7in', 
+    isSpread: true,
+  },
   inside: {
     contentWidth: '5.125in',
     contentHeight: '7in',
@@ -48,6 +55,9 @@ function getLayoutConfig(
   isSpread: boolean = false
 ): LayoutConfig {
   if (type === 'front') {
+    if (format === 'production' || isSpread) {
+      return LAYOUT_CONFIGS.frontSpread;
+    }
     return LAYOUT_CONFIGS.front;
   }
   
@@ -128,7 +138,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
   const imgSrc = content.templatePreviewUrl || '';
   
   if (layout.isSpread) {
-    // Production format: front on left half, blank on right
+    // Production format: blank on left half, front on right half
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -138,19 +148,16 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         html, body { margin: 0; padding: 0; width: ${layout.overallWidth}; height: ${layout.overallHeight}; }
         body { font-family: Arial, sans-serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
+        .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; }
         .front-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; overflow: hidden; }
-        .back-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; display: flex; align-items: center; justify-content: center; }
         .front-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .back-template { width: 100%; height: 100%; background: #ffffff; }
       </style>
     </head>
     <body>
       <div class="production-layout">
+        <div class="blank-half"></div>
         <div class="front-half">
           ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="Card front"/>` : ''}
-        </div>
-        <div class="back-half">
-          <div class="back-template"></div>
         </div>
       </div>
     </body>

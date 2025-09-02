@@ -30,6 +30,16 @@ export const LAYOUT_CONFIGS = {
     isSpread: false,
   } as LayoutConfig,
 
+  // Front card spread - landscape 10.25" x 7" (left blank, right content)
+  frontSpread: {
+    contentWidth: '5.125in',
+    contentHeight: '7in',
+    overallWidth: '10.25in',
+    overallHeight: '7in',
+    aspectRatio: 10.25/7,
+    isSpread: true,
+  } as LayoutConfig,
+
   // Inside card - portrait 5.125" x 7"
   inside: {
     contentWidth: '5.125in',
@@ -69,6 +79,9 @@ export function getLayoutConfig(
   isSpread: boolean = false
 ): LayoutConfig {
   if (type === 'front') {
+    if (format === 'production' || isSpread) {
+      return LAYOUT_CONFIGS.frontSpread;
+    }
     return LAYOUT_CONFIGS.front;
   }
   
