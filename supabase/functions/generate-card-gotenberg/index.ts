@@ -219,7 +219,8 @@ serve(async (req) => {
       let insideHTML = '';
       let useInsideUrl = false;
       
-      if (base && includeInside && !includeFront) {
+      if (base && includeInside && !includeFront && false) {
+        // DISABLED: URL mode for inside-only to avoid Lovable badges and debug elements
         // For inside-only generation, use URL mode to match preview exactly
         const spreadParam = format === 'production' ? '?spread=true' : '';
         const insideUrl = `${base}/#/preview/inside/${orderId}${spreadParam}`;
@@ -269,9 +270,18 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else if (includeInside && !includeFront && useInsideUrl) {
-        // Inside URL mode was already handled above - gotenbergResp is already set
+        // This condition will never be true now since useInsideUrl is always false
         console.log('Inside PDF generated using URL mode for consistency with preview');
       } else if (includeInside && !includeFront) {
+        // Always use HTML mode for inside-only generation to avoid badges
+        console.log('Inside-only PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+        insideHTML = generateUnifiedCardHTML('inside', {
+          message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
+          logoDataUrl,
+          signatureDataUrl,
+          templatePreviewUrl: previewDataUrl,
+        }, format, format === 'production');
+        
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
         form.append('paperHeight', paperHeight);
