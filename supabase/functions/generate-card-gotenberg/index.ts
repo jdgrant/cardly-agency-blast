@@ -328,6 +328,7 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       }
+    }
 
     console.log('Gotenberg response status:', gotenbergResp.status);
     if (!gotenbergResp.ok) {
