@@ -687,12 +687,20 @@ const Admin = () => {
 
       console.log('Updating template in database...');
       
-      // Set the session variable for this connection
-      const { error: configError } = await supabase.rpc('set_config', {
-        setting_name: 'app.admin_session_id',
-        setting_value: sessionId,
-        is_local: true
+      // First ensure the admin session is recorded in the database
+      const { error: sessionError } = await supabase.rpc('set_admin_session', {
+        session_id: sessionId
       });
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error('Failed to set admin session');
+      }
+
+      // Set the session variable for this connection using raw SQL
+      const { error: configError } = await supabase.sql`
+        SELECT set_config('app.admin_session_id', ${sessionId}, false)
+      `;
 
       if (configError) {
         console.error('Config error:', configError);

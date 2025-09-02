@@ -551,6 +551,10 @@ export type Database = {
         Args: { session_id_param: string }
         Returns: boolean
       }
+      set_config: {
+        Args: { is_local: boolean; setting_name: string; setting_value: string }
+        Returns: undefined
+      }
       update_admin_order_status: {
         Args: {
           new_status_param: string
