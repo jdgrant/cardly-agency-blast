@@ -296,13 +296,13 @@ serve(async (req) => {
         console.log('Calling Gotenberg (html) at:', url, 'includeFront:', includeFront, 'includeInside:', includeInside);  
         gotenbergResp = await fetch(url, { method: 'POST', headers, body: form as any });
       } else {
-        // both pages - send identical HTML files as individual PDFs
-        console.log('Combined PDF: Using identical HTML files as individual PDFs');
+        // both pages - create single HTML with two pages using identical generation code
+        console.log('Combined PDF: Creating single HTML with identical page generation as individual PDFs');
         
         // Generate IDENTICAL front HTML as individual front PDF
         const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
         
-        // Generate IDENTICAL inside HTML as individual inside PDF
+        // Generate IDENTICAL inside HTML as individual inside PDF  
         console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
         const insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
@@ -311,10 +311,29 @@ serve(async (req) => {
           templatePreviewUrl: previewDataUrl,
         }, format, format === 'production');
         
-        // Send both HTML files to Gotenberg
-        form.append('files', new File([frontHTML], 'front.html', { type: 'text/html' }));
-        form.append('files', new File([insideHTML], 'inside.html', { type: 'text/html' }));
+        // Combine the complete HTML documents into a single multi-page document
+        const combinedHTML = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+    html, body { margin: 0; padding: 0; }
+    .page { width: ${paperWidth}in; height: ${paperHeight}in; page-break-after: always; }
+    .page:last-child { page-break-after: auto; }
+  </style>
+</head>
+<body>
+  <div class="page">${frontHTML.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || frontHTML}</div>
+  <div class="page">${insideHTML.match(/<body[^>]*>([\s\S]*?)<\/body>/i)?.[1] || insideHTML}</div>
+  <style>
+    ${frontHTML.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n') || ''}
+    ${insideHTML.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.map(s => s.replace(/<\/?style[^>]*>/gi, '')).join('\n') || ''}
+  </style>
+</body>
+</html>`;
         
+        form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
         form.append('paperHeight', paperHeight);
         form.append('marginTop', '0');
