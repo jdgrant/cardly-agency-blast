@@ -150,7 +150,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         .production-layout { width: 100%; height: 100%; display: flex; }
         .front-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; overflow: hidden; }
         .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; }
-        .front-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .front-img { width: 100%; height: 100%; object-fit: cover; object-position: left center; display: block; }
       </style>
     </head>
     <body>
