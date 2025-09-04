@@ -342,6 +342,9 @@ const OrderManagement = () => {
       } : null);
       setShowSignatureUpload(false);
 
+      // Refresh the entire order data to ensure we have the latest state
+      await fetchOrderByHashedId();
+
       toast({
         title: "Success",
         description: "Signature uploaded successfully and marked for review",
@@ -1054,7 +1057,7 @@ const OrderManagement = () => {
           <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
             <SignatureExtractor 
               onSignatureExtracted={(url) => {
-                console.log('SignatureExtractor callback triggered with URL:', url);
+                console.log('CROPPED SignatureExtractor callback triggered with URL:', url);
                 handleSignatureUpload(url);
               }} 
             />
