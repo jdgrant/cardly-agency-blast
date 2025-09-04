@@ -20,7 +20,6 @@ const Step5SelectPackage = () => {
     updateState({ selectedTier: tier });
   };
 
-  const postageAdditionalCost = state.postageOption === 'first-class' ? 0.20 : 0;
   const signatureAdditionalCost = state.signatureSelected ? 50 : 0;
   
   // Get rush fee for selected mailing window
@@ -56,7 +55,7 @@ const Step5SelectPackage = () => {
           const regularPiecePrice = tier.regularPrice / tier.quantity;
           const earlyBirdPiecePrice = tier.earlyBirdPrice / tier.quantity;
           const basePiecePrice = state.earlyBirdActive ? earlyBirdPiecePrice : regularPiecePrice;
-          const finalPiecePrice = basePiecePrice + postageAdditionalCost + rushFeePerPiece;
+          const finalPiecePrice = basePiecePrice + rushFeePerPiece;
           const totalWithAddons = (finalPiecePrice * tier.quantity) + signatureAdditionalCost;
 
           return (
@@ -75,9 +74,9 @@ const Step5SelectPackage = () => {
                 <div className="text-sm text-gray-600">per card</div>
                 {state.earlyBirdActive && (
                   <div className="space-y-1">
-                    <div className="text-sm text-gray-500 line-through">
-                      ${(regularPiecePrice + postageAdditionalCost + rushFeePerPiece).toFixed(2)} each
-                    </div>
+                     <div className="text-sm text-gray-500 line-through">
+                       ${(regularPiecePrice + rushFeePerPiece).toFixed(2)} each
+                     </div>
                     <div className="text-sm text-green-600 font-medium">
                       Save ${(regularPiecePrice - earlyBirdPiecePrice).toFixed(2)} per card
                     </div>
@@ -86,17 +85,14 @@ const Step5SelectPackage = () => {
                 <div className="text-lg font-semibold text-blue-600">
                   {tier.quantity} cards total
                 </div>
-                <div className="space-y-1 text-xs text-gray-500">
-                  {postageAdditionalCost > 0 && (
-                    <div>+ ${postageAdditionalCost.toFixed(2)} First-Class postage per card</div>
-                  )}
-                  {rushFeePerPiece > 0 && (
-                    <div className="text-red-600 font-medium">+ ${rushFeePerPiece.toFixed(2)} rush fee per card</div>
-                  )}
-                  {signatureAdditionalCost > 0 && (
-                    <div className="text-emerald-600 font-medium">+ $50.00 signature service</div>
-                  )}
-                </div>
+                 <div className="space-y-1 text-xs text-gray-500">
+                   {rushFeePerPiece > 0 && (
+                     <div className="text-red-600 font-medium">+ ${rushFeePerPiece.toFixed(2)} rush fee per card</div>
+                   )}
+                   {signatureAdditionalCost > 0 && (
+                     <div className="text-emerald-600 font-medium">+ $50.00 signature service</div>
+                   )}
+                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="space-y-3">
@@ -112,16 +108,10 @@ const Step5SelectPackage = () => {
                     <Check className="w-4 h-4 text-green-500" />
                     <span className="text-sm">Custom branding</span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Check className="w-4 h-4 text-green-500" />
-                    <span className="text-sm">Envelope stuffing</span>
-                  </div>
-                  {postageAdditionalCost === 0 && (
-                    <div className="flex items-center space-x-2">
-                      <Check className="w-4 h-4 text-green-500" />
-                      <span className="text-sm">Standard postage</span>
-                    </div>
-                  )}
+                   <div className="flex items-center space-x-2">
+                     <Check className="w-4 h-4 text-green-500" />
+                     <span className="text-sm">Envelope stuffing</span>
+                   </div>
                   {signatureAdditionalCost > 0 && (
                     <div className="flex items-center space-x-2">
                       <Check className="w-4 h-4 text-emerald-500" />
@@ -153,7 +143,7 @@ const Step5SelectPackage = () => {
           <li>• High-quality cardstock and professional printing</li>
           <li>• Your logo applied to each card</li>
           <li>• Individual envelope addressing and stuffing</li>
-          <li>• Postage and mailing during your selected window</li>
+          <li>• Mailing during your selected window</li>
           <li>• Order tracking and delivery confirmation</li>
           {state.signatureSelected && (
             <li>• Professional signature service - our artists will add your signature to each card</li>
