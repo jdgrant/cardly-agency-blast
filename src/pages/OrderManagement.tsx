@@ -629,6 +629,12 @@ const OrderManagement = () => {
                     <p className="text-gray-600">Mailing Window</p>
                     <p className="font-medium">{formatMailingWindow(order.mailing_window)}</p>
                   </div>
+                  {order.promo_code && (
+                    <div>
+                      <p className="text-gray-600">Promo Code</p>
+                      <p className="font-medium text-emerald-600">{order.promo_code}</p>
+                    </div>
+                  )}
                   <div>
                     <p className="text-gray-600">Total Price</p>
                     <p className="text-lg font-bold text-emerald-600">${Number(order.final_price).toFixed(2)}</p>
