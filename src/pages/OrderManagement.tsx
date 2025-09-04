@@ -608,7 +608,7 @@ const OrderManagement = () => {
         </Card>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - Order Details */}
+          {/* Left Column - Order Details, Uploads & Payment */}
           <div className="space-y-6">
             {/* Order Summary */}
             <Card>
@@ -662,10 +662,7 @@ const OrderManagement = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
 
-          {/* Right Column - Uploads & Payment */}
-          <div className="space-y-6">
             {/* Upload Requirements */}
             <Card>
               <CardHeader>
@@ -810,37 +807,6 @@ const OrderManagement = () => {
               </CardContent>
             </Card>
 
-            {/* Card Preview */}
-            {(order.front_preview_base64 || order.inside_preview_base64) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Card Preview</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {order.front_preview_base64 && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Front</p>
-                      <img
-                        src={order.front_preview_base64}
-                        alt="Card Front Preview"
-                        className="w-full border rounded-lg"
-                      />
-                    </div>
-                  )}
-                  {order.inside_preview_base64 && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Inside</p>
-                      <img
-                        src={order.inside_preview_base64}
-                        alt="Card Inside Preview"
-                        className="w-full border rounded-lg"
-                      />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
             {/* Payment Section */}
             <Card>
               <CardHeader>
@@ -984,6 +950,40 @@ const OrderManagement = () => {
                 )}
               </CardContent>
             </Card>
+          </div>
+
+          {/* Right Column - Preview */}
+          <div className="space-y-6">
+            {/* Card Preview */}
+            {(order.front_preview_base64 || order.inside_preview_base64) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Card Preview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {order.front_preview_base64 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Front</p>
+                      <img
+                        src={order.front_preview_base64}
+                        alt="Card Front Preview"
+                        className="w-full border rounded-lg"
+                      />
+                    </div>
+                  )}
+                  {order.inside_preview_base64 && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Inside</p>
+                      <img
+                        src={order.inside_preview_base64}
+                        alt="Card Inside Preview"
+                        className="w-full border rounded-lg"
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
