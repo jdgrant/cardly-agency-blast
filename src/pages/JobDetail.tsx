@@ -1011,8 +1011,8 @@ const JobDetail = () => {
                     <p className="font-medium">${Number(order.regular_price).toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Postage Cost</p>
-                    <p className="font-medium">${Number(order.postage_cost).toFixed(2)}</p>
+                    <p className="text-sm text-gray-600">Discount</p>
+                    <p className="font-medium text-green-600">-${(Number(order.regular_price) - Number(order.final_price)).toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Final Total</p>
