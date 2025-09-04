@@ -44,6 +44,7 @@ interface Order {
   status: string;
   logo_url: string | null;
   signature_url: string | null;
+  cropped_signature_url: string | null;
   csv_file_url: string | null;
   created_at: string;
   updated_at: string;
@@ -60,6 +61,7 @@ interface Order {
   billing_address?: string | null;
   invoice_paid?: boolean;
   signature_purchased?: boolean;
+  signature_needs_review?: boolean;
   promo_code?: string | null;
 }
 
@@ -732,41 +734,73 @@ const OrderManagement = () => {
 
                 {/* Signature Section - Show upgrade option if not purchased, upload if purchased */}
                 {order.signature_purchased === true ? (
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="font-medium">Signature</p>
-                        <p className="text-sm text-gray-600">Upload or extract your signature</p>
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <FileText className="w-5 h-5 text-gray-400" />
+                        <div>
+                          <p className="font-medium">Signature</p>
+                          <p className="text-sm text-gray-600">Upload or extract your signature</p>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // Download signature template
-                          const link = document.createElement('a');
-                          link.href = '/SignatureInstruction.pdf';
-                          link.download = 'SignatureTemplate.pdf';
-                          link.click();
-                        }}
-                      >
-                        📄 Template
-                      </Button>
-                      {order.signature_url ? (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      ) : (
+                      <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setShowSignatureUpload(true)}
+                          onClick={() => {
+                            // Download signature template
+                            const link = document.createElement('a');
+                            link.href = '/SignatureInstruction.pdf';
+                            link.download = 'SignatureTemplate.pdf';
+                            link.click();
+                          }}
                         >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Upload
+                          📄 Template
                         </Button>
-                      )}
+                        {order.cropped_signature_url || order.signature_url ? (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowSignatureUpload(true)}
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload
+                          </Button>
+                        )}
+                      </div>
                     </div>
+                    
+                    {/* Signature Preview */}
+                    {order.cropped_signature_url && (
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-sm text-gray-600 mb-2">Cropped Signature Preview:</p>
+                        <div className="flex items-center justify-center bg-white border rounded p-4">
+                          <img 
+                            src={order.cropped_signature_url} 
+                            alt="Cropped Signature"
+                            className="max-h-20 max-w-full object-contain"
+                            onError={(e) => {
+                              // If image fails to load, show a placeholder
+                              const target = e.currentTarget as HTMLImageElement;
+                              target.style.display = 'none';
+                              const nextElement = target.nextElementSibling as HTMLElement;
+                              if (nextElement) nextElement.style.display = 'block';
+                            }}
+                          />
+                          <div className="hidden text-gray-400 text-sm">
+                            Unable to preview signature
+                          </div>
+                        </div>
+                        {order.signature_needs_review && (
+                          <div className="mt-2 flex items-center text-sm text-amber-600">
+                            <AlertTriangle className="w-4 h-4 mr-1" />
+                            Signature pending review
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p-6 border-2 border-dashed border-blue-200 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50">
