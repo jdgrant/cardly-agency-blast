@@ -543,6 +543,10 @@ export type Database = {
         Args: { email_address: string }
         Returns: boolean
       }
+      reset_order_client_list: {
+        Args: { order_readable_id: string }
+        Returns: boolean
+      }
       set_admin_session: {
         Args: { session_id: string }
         Returns: undefined
