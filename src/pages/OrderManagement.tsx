@@ -798,20 +798,16 @@ const OrderManagement = () => {
                     </div>
                     
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span>Subtotal:</span>
-                        <span>${Number(order.regular_price).toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span>Postage:</span>
-                        <span>${Number(order.postage_cost).toFixed(2)}</span>
-                      </div>
-                      {order.early_bird_discount && (
-                        <div className="flex justify-between items-center text-green-600">
-                          <span>Early Bird Discount:</span>
-                          <span>-${(Number(order.regular_price) + Number(order.postage_cost) - Number(order.final_price)).toFixed(2)}</span>
-                        </div>
-                      )}
+                       <div className="flex justify-between items-center">
+                         <span>Subtotal:</span>
+                         <span>${Number(order.regular_price).toFixed(2)}</span>
+                       </div>
+                       {order.early_bird_discount && (
+                         <div className="flex justify-between items-center text-green-600">
+                           <span>Early Bird Discount:</span>
+                           <span>-${(Number(order.regular_price) - Number(order.final_price)).toFixed(2)}</span>
+                         </div>
+                       )}
                       <Separator />
                       <div className="flex justify-between items-center font-bold text-lg">
                         <span>Total:</span>
