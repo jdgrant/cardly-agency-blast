@@ -18,12 +18,17 @@ import {
   Users,
   AlertTriangle,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Tag,
+  X,
+  Check
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { ClientListUploader } from '@/components/admin/ClientListUploader';
 import SignatureExtractor from '@/components/signature/SignatureExtractor';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface Order {
   id: string;
@@ -76,6 +81,10 @@ const OrderManagement = () => {
   const [showSignatureUpload, setShowSignatureUpload] = useState(false);
   const [showLogoUpload, setShowLogoUpload] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [validatedPromoCode, setValidatedPromoCode] = useState<any>(null);
+  const [promoCodeError, setPromoCodeError] = useState('');
+  const [validatingPromoCode, setValidatingPromoCode] = useState(false);
 
   // Hash/unhash order ID (simple implementation - in production use proper hashing)
   const hashOrderId = (orderId: string) => {
@@ -395,15 +404,81 @@ const OrderManagement = () => {
     }
   };
 
+  const validatePromoCode = async (code: string) => {
+    if (!code.trim()) {
+      setValidatedPromoCode(null);
+      setPromoCodeError('');
+      return;
+    }
+
+    setValidatingPromoCode(true);
+    setPromoCodeError('');
+
+    try {
+      const { data, error } = await supabase.rpc('get_promocode', { code_param: code.toUpperCase() });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const promoData = data[0];
+        setValidatedPromoCode(promoData);
+        toast({
+          title: "Promo Code Applied!",
+          description: `${promoData.discount_percentage}% discount applied to your order`,
+        });
+      } else {
+        setValidatedPromoCode(null);
+        setPromoCodeError('Invalid or expired promo code');
+      }
+    } catch (error: any) {
+      setValidatedPromoCode(null);
+      setPromoCodeError('Failed to validate promo code');
+      console.error('Promo code validation error:', error);
+    } finally {
+      setValidatingPromoCode(false);
+    }
+  };
+
+  const applyPromoCode = () => {
+    validatePromoCode(promoCodeInput);
+  };
+
+  const removePromoCode = () => {
+    setPromoCodeInput('');
+    setValidatedPromoCode(null);
+    setPromoCodeError('');
+  };
+
+  const calculateDiscountedTotal = () => {
+    if (!order) return 0;
+    const discount = validatedPromoCode ? (order.final_price * (validatedPromoCode.discount_percentage / 100)) : 0;
+    return order.final_price - discount;
+  };
+
+  const getDiscountAmount = () => {
+    if (!order || !validatedPromoCode) return 0;
+    return order.final_price * (validatedPromoCode.discount_percentage / 100);
+  };
+
   const handlePayment = async () => {
     if (!order?.id || !canProceedToPayment()) return;
 
     setProcessingPayment(true);
     try {
+      // Use promo code if applied
+      if (validatedPromoCode) {
+        try {
+          await supabase.rpc('use_promocode', { code_param: validatedPromoCode.code });
+        } catch (promoError) {
+          console.warn('Failed to increment promo code usage:', promoError);
+        }
+      }
+
+      const finalAmount = calculateDiscountedTotal();
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
           orderId: order.id,
-          amount: Math.round(order.final_price * 100), // Convert to cents
+          amount: Math.round(finalAmount * 100), // Convert to cents
           returnUrl: window.location.href
         }
       });
@@ -796,6 +871,71 @@ const OrderManagement = () => {
                         All required files have been uploaded. You can now proceed with payment.
                       </p>
                     </div>
+
+                    {/* Promo Code Section */}
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center space-x-2 text-base">
+                          <Tag className="w-4 h-4" />
+                          <span>Promo Code</span>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        {validatedPromoCode ? (
+                          <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                              <Check className="w-4 h-4 text-green-600" />
+                              <div>
+                                <span className="text-sm text-green-700 font-medium block">
+                                  {validatedPromoCode.code}
+                                </span>
+                                <span className="text-xs text-green-600">
+                                  {validatedPromoCode.discount_percentage}% discount applied
+                                </span>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={removePromoCode}
+                              className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex space-x-2">
+                              <Input
+                                value={promoCodeInput}
+                                onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                                placeholder="Enter promo code"
+                                className="uppercase text-sm"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    applyPromoCode();
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={applyPromoCode}
+                                disabled={validatingPromoCode || !promoCodeInput.trim()}
+                                size="sm"
+                              >
+                                {validatingPromoCode ? 'Checking...' : 'Apply'}
+                              </Button>
+                            </div>
+                            {promoCodeError && (
+                              <p className="text-xs text-red-600">{promoCodeError}</p>
+                            )}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
                     
                     <div className="space-y-3">
                        <div className="flex justify-between items-center">
@@ -808,10 +948,16 @@ const OrderManagement = () => {
                            <span>-${(Number(order.regular_price) - Number(order.final_price)).toFixed(2)}</span>
                          </div>
                        )}
+                       {validatedPromoCode && (
+                         <div className="flex justify-between items-center text-green-600">
+                           <span>Promo Discount ({validatedPromoCode.discount_percentage}% off):</span>
+                           <span>-${getDiscountAmount().toFixed(2)}</span>
+                         </div>
+                       )}
                       <Separator />
                       <div className="flex justify-between items-center font-bold text-lg">
                         <span>Total:</span>
-                        <span>${Number(order.final_price).toFixed(2)}</span>
+                        <span>${calculateDiscountedTotal().toFixed(2)}</span>
                       </div>
                     </div>
 
@@ -829,7 +975,7 @@ const OrderManagement = () => {
                       ) : (
                         <div className="flex items-center space-x-2">
                           <CreditCard className="w-5 h-5" />
-                          <span>Pay Now</span>
+                          <span>Pay Now - ${calculateDiscountedTotal().toFixed(2)}</span>
                           <ArrowRight className="w-4 h-4" />
                         </div>
                       )}
