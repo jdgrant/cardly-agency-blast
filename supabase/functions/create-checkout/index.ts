@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount, description, metadata, returnUrl, orderId } = await req.json();
+    const { amount, description, metadata, returnUrl, orderId, promoCode, originalAmount } = await req.json();
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -55,7 +55,8 @@ serve(async (req) => {
       cancel_url: cancelUrl,
       metadata: {
         ...metadata,
-        ...(orderId && { orderId })
+        ...(orderId && { orderId }),
+        ...(promoCode && { promoCode, originalAmount })
       },
     });
 

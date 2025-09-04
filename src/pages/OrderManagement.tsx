@@ -466,21 +466,50 @@ const OrderManagement = () => {
 
     setProcessingPayment(true);
     try {
-      // Use promo code if applied
+      const finalAmount = calculateDiscountedTotal();
+      
+      // If promo code is applied, save it to the order first
       if (validatedPromoCode) {
         try {
-          await supabase.rpc('use_promocode', { code_param: validatedPromoCode.code });
+          // Update the order with promo code and discounted price
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({ 
+              promo_code: validatedPromoCode.code,
+              final_price: finalAmount
+            })
+            .eq('id', order.id);
+
+          if (updateError) {
+            console.error('Error saving promo code to order:', updateError);
+          } else {
+            // Use promo code (increment usage)
+            await supabase.rpc('use_promocode', { code_param: validatedPromoCode.code });
+            
+            // Update local state
+            setOrder(prev => prev ? { 
+              ...prev, 
+              promo_code: validatedPromoCode.code,
+              final_price: finalAmount
+            } : null);
+          }
         } catch (promoError) {
-          console.warn('Failed to increment promo code usage:', promoError);
+          console.error('Failed to save promo code:', promoError);
+          toast({
+            title: "Promo Code Error", 
+            description: "Failed to apply promo code. Proceeding with original price.",
+            variant: "destructive"
+          });
         }
       }
 
-      const finalAmount = calculateDiscountedTotal();
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
           orderId: order.id,
           amount: Math.round(finalAmount * 100), // Convert to cents
-          returnUrl: window.location.href
+          returnUrl: window.location.href,
+          promoCode: validatedPromoCode?.code,
+          originalAmount: Math.round(order.final_price * 100)
         }
       });
 
