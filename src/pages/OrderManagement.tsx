@@ -320,11 +320,15 @@ const OrderManagement = () => {
     }
 
     try {
+      // Calculate the correct short_id format (first 8 chars of UUID without hyphens)
+      const shortId = order.id.replace(/-/g, '').substring(0, 8);
+      console.log('Using short_id for RPC call:', shortId);
+      
       // Use secure function to update order with signature URL
       console.log('Updating order with RPC call...');
       const { data, error: updateError } = await supabase
         .rpc('update_order_file_for_customer', {
-          short_id: hashedOrderId,
+          short_id: shortId,
           file_type: 'cropped_signature',
           file_url: signatureUrl
         });
