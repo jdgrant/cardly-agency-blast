@@ -499,6 +499,7 @@ export type Database = {
           mailing_window: string
           postage_cost: number
           postage_option: string
+          promo_code: string
           readable_order_id: string
           regular_price: number
           selected_message: string
