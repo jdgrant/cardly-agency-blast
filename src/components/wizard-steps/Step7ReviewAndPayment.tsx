@@ -150,7 +150,27 @@ const Step7ReviewAndSubmit = () => {
       }
 
       // Create order using RPC
-      console.log('Creating order...');
+      console.log('Creating order with data:', {
+        p_template_id: state.selectedTemplate,
+        p_tier_name: state.selectedTier?.name || 'Custom',
+        p_card_quantity: Math.max(clientCount, 1),
+        p_regular_price: subtotal + rushFeeTotal,
+        p_final_price: total,
+        p_mailing_window: state.mailingWindow,
+        p_postage_option: state.postageOption,
+        p_postage_cost: 0,
+        p_custom_message: state.customMessage,
+        p_selected_message: state.selectedMessage,
+        p_logo_url: logoUrl,
+        p_signature_url: signatureUrl,
+        p_csv_file_url: csvFileUrl,
+        p_contact_firstname: state.contactFirstName,
+        p_contact_lastname: state.contactLastName,
+        p_contact_email: state.contactEmail,
+        p_contact_phone: state.contactPhone,
+        p_billing_address: state.billingAddress,
+      });
+      
       const { data: orderId, error: orderError } = await supabase.rpc('create_order', {
         p_template_id: state.selectedTemplate,
         p_tier_name: state.selectedTier?.name || 'Custom',
@@ -165,8 +185,8 @@ const Step7ReviewAndSubmit = () => {
         p_logo_url: logoUrl,
         p_signature_url: signatureUrl,
         p_csv_file_url: csvFileUrl,
-          p_contact_firstname: state.contactFirstName,
-          p_contact_lastname: state.contactLastName,
+        p_contact_firstname: state.contactFirstName,
+        p_contact_lastname: state.contactLastName,
         p_contact_email: state.contactEmail,
         p_contact_phone: state.contactPhone,
         p_billing_address: state.billingAddress,
