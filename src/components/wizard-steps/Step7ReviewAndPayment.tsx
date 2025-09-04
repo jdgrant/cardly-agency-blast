@@ -232,16 +232,24 @@ const Step7ReviewAndSubmit = () => {
         console.log('Client records inserted successfully');
       }
 
+      // Get the order details to get the readable order ID
+      const { data: orderDetails, error: detailsError } = await supabase.rpc('get_order_by_id', { order_id: orderId });
+      
+      if (detailsError) {
+        console.error('Error fetching order details:', detailsError);
+      }
+
+      const readableOrderId = orderDetails?.[0]?.readable_order_id;
+      const shortId = readableOrderId ? readableOrderId.split('-').pop() : orderId.toString().slice(-8);
+
       toast({
         title: "Order Submitted Successfully!",
-        description: "Your holiday card order has been submitted. An invoice will be sent to your email.",
+        description: "Your holiday card order has been submitted. Redirecting to order management...",
       });
 
-      // Reset wizard and navigate
+      // Reset wizard and navigate to order management
       resetWizard();
-      navigate('/order-confirmation', { 
-        state: { orderId: orderId }
-      });
+      navigate(`/ordermanagement/${shortId}`);
 
     } catch (error: any) {
       console.error('Submission error:', error);
