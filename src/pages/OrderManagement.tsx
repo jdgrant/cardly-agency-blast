@@ -533,7 +533,7 @@ const OrderManagement = () => {
         </Card>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - Order Details & Uploads */}
+          {/* Left Column - Order Details */}
           <div className="space-y-6">
             {/* Order Summary */}
             <Card>
@@ -587,7 +587,10 @@ const OrderManagement = () => {
                 )}
               </CardContent>
             </Card>
+          </div>
 
+          {/* Right Column - Uploads & Payment */}
+          <div className="space-y-6">
             {/* Upload Requirements */}
             <Card>
               <CardHeader>
@@ -731,10 +734,7 @@ const OrderManagement = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          {/* Right Column - Preview & Payment */}
-          <div className="space-y-6">
             {/* Card Preview */}
             {(order.front_preview_base64 || order.inside_preview_base64) && (
               <Card>
