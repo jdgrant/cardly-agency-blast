@@ -124,6 +124,7 @@ export type Database = {
           production_combined_pdf_generated_at: string | null
           production_combined_pdf_path: string | null
           production_combined_pdf_public_url: string | null
+          promo_code: string | null
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
@@ -161,6 +162,7 @@ export type Database = {
           production_combined_pdf_generated_at?: string | null
           production_combined_pdf_path?: string | null
           production_combined_pdf_public_url?: string | null
+          promo_code?: string | null
           readable_order_id?: string | null
           regular_price: number
           selected_message?: string | null
@@ -198,6 +200,7 @@ export type Database = {
           production_combined_pdf_generated_at?: string | null
           production_combined_pdf_path?: string | null
           production_combined_pdf_public_url?: string | null
+          promo_code?: string | null
           readable_order_id?: string | null
           regular_price?: number
           selected_message?: string | null
@@ -369,6 +372,7 @@ export type Database = {
           production_combined_pdf_generated_at: string | null
           production_combined_pdf_path: string | null
           production_combined_pdf_public_url: string | null
+          promo_code: string | null
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
@@ -421,6 +425,7 @@ export type Database = {
           production_combined_pdf_generated_at: string | null
           production_combined_pdf_path: string | null
           production_combined_pdf_public_url: string | null
+          promo_code: string | null
           readable_order_id: string | null
           regular_price: number
           selected_message: string | null
