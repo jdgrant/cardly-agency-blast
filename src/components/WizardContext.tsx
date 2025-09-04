@@ -58,10 +58,10 @@ interface WizardContextType {
 }
 
 const pricingTiers: PricingTier[] = [
-  { name: 'Starter', quantity: 250, regularPrice: 750, earlyBirdPrice: 637.50 },
-  { name: 'Growth', quantity: 500, regularPrice: 1375, earlyBirdPrice: 1168.75 },
-  { name: 'Agency Elite', quantity: 1000, regularPrice: 2500, earlyBirdPrice: 2125 },
-  { name: 'Agency Pro', quantity: 2000, regularPrice: 4500, earlyBirdPrice: 3825 },
+  { name: 'Starter', quantity: 250, regularPrice: 750, earlyBirdPrice: 750 }, // $3 per card, no sale
+  { name: 'Growth', quantity: 500, regularPrice: 1500, earlyBirdPrice: 1275 }, // $3 regular, $2.55 sale
+  { name: 'Agency Elite', quantity: 1000, regularPrice: 2500, earlyBirdPrice: 2130 }, // $2.50 regular, $2.13 sale
+  { name: 'Agency Pro', quantity: 2000, regularPrice: 4500, earlyBirdPrice: 3820 }, // $2.25 regular, $1.91 sale
 ];
 
 const initialState: WizardState = {
