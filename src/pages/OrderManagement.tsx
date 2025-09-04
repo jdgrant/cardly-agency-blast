@@ -944,22 +944,16 @@ const OrderManagement = () => {
                          <span>Subtotal:</span>
                          <span>${Number(order.regular_price).toFixed(2)}</span>
                        </div>
-                       {order.early_bird_discount && (
+                       {(order.promo_code || validatedPromoCode) && (
                          <div className="flex justify-between items-center text-green-600">
-                           <span>Early Bird Discount:</span>
+                           <span>Discount {order.promo_code ? `(${order.promo_code})` : validatedPromoCode ? `(${validatedPromoCode.code} - ${validatedPromoCode.discount_percentage}% off)` : ''}:</span>
                            <span>-${(Number(order.regular_price) - Number(order.final_price)).toFixed(2)}</span>
-                         </div>
-                       )}
-                       {validatedPromoCode && (
-                         <div className="flex justify-between items-center text-green-600">
-                           <span>Promo Discount ({validatedPromoCode.discount_percentage}% off):</span>
-                           <span>-${getDiscountAmount().toFixed(2)}</span>
                          </div>
                        )}
                       <Separator />
                       <div className="flex justify-between items-center font-bold text-lg">
                         <span>Total:</span>
-                        <span>${calculateDiscountedTotal().toFixed(2)}</span>
+                        <span>${Number(order.final_price).toFixed(2)}</span>
                       </div>
                     </div>
 
