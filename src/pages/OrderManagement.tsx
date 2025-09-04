@@ -306,6 +306,7 @@ const OrderManagement = () => {
   };
 
   const handleSignatureUpload = async (signatureUrl: string) => {
+    console.log('handleSignatureUpload called with:', signatureUrl);
     console.log('Updating order with signature URL and review flag:', { orderId: order?.id, hashedOrderId, signatureUrl });
     
     if (!order?.id || !hashedOrderId) {
@@ -1051,7 +1052,12 @@ const OrderManagement = () => {
             <DialogTitle>Upload Signature</DialogTitle>
           </DialogHeader>
           <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
-            <SignatureExtractor onSignatureExtracted={handleSignatureUpload} />
+            <SignatureExtractor 
+              onSignatureExtracted={(url) => {
+                console.log('SignatureExtractor callback triggered with URL:', url);
+                handleSignatureUpload(url);
+              }} 
+            />
           </div>
         </DialogContent>
       </Dialog>

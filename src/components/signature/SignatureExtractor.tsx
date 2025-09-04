@@ -14,11 +14,13 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log('SignatureExtractor: File selected:', file);
+    
     if (!file) return;
 
-    console.log('SignatureExtractor: File selected:', file.name, file.type, file.size);
+    console.log('SignatureExtractor: File details:', file.name, file.type, file.size);
 
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'application/pdf'];
@@ -33,11 +35,13 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       return;
     }
 
+    console.log('SignatureExtractor: File validation passed, setting uploadedFile');
     setUploadedFile(file);
     console.log('SignatureExtractor: File ready for processing');
   };
 
   const processAndUploadSignature = async () => {
+    console.log('SignatureExtractor: processAndUploadSignature called, uploadedFile:', uploadedFile);
     if (!uploadedFile) return;
 
     setIsUploading(true);
@@ -50,6 +54,8 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       const fileExtension = uploadedFile.type === 'application/pdf' ? 'pdf' : 
                            uploadedFile.name.split('.').pop() || 'png';
       const fileName = `signatures/cropped_signature_${timestamp}.${fileExtension}`;
+
+      console.log('SignatureExtractor: Generated fileName:', fileName);
 
       // Upload directly to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
@@ -64,6 +70,8 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         throw uploadError;
       }
 
+      console.log('SignatureExtractor: Upload successful, data:', uploadData);
+
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('holiday-cards')
@@ -74,6 +82,7 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       // Set the uploaded image URL for preview
       setUploadedImageUrl(publicUrl);
       
+      console.log('SignatureExtractor: Calling onSignatureExtracted callback with URL:', publicUrl);
       // Call the parent callback with the public URL
       onSignatureExtracted(publicUrl);
       
