@@ -282,6 +282,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_promocode_to_order: {
+        Args: { order_readable_id: string; promo_code_param: string }
+        Returns: boolean
+      }
       clear_admin_session: {
         Args: { session_id: string }
         Returns: undefined
