@@ -322,7 +322,7 @@ const OrderManagement = () => {
       const { data, error: updateError } = await supabase
         .rpc('update_order_file_for_customer', {
           short_id: hashedOrderId,
-          file_type: 'signature',
+          file_type: 'cropped_signature',
           file_url: signatureUrl
         });
 
@@ -334,7 +334,7 @@ const OrderManagement = () => {
       console.log('Order update successful:', data);
       setOrder(prev => prev ? { 
         ...prev, 
-        signature_url: signatureUrl,
+        cropped_signature_url: signatureUrl,
         signature_needs_review: true
       } : null);
       setShowSignatureUpload(false);
