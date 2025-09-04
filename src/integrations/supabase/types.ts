@@ -547,6 +547,10 @@ export type Database = {
         Args: { order_readable_id: string }
         Returns: boolean
       }
+      reset_order_completely: {
+        Args: { order_readable_id: string }
+        Returns: boolean
+      }
       set_admin_session: {
         Args: { session_id: string }
         Returns: undefined
