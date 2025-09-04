@@ -2,6 +2,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
+import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -88,15 +89,19 @@ serve(async (req) => {
       }
     };
 
-    // Handle signature URL - check if it's a full URL or path and if it's a PDF
+    // Handle signature URL using shared utility - prioritizes cropped signature
     let signatureDataUrl = '';
-    if (order.signature_url) {
+    const signatureUrl = getSignatureUrl(order);
+    console.log('Order signatures - signature_url:', order.signature_url, 'cropped_signature_url:', order.cropped_signature_url);
+    console.log('Selected signature URL:', signatureUrl);
+    
+    if (signatureUrl) {
       try {
-        let signaturePath = order.signature_url;
+        let signaturePath = signatureUrl;
         
         // If it's a full URL, extract the path
-        if (order.signature_url.startsWith('https://')) {
-          const urlParts = order.signature_url.split('/');
+        if (signatureUrl.startsWith('https://')) {
+          const urlParts = signatureUrl.split('/');
           const bucketIndex = urlParts.findIndex(part => part === 'holiday-cards');
           if (bucketIndex !== -1 && bucketIndex < urlParts.length - 1) {
             signaturePath = urlParts.slice(bucketIndex + 1).join('/');
@@ -198,6 +203,7 @@ serve(async (req) => {
     }
 
     const logoDataUrl = order.logo_url ? await encodeToDataUrl(order.logo_url) : '';
+    console.log('Logo URL processed:', !!logoDataUrl);
 
     // Handle template preview image - convert local paths to data URLs
     let previewDataUrl = '';
