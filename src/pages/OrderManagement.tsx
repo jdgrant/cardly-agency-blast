@@ -331,14 +331,6 @@ const OrderManagement = () => {
         throw updateError;
       }
 
-      // Also set the review flag
-      const { error: reviewError } = await supabase
-        .from('orders')
-        .update({ signature_needs_review: true })
-        .eq('id', order.id);
-
-      if (reviewError) console.error('Error setting review flag:', reviewError);
-
       console.log('Order update successful:', data);
       setOrder(prev => prev ? { 
         ...prev, 
