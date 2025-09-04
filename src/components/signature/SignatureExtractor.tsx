@@ -74,8 +74,8 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
       // Set the uploaded image URL for preview
       setUploadedImageUrl(publicUrl);
       
-      // Call the parent callback with the file path (not public URL)
-      onSignatureExtracted(fileName);
+      // Call the parent callback with the public URL
+      onSignatureExtracted(publicUrl);
       
       toast.success('Cropped signature uploaded successfully!');
       
