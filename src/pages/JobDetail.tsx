@@ -19,7 +19,8 @@ import {
   MapPin,
   Upload,
   ChevronDown,
-  Mail
+  Mail,
+  Tag
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
@@ -67,6 +68,8 @@ interface Order {
   signature_purchased?: boolean;
   invoice_paid?: boolean;
   signature_needs_review?: boolean;
+  // Promo code
+  promo_code?: string | null;
 }
 
 interface OrderWithId extends Order {
@@ -1016,6 +1019,16 @@ const JobDetail = () => {
                     <p className="text-lg font-bold text-emerald-600">${Number(order.final_price).toFixed(2)}</p>
                   </div>
                 </div>
+                {order.promo_code && (
+                  <div className="bg-emerald-50 p-3 rounded-lg">
+                    <p className="text-sm text-emerald-800 font-medium">
+                      <span className="inline-flex items-center">
+                        <Tag className="w-4 h-4 mr-2" />
+                        Promo Code Applied: {order.promo_code}
+                      </span>
+                    </p>
+                  </div>
+                )}
                 {order.early_bird_discount && (
                   <div className="bg-emerald-50 p-3 rounded-lg">
                     <p className="text-sm text-emerald-800 font-medium">Early Bird Discount Applied</p>

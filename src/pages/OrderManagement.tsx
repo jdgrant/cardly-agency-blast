@@ -60,6 +60,7 @@ interface Order {
   billing_address?: string | null;
   invoice_paid?: boolean;
   signature_purchased?: boolean;
+  promo_code?: string | null;
 }
 
 interface Template {
