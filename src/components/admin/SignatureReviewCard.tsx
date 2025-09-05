@@ -72,6 +72,10 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
 
     setUploading(true);
     try {
+      console.log('Starting cropped signature upload process');
+      console.log('Order ID:', order.id);
+      console.log('New signature URL:', signatureUrl);
+
       // Update order record with cropped signature URL
       const { error: updateError } = await supabase
         .from('orders')
@@ -81,12 +85,28 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
         .eq('id', order.id);
 
       if (updateError) throw updateError;
+      console.log('Database updated with cropped signature URL');
+
+      // Verify the database was actually updated
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('orders')
+        .select('cropped_signature_url, signature_url, front_preview_base64, inside_preview_base64')
+        .eq('id', order.id)
+        .single();
+
+      if (verifyError) {
+        console.error('Error verifying database update:', verifyError);
+      } else {
+        console.log('Database verification after update:', verifyData);
+      }
 
       // Regenerate card previews with the new signature
       console.log('Regenerating previews after signature crop upload');
       const { data: previewData, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
         body: { orderId: order.id }
       });
+
+      console.log('Preview generation response:', { previewData, previewError });
 
       if (previewError) {
         console.error('Error regenerating previews:', previewError);
@@ -97,6 +117,24 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
         });
       } else {
         console.log('Preview generation completed successfully', previewData);
+
+        // Verify previews were actually updated in the database
+        const { data: finalVerifyData, error: finalVerifyError } = await supabase
+          .from('orders')
+          .select('front_preview_base64, inside_preview_base64, previews_updated_at')
+          .eq('id', order.id)
+          .single();
+
+        if (finalVerifyError) {
+          console.error('Error verifying final database state:', finalVerifyError);
+        } else {
+          console.log('Final database state after preview generation:', {
+            front_preview_length: finalVerifyData?.front_preview_base64?.length || 0,
+            inside_preview_length: finalVerifyData?.inside_preview_base64?.length || 0,
+            previews_updated_at: finalVerifyData?.previews_updated_at
+          });
+        }
+
         toast({
           title: "Success",
           description: "Signature uploaded and previews regenerated successfully",
@@ -106,9 +144,11 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
       setShowUploadDialog(false);
       
       // Wait a moment for preview generation to fully complete before refreshing
+      console.log('Waiting before refreshing order data...');
       setTimeout(() => {
+        console.log('Refreshing order data now');
         onOrderUpdate();
-      }, 1000);
+      }, 2000);
 
     } catch (error) {
       console.error('Error uploading cropped signature:', error);
