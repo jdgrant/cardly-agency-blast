@@ -743,9 +743,27 @@ const JobDetail = () => {
       
       setOrder(prev => prev ? { ...prev, production_combined_pdf_public_url: publicUrl, production_combined_pdf_generated_at: new Date().toISOString() } : prev);
       
-      // Use our PDF serving function instead of direct URL
+      // Download PDF as blob to avoid domain blocking
       const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
-      window.open(servePdfUrl, '_blank');
+      
+      try {
+        const response = await fetch(servePdfUrl);
+        if (!response.ok) throw new Error('Failed to download PDF');
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `order-${order.readable_order_id || order.id}-combined.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      } catch (fetchError) {
+        // Fallback to direct URL if blob download fails
+        console.warn('Blob download failed, trying direct URL:', fetchError);
+        window.open(servePdfUrl, '_blank');
+      }
       toast({ title: 'Production Combined PDF Ready', description: 'Combined PDF with front (page 1) and inside (page 2) opened in a new tab.' });
     } catch (error: any) {
       console.error('Error generating Production Combined PDF:', error);
@@ -1342,13 +1360,31 @@ const JobDetail = () => {
                       <Button
                         variant="secondary"
                         size="sm"
-                        onClick={() => {
+                        onClick={async () => {
                           if (order.production_combined_pdf_public_url) {
                             // Extract PDF path from the public URL and use our serve-pdf function
                             const urlParts = order.production_combined_pdf_public_url.split('/');
                             const pdfPath = urlParts.slice(-2).join('/'); // Get cards/filename.pdf
                             const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
-                            window.open(servePdfUrl, '_blank');
+                            
+                            try {
+                              const response = await fetch(servePdfUrl);
+                              if (!response.ok) throw new Error('Failed to download PDF');
+                              
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `order-${order.readable_order_id || order.id}-combined.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              window.URL.revokeObjectURL(url);
+                            } catch (fetchError) {
+                              // Fallback to direct URL if blob download fails
+                              console.warn('Blob download failed, trying direct URL:', fetchError);
+                              window.open(servePdfUrl, '_blank');
+                            }
                           }
                         }}
                       >
@@ -1561,13 +1597,31 @@ const JobDetail = () => {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => {
+                          onClick={async () => {
                             if (order.production_combined_pdf_public_url) {
                               // Extract PDF path from the public URL and use our serve-pdf function
                               const urlParts = order.production_combined_pdf_public_url.split('/');
                               const pdfPath = urlParts.slice(-2).join('/'); // Get cards/filename.pdf
                               const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
-                              window.open(servePdfUrl, '_blank');
+                              
+                              try {
+                                const response = await fetch(servePdfUrl);
+                                if (!response.ok) throw new Error('Failed to download PDF');
+                                
+                                const blob = await response.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `order-${order.readable_order_id || order.id}-combined.pdf`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                window.URL.revokeObjectURL(url);
+                              } catch (fetchError) {
+                                // Fallback to direct URL if blob download fails
+                                console.warn('Blob download failed, trying direct URL:', fetchError);
+                                window.open(servePdfUrl, '_blank');
+                              }
                             }
                           }}
                         >
