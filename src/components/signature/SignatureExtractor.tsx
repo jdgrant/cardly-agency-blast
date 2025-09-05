@@ -78,6 +78,10 @@ const SignatureExtractor: React.FC<SignatureExtractorProps> = ({ onSignatureExtr
         .getPublicUrl(fileName);
 
       console.log('SignatureExtractor: File uploaded successfully to:', publicUrl);
+      console.log('=== SIGNATURE SAVED ===');
+      console.log('New signature path saved:', publicUrl);
+      console.log('File name in storage:', fileName);
+      console.log('========================');
       
       // Set the uploaded image URL for preview
       setUploadedImageUrl(publicUrl);

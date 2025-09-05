@@ -74,7 +74,8 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
     try {
       console.log('Starting cropped signature upload process');
       console.log('Order ID:', order.id);
-      console.log('New signature URL:', signatureUrl);
+      console.log('New signature URL received from SignatureExtractor:', signatureUrl);
+      console.log('=== PROCESSING SIGNATURE UPLOAD ===');
 
       // Update order record with cropped signature URL
       const { error: updateError } = await supabase
