@@ -83,7 +83,8 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
       if (updateError) throw updateError;
 
       // Regenerate card previews with the new signature
-      const { error: previewError } = await supabase.functions.invoke('generate-card-previews', {
+      console.log('Regenerating previews after signature crop upload');
+      const { data: previewData, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
         body: { orderId: order.id }
       });
 
@@ -94,15 +95,20 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
           description: "Signature uploaded but preview regeneration failed",
           variant: "destructive"
         });
+      } else {
+        console.log('Preview generation completed successfully', previewData);
+        toast({
+          title: "Success",
+          description: "Signature uploaded and previews regenerated successfully",
+        });
       }
 
       setShowUploadDialog(false);
-      onOrderUpdate();
-
-      toast({
-        title: "Success",
-        description: "Cropped signature uploaded and previews regenerated",
-      });
+      
+      // Wait a moment for preview generation to fully complete before refreshing
+      setTimeout(() => {
+        onOrderUpdate();
+      }, 1000);
 
     } catch (error) {
       console.error('Error uploading cropped signature:', error);
