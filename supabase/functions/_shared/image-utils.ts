@@ -40,8 +40,16 @@ export async function downloadAndEncodeImageForGotenberg(
     if (data) {
       const buf = await data.arrayBuffer();
       const uint8Array = new Uint8Array(buf);
-      // Use TextDecoder approach for gotenberg compatibility
-      const base64 = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+      
+      // Process in chunks to avoid stack overflow with large images
+      let binary = '';
+      const chunkSize = 8192; // Process 8KB at a time
+      for (let i = 0; i < uint8Array.length; i += chunkSize) {
+        const chunk = uint8Array.slice(i, i + chunkSize);
+        binary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      
+      const base64 = btoa(binary);
       return `data:image/png;base64,${base64}`;
     }
   } catch (error) {
