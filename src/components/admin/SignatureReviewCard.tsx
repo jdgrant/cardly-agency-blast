@@ -14,6 +14,7 @@ interface SignatureReviewCardProps {
     signature_url: string | null;
     cropped_signature_url?: string | null;
     signature_needs_review?: boolean;
+    readable_order_id?: string;
   };
   onOrderUpdate: () => void;
 }
@@ -77,16 +78,20 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
       console.log('New signature URL received from SignatureExtractor:', signatureUrl);
       console.log('=== PROCESSING SIGNATURE UPLOAD ===');
 
-      // Update order record with cropped signature URL
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({ 
-          cropped_signature_url: signatureUrl,
-          signature_needs_review: true 
-        })
-        .eq('id', order.id);
+      // Use the admin function to update the order with the new cropped signature
+      // Extract short ID from the full UUID (first 8 characters without hyphens)
+      const shortId = order.id.replace(/-/g, '').substring(0, 8);
+      
+      const { error: updateError } = await supabase.rpc('update_order_file_for_customer', {
+        short_id: shortId,
+        file_type: 'cropped_signature',
+        file_url: signatureUrl
+      });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating order with cropped signature:', updateError);
+        throw updateError;
+      }
       console.log('Database updated with cropped signature URL successfully');
 
       // Regenerate card previews with the new signature
