@@ -82,12 +82,26 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
 
       if (updateError) throw updateError;
 
+      // Regenerate card previews with the new signature
+      const { error: previewError } = await supabase.functions.invoke('generate-card-previews', {
+        body: { orderId: order.id }
+      });
+
+      if (previewError) {
+        console.error('Error regenerating previews:', previewError);
+        toast({
+          title: "Warning",
+          description: "Signature uploaded but preview regeneration failed",
+          variant: "destructive"
+        });
+      }
+
       setShowUploadDialog(false);
       onOrderUpdate();
 
       toast({
         title: "Success",
-        description: "Cropped signature uploaded successfully",
+        description: "Cropped signature uploaded and previews regenerated",
       });
 
     } catch (error) {
