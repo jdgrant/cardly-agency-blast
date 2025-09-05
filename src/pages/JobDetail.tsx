@@ -726,7 +726,15 @@ const JobDetail = () => {
     setGeneratingProduction(true);
     try {
       // Generate combined PDF using the same parameters as individual buttons
-      console.log('Generating combined production PDF...');
+      console.log('Generating combined production PDF for order:', order.id);
+      console.log('Request payload:', { 
+        orderId: order.id, 
+        format: 'production', 
+        only: 'front+inside',
+        mode: 'html',
+        origin: window.location.origin
+      });
+      
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
         body: { 
           orderId: order.id, 
@@ -736,21 +744,43 @@ const JobDetail = () => {
           origin: window.location.origin
         }
       });
-      if (error) throw error;
+      
+      console.log('Supabase function response:', { data, error });
+      
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error('No data returned from PDF generation function');
+      }
+      
       const pdfPath = data?.pdfPath;
       const publicUrl = data?.publicUrl as string | undefined;
-      if (!pdfPath || !publicUrl) throw new Error('No PDF path or public URL returned');
+      
+      console.log('PDF generation result:', { pdfPath, publicUrl });
+      
+      if (!pdfPath || !publicUrl) {
+        throw new Error(`Missing PDF data: path=${pdfPath}, url=${publicUrl}`);
+      }
       
       setOrder(prev => prev ? { ...prev, production_combined_pdf_public_url: publicUrl, production_combined_pdf_generated_at: new Date().toISOString() } : prev);
       
       // Download PDF as blob to avoid domain blocking
       const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
       
+      console.log('Attempting to download PDF from:', servePdfUrl);
+      
       try {
         const response = await fetch(servePdfUrl);
-        if (!response.ok) throw new Error('Failed to download PDF');
+        console.log('PDF fetch response status:', response.status, response.statusText);
+        
+        if (!response.ok) throw new Error(`Failed to download PDF: ${response.status} ${response.statusText}`);
         
         const blob = await response.blob();
+        console.log('PDF blob size:', blob.size, 'bytes');
+        
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -759,12 +789,14 @@ const JobDetail = () => {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+        
+        console.log('PDF download triggered successfully');
       } catch (fetchError) {
         // Fallback to direct URL if blob download fails
         console.warn('Blob download failed, trying direct URL:', fetchError);
         window.open(servePdfUrl, '_blank');
       }
-      toast({ title: 'Production Combined PDF Ready', description: 'Combined PDF with front (page 1) and inside (page 2) opened in a new tab.' });
+      toast({ title: 'Production Combined PDF Ready', description: 'Combined PDF with front (page 1) and inside (page 2) downloaded.' });
     } catch (error: any) {
       console.error('Error generating Production Combined PDF:', error);
       toast({

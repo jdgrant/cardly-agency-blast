@@ -458,7 +458,22 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error('generate-card-gotenberg error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Unknown error' }), {
+    
+    // Provide more detailed error information
+    const errorDetails = {
+      message: error.message || 'Unknown error',
+      stack: error.stack,
+      name: error.name,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error('Detailed error info:', JSON.stringify(errorDetails, null, 2));
+    
+    return new Response(JSON.stringify({ 
+      error: error.message || 'Unknown error',
+      details: errorDetails,
+      success: false
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
