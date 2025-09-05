@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Download, Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,25 +81,13 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
-          cropped_signature_url: signatureUrl
+          cropped_signature_url: signatureUrl,
+          signature_needs_review: true 
         })
         .eq('id', order.id);
 
       if (updateError) throw updateError;
-      console.log('Database updated with cropped signature URL');
-
-      // Verify the database was actually updated
-      const { data: verifyData, error: verifyError } = await supabase
-        .from('orders')
-        .select('cropped_signature_url, signature_url, front_preview_base64, inside_preview_base64')
-        .eq('id', order.id)
-        .single();
-
-      if (verifyError) {
-        console.error('Error verifying database update:', verifyError);
-      } else {
-        console.log('Database verification after update:', verifyData);
-      }
+      console.log('Database updated with cropped signature URL successfully');
 
       // Regenerate card previews with the new signature
       console.log('Regenerating previews after signature crop upload');
@@ -118,24 +106,6 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
         });
       } else {
         console.log('Preview generation completed successfully', previewData);
-
-        // Verify previews were actually updated in the database
-        const { data: finalVerifyData, error: finalVerifyError } = await supabase
-          .from('orders')
-          .select('front_preview_base64, inside_preview_base64, previews_updated_at')
-          .eq('id', order.id)
-          .single();
-
-        if (finalVerifyError) {
-          console.error('Error verifying final database state:', finalVerifyError);
-        } else {
-          console.log('Final database state after preview generation:', {
-            front_preview_length: finalVerifyData?.front_preview_base64?.length || 0,
-            inside_preview_length: finalVerifyData?.inside_preview_base64?.length || 0,
-            previews_updated_at: finalVerifyData?.previews_updated_at
-          });
-        }
-
         toast({
           title: "Success",
           description: "Signature uploaded and previews regenerated successfully",
@@ -286,6 +256,9 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Upload Cropped Signature</DialogTitle>
+            <DialogDescription>
+              Upload a cropped version of the signature that will be used in the holiday cards.
+            </DialogDescription>
           </DialogHeader>
           <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
             <SignatureExtractor onSignatureExtracted={handleCroppedSignatureUpload} />
