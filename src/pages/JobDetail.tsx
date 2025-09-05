@@ -1678,6 +1678,7 @@ const JobDetail = () => {
               order={{
                 id: order.id,
                 signature_url: order.signature_url,
+                cropped_signature_url: order.cropped_signature_url,
                 signature_needs_review: order.signature_needs_review
               }}
               onOrderUpdate={fetchOrderDetails}
