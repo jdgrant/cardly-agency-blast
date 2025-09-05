@@ -246,12 +246,15 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
                 Download Original Signature
               </Button>
               
-              <Button
-                variant="outline"
-                onClick={() => setShowUploadDialog(true)}
-                className="w-full justify-start"
-                disabled={uploading}
-              >
+               <Button
+                 variant="outline"
+                 onClick={() => {
+                   console.log('Upload button clicked - opening dialog');
+                   setShowUploadDialog(true);
+                 }}
+                 className="w-full justify-start"
+                 disabled={uploading}
+               >
                 <Upload className="w-4 h-4 mr-2" />
                 {order.cropped_signature_url ? 'Replace Cropped Signature' : 'Upload Cropped Signature'}
               </Button>
