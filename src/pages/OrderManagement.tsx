@@ -570,7 +570,13 @@ const OrderManagement = () => {
             <h1 className="text-3xl font-bold text-gray-900">Complete Your Holiday Card Order</h1>
             <p className="text-gray-600 mt-2">Order #{order.readable_order_id || order.id.slice(0, 8)}</p>
             <Badge 
-              variant={order.status === 'pending' ? 'secondary' : 'default'}
+              variant={
+                order.status === 'pending' ? 'secondary' :
+                order.status === 'approved' ? 'default' :
+                order.status === 'send_to_print' ? 'outline' :
+                order.status === 'sent' ? 'default' :
+                'default'
+              }
               className="mt-2"
             >
               {order.status.toUpperCase()}

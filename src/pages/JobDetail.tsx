@@ -972,6 +972,7 @@ const JobDetail = () => {
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="blocked">Blocked</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="send_to_print">Send to Print</SelectItem>
                   <SelectItem value="sent">Sent</SelectItem>
                 </SelectContent>
               </Select>
@@ -980,6 +981,8 @@ const JobDetail = () => {
               variant={
                 order.status === 'pending' ? 'secondary' :
                 order.status === 'approved' ? 'default' :
+                order.status === 'send_to_print' ? 'outline' :
+                order.status === 'sent' ? 'default' :
                 order.status === 'blocked' ? 'destructive' :
                 'outline'
               }

@@ -1018,15 +1018,17 @@ const Admin = () => {
                         ${Number(order.final_price).toFixed(2)}
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={
-                            order.status === 'pending' ? 'secondary' :
-                            order.status === 'approved' ? 'default' :
-                            order.status === 'blocked' ? 'destructive' :
-                            'outline'
-                          }
-                        >
-                          {order.status}
+                          <Badge 
+                            variant={
+                              order.status === 'pending' ? 'secondary' :
+                              order.status === 'approved' ? 'default' :
+                              order.status === 'send_to_print' ? 'outline' :
+                              order.status === 'sent' ? 'default' :
+                              order.status === 'blocked' ? 'destructive' :
+                              'outline'
+                            }
+                          >
+                            {order.status}
                         </Badge>
                       </TableCell>
                       {/* Signature Purchase - Grey out if no signature */}

@@ -90,8 +90,12 @@ const OrderStatus = () => {
     switch (status) {
       case 'pending': return 'text-yellow-600';
       case 'processing': return 'text-blue-600';
+      case 'approved': return 'text-green-600';
+      case 'send_to_print': return 'text-purple-600';
+      case 'sent': return 'text-green-600';
       case 'shipped': return 'text-green-600';
       case 'delivered': return 'text-green-800';
+      case 'blocked': return 'text-red-600';
       case 'cancelled': return 'text-red-600';
       default: return 'text-gray-600';
     }
@@ -100,9 +104,13 @@ const OrderStatus = () => {
   const getStatusDescription = (status: string) => {
     switch (status) {
       case 'pending': return 'Your order has been received and is awaiting review.';
+      case 'approved': return 'Your order has been approved and is ready for production.';
+      case 'send_to_print': return 'Your cards have been sent to print and are in production.';
+      case 'sent': return 'Your cards have been completed and sent out.';
       case 'processing': return 'Your cards are being printed and prepared for shipping.';
       case 'shipped': return 'Your cards have been shipped and are on their way.';
       case 'delivered': return 'Your cards have been delivered successfully.';
+      case 'blocked': return 'This order has been blocked and requires attention.';
       case 'cancelled': return 'This order has been cancelled.';
       default: return 'Status information not available.';
     }
