@@ -106,6 +106,21 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No production PDF available for this order. Please generate the production PDF first before sending to PCM DirectMail.');
     }
 
+    // Calculate mailDate from mailing window (2 days before)
+    let mailDate = '';
+    if (order.mailing_window) {
+      const year = new Date().getFullYear(); // Use current year
+      const mailingWindowMap: Record<string, string> = {
+        'dec-1-5': `${year}-11-29`,     // 2 days before Dec 1
+        'dec-6-10': `${year}-12-04`,    // 2 days before Dec 6  
+        'dec-11-15': `${year}-12-09`,   // 2 days before Dec 11
+        'dec-16-20': `${year}-12-14`    // 2 days before Dec 16
+      };
+      
+      mailDate = mailingWindowMap[order.mailing_window] || '';
+      console.log(`Mailing window: ${order.mailing_window}, Calculated mailDate: ${mailDate}`);
+    }
+
     // Step 2: Try direct greeting card order with recipients (skip list count)
     console.log('=== ATTEMPTING DIRECT PCM GREETING CARD ORDER ===');
     
@@ -143,7 +158,8 @@ const handler = async (req: Request): Promise<Response> => {
         payload: {
           recipients: recipients,
           recordCount: recipientAddresses.length,
-          mailClass: "FirstClass",
+          mailClass: "Standard",
+          mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress
         }
@@ -153,7 +169,8 @@ const handler = async (req: Request): Promise<Response> => {
         payload: {
           recipients: recipients,
           recordCount: recipientAddresses.length,
-          mailClass: "FirstClass",
+          mailClass: "Standard", 
+          mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress
         }
@@ -163,7 +180,8 @@ const handler = async (req: Request): Promise<Response> => {
         payload: {
           recipients: recipients,
           recordCount: recipientAddresses.length,
-          mailClass: "FirstClass",
+          mailClass: "Standard",
+          mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
           listCountID: 0 // Try with 0 as dummy value
