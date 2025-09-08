@@ -53,15 +53,38 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         recipientAddresses
       };
 
-      // Set debug info showing what we're sending
-      const apiUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/send-physical-greeting-cards`;
-      setDebugInfo(`API URL: ${apiUrl}\n\nRequest Payload:\n${JSON.stringify(requestPayload, null, 2)}\n\nClient Records Found: ${clientsData.length}\n\nAdmin Session: ${adminSessionId ? 'Valid' : 'Missing'}`);
-
       const { data, error } = await supabase.functions.invoke('send-physical-greeting-cards', {
         body: requestPayload
       });
 
       if (error) throw error;
+
+      // Extract PCM API interactions for debug display
+      if (data && data.pcmApiInteractions) {
+        const pcmDebugInfo = `
+=== PCM DirectMail API Authentication ===
+URL: ${data.pcmApiInteractions.authentication.request.url}
+Request: ${JSON.stringify(data.pcmApiInteractions.authentication.request.body, null, 2)}
+Response Status: ${data.pcmApiInteractions.authentication.response.status}
+Response: ${JSON.stringify(data.pcmApiInteractions.authentication.response.body, null, 2)}
+
+=== PCM List Count Creation ===
+URL: ${data.pcmApiInteractions.listCount.request.url}
+Request: ${JSON.stringify(data.pcmApiInteractions.listCount.request.body, null, 2)}
+Response Status: ${data.pcmApiInteractions.listCount.response.status}
+Response: ${JSON.stringify(data.pcmApiInteractions.listCount.response.body, null, 2)}
+
+=== PCM Greeting Card Order ===
+URL: ${data.pcmApiInteractions.greetingCardOrder.request.url}
+Request: ${JSON.stringify(data.pcmApiInteractions.greetingCardOrder.request.body, null, 2)}
+Response Status: ${data.pcmApiInteractions.greetingCardOrder.response.status}
+Response: ${JSON.stringify(data.pcmApiInteractions.greetingCardOrder.response.body, null, 2)}
+        `.trim();
+        
+        setDebugInfo(pcmDebugInfo);
+      } else {
+        setDebugInfo(`Client Records Found: ${clientsData.length}\nAdmin Session: ${adminSessionId ? 'Valid' : 'Missing'}`);
+      }
 
       // Save the response for display
       setApiResponse(JSON.stringify(data, null, 2));
