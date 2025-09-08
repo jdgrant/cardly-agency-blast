@@ -161,7 +161,12 @@ const handler = async (req: Request): Promise<Response> => {
           mailClass: "Standard",
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
-          returnAddress: returnAddress
+          returnAddress: returnAddress,
+          addOns: [
+            {
+              "addon": "Livestamping"
+            }
+          ]
         }
       },
       {
@@ -172,7 +177,12 @@ const handler = async (req: Request): Promise<Response> => {
           mailClass: "Standard", 
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
-          returnAddress: returnAddress
+          returnAddress: returnAddress,
+          addOns: [
+            {
+              "addon": "Livestamping"
+            }
+          ]
         }
       },
       {
@@ -184,7 +194,12 @@ const handler = async (req: Request): Promise<Response> => {
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
-          listCountID: 0 // Try with 0 as dummy value
+          listCountID: 0, // Try with 0 as dummy value
+          addOns: [
+            {
+              "addon": "Livestamping"
+            }
+          ]
         }
       }
     ];
