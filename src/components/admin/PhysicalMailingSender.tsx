@@ -6,6 +6,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface PhysicalMailingSenderProps {
   orderId: string;
@@ -213,15 +224,35 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 relative">
             <div className="flex justify-between items-start mb-3">
               <h4 className="font-medium text-blue-900">PCM DirectMail Information</h4>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCancelOrder}
-                disabled={isCancelling}
-                className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isCancelling}
+                    className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel PCM Order</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to cancel this PCM order? This action cannot be undone and will clear the PCM Order ID ({pcmOrderId}) and Batch ID from the system.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleCancelOrder}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {isCancelling ? "Cancelling..." : "Yes, Cancel Order"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
