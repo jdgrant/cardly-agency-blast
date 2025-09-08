@@ -700,6 +700,15 @@ export type Database = {
         Args: { file_type: string; file_url: string; short_id: string }
         Returns: boolean
       }
+      update_pcm_info_simple: {
+        Args: {
+          order_id_param: string
+          pcm_batch_id_param: number
+          pcm_order_id_param: string
+          session_id_param: string
+        }
+        Returns: undefined
+      }
       update_pcm_order_info: {
         Args: { order_id_param: string; pcm_order_id_param?: string }
         Returns: undefined

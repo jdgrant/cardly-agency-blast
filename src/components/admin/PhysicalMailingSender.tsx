@@ -93,44 +93,24 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
         const adminSessionId = sessionStorage.getItem('adminSessionId');
         console.log('Admin session ID:', adminSessionId);
         
-        // First, let's check what the order looks like before update
-        const { data: beforeData } = await supabase
-          .from('orders')
-          .select('pcm_order_id, pcm_batch_id, status')
-          .eq('id', orderId)
-          .single();
+        if (!adminSessionId) {
+          throw new Error('Admin session not found');
+        }
         
-        console.log('Order BEFORE update:', beforeData);
-        
-        // Simple direct update 
-        const { data: updateResult, error: updateError } = await supabase
-          .from('orders')
-          .update({
-            pcm_order_id: data.pcmOrderId.toString(),
-            pcm_batch_id: data.pcmBatchId,
-            status: 'sent_to_press',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', orderId)
-          .select('pcm_order_id, pcm_batch_id, status');
-
-        console.log('Update result:', updateResult);
-        console.log('Update error:', updateError);
+        // Use the simple RPC function that just works
+        const { error: updateError } = await supabase.rpc('update_pcm_info_simple', {
+          session_id_param: adminSessionId,
+          order_id_param: orderId,
+          pcm_order_id_param: data.pcmOrderId.toString(),
+          pcm_batch_id_param: data.pcmBatchId
+        });
 
         if (updateError) {
-          console.error('Direct update error:', updateError);
+          console.error('Update error:', updateError);
           throw new Error(`Failed to update order: ${updateError.message}`);
         }
 
-        // Check what the order looks like after update
-        const { data: afterData } = await supabase
-          .from('orders')
-          .select('pcm_order_id, pcm_batch_id, status')
-          .eq('id', orderId)
-          .single();
-        
-        console.log('Order AFTER update:', afterData);
-        console.log('✅ Order updated successfully:', updateResult);
+        console.log('✅ PCM info updated successfully!');
       } else {
         console.error('Missing required data from PCM API response:', {
           success: data.success,
