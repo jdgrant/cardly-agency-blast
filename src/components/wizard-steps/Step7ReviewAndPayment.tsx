@@ -169,6 +169,12 @@ const Step7ReviewAndSubmit = () => {
         p_contact_email: state.contactEmail,
         p_contact_phone: state.contactPhone,
         p_billing_address: state.billingAddress,
+        p_return_address_name: state.returnAddressName,
+        p_return_address_line1: state.returnAddressLine1,
+        p_return_address_line2: state.returnAddressLine2,
+        p_return_address_city: state.returnAddressCity,
+        p_return_address_state: state.returnAddressState,
+        p_return_address_zip: state.returnAddressZip,
       });
       
       const { data: orderId, error: orderError } = await supabase.rpc('create_order', {
@@ -190,6 +196,12 @@ const Step7ReviewAndSubmit = () => {
         p_contact_email: state.contactEmail,
         p_contact_phone: state.contactPhone,
         p_billing_address: state.billingAddress,
+        p_return_address_name: state.returnAddressName,
+        p_return_address_line1: state.returnAddressLine1,
+        p_return_address_line2: state.returnAddressLine2,
+        p_return_address_city: state.returnAddressCity,
+        p_return_address_state: state.returnAddressState,
+        p_return_address_zip: state.returnAddressZip,
       });
 
       if (orderError) {
@@ -263,7 +275,7 @@ const Step7ReviewAndSubmit = () => {
     }
   };
 
-  const isFormValid = state.contactFirstName && state.contactLastName && state.contactEmail && state.contactPhone && state.billingAddress;
+  const isFormValid = state.contactFirstName && state.contactLastName && state.contactEmail && state.contactPhone && state.billingAddress && state.returnAddressName && state.returnAddressLine1 && state.returnAddressCity && state.returnAddressState && state.returnAddressZip;
 
   return (
     <div className="space-y-8">
@@ -330,6 +342,71 @@ const Step7ReviewAndSubmit = () => {
                   onChange={(e) => updateState({ billingAddress: e.target.value })}
                   placeholder="123 Main St, City, State 12345"
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Return Address Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Return Address</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="returnAddressName">Name/Company *</Label>
+                <Input
+                  id="returnAddressName"
+                  value={state.returnAddressName}
+                  onChange={(e) => updateState({ returnAddressName: e.target.value })}
+                  placeholder="Your Name or Company"
+                />
+              </div>
+              <div>
+                <Label htmlFor="returnAddressLine1">Address Line 1 *</Label>
+                <Input
+                  id="returnAddressLine1"
+                  value={state.returnAddressLine1}
+                  onChange={(e) => updateState({ returnAddressLine1: e.target.value })}
+                  placeholder="123 Main Street"
+                />
+              </div>
+              <div>
+                <Label htmlFor="returnAddressLine2">Address Line 2</Label>
+                <Input
+                  id="returnAddressLine2"
+                  value={state.returnAddressLine2}
+                  onChange={(e) => updateState({ returnAddressLine2: e.target.value })}
+                  placeholder="Suite 100 (optional)"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="returnAddressCity">City *</Label>
+                  <Input
+                    id="returnAddressCity"
+                    value={state.returnAddressCity}
+                    onChange={(e) => updateState({ returnAddressCity: e.target.value })}
+                    placeholder="City"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="returnAddressState">State *</Label>
+                  <Input
+                    id="returnAddressState"
+                    value={state.returnAddressState}
+                    onChange={(e) => updateState({ returnAddressState: e.target.value })}
+                    placeholder="ST"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="returnAddressZip">ZIP *</Label>
+                  <Input
+                    id="returnAddressZip"
+                    value={state.returnAddressZip}
+                    onChange={(e) => updateState({ returnAddressZip: e.target.value })}
+                    placeholder="12345"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

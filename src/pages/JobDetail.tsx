@@ -65,6 +65,13 @@ interface Order {
   contact_email?: string | null;
   contact_phone?: string | null;
   billing_address?: string | null;
+  // Return address information
+  return_address_name?: string | null;
+  return_address_line1?: string | null;
+  return_address_line2?: string | null;
+  return_address_city?: string | null;
+  return_address_state?: string | null;
+  return_address_zip?: string | null;
   // Status checkboxes
   signature_purchased?: boolean;
   invoice_paid?: boolean;
@@ -1125,6 +1132,40 @@ const JobDetail = () => {
                   <div>
                     <p className="text-sm text-gray-600">Billing Address</p>
                     <p className="font-medium">{order.billing_address || 'Not provided'}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Return Address Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                  <span>Return Address</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Return Name/Company</p>
+                    <p className="font-medium">{order.return_address_name || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Address Line 1</p>
+                    <p className="font-medium">{order.return_address_line1 || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Address Line 2</p>
+                    <p className="font-medium">{order.return_address_line2 || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">City, State ZIP</p>
+                    <p className="font-medium">
+                      {order.return_address_city && order.return_address_state && order.return_address_zip
+                        ? `${order.return_address_city}, ${order.return_address_state} ${order.return_address_zip}`
+                        : 'Not provided'}
+                    </p>
                   </div>
                 </div>
               </CardContent>

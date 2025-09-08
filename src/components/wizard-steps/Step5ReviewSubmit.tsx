@@ -113,6 +113,12 @@ const Step5ReviewSubmit = () => {
           p_contact_email: state.contactEmail,
           p_contact_phone: state.contactPhone,
           p_billing_address: state.billingAddress,
+          p_return_address_name: state.returnAddressName,
+          p_return_address_line1: state.returnAddressLine1,
+          p_return_address_line2: state.returnAddressLine2,
+          p_return_address_city: state.returnAddressCity,
+          p_return_address_state: state.returnAddressState,
+          p_return_address_zip: state.returnAddressZip,
         });
 
       if (orderError) throw orderError;
@@ -399,15 +405,15 @@ const Step5ReviewSubmit = () => {
         </Button>
         <Button 
           onClick={handleSubmit}
-          disabled={isSubmitting || !state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress}
+          disabled={isSubmitting || !state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress || !state.returnAddressName || !state.returnAddressLine1 || !state.returnAddressCity || !state.returnAddressState || !state.returnAddressZip}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
           {isSubmitting ? 'Submitting Order...' : clientCount > 0 ? `Submit Order - $${total.toFixed(2)}` : 'Submit Order for Quote'}
         </Button>
         {/* Debug info */}
-        {(!state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress) && (
+        {(!state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress || !state.returnAddressName || !state.returnAddressLine1 || !state.returnAddressCity || !state.returnAddressState || !state.returnAddressZip) && (
           <div className="text-xs text-red-600 mt-2">
-            Missing required fields: {!state.contactFirstName && 'First Name '}{!state.contactLastName && 'Last Name '}{!state.contactEmail && 'Email '}{!state.billingAddress && 'Billing Address'}
+            Missing required fields: {!state.contactFirstName && 'First Name '}{!state.contactLastName && 'Last Name '}{!state.contactEmail && 'Email '}{!state.billingAddress && 'Billing Address '}{!state.returnAddressName && 'Return Name '}{!state.returnAddressLine1 && 'Return Address '}{!state.returnAddressCity && 'Return City '}{!state.returnAddressState && 'Return State '}{!state.returnAddressZip && 'Return ZIP'}
           </div>
         )}
       </div>

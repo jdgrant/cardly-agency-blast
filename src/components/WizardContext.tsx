@@ -45,6 +45,12 @@ export interface WizardState {
   contactEmail: string;
   contactPhone: string;
   billingAddress: string;
+  returnAddressName: string;
+  returnAddressLine1: string;
+  returnAddressLine2: string;
+  returnAddressCity: string;
+  returnAddressState: string;
+  returnAddressZip: string;
 }
 
 interface WizardContextType {
@@ -85,6 +91,12 @@ const initialState: WizardState = {
   contactEmail: '',
   contactPhone: '',
   billingAddress: '',
+  returnAddressName: '',
+  returnAddressLine1: '',
+  returnAddressLine2: '',
+  returnAddressCity: '',
+  returnAddressState: '',
+  returnAddressZip: '',
 };
 
 const STORAGE_KEY = 'sendyourcards-wizard-session';

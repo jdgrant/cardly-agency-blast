@@ -82,7 +82,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No bearer token received from PCM authentication');
     }
 
-    // Fetch order details including card previews
+    // Fetch order details including card previews and return address
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('*')
@@ -126,6 +126,16 @@ const handler = async (req: Request): Promise<Response> => {
       };
     });
 
+    // Prepare return address from order data
+    const returnAddress = {
+      name: order.return_address_name || 'Default Sender',
+      address: order.return_address_line1 || '',
+      address2: order.return_address_line2 || '',
+      city: order.return_address_city || '',
+      state: order.return_address_state || '',
+      zipCode: order.return_address_zip || ''
+    };
+
     // Try different greeting card order approaches
     const greetingCardEndpoints = [
       {
@@ -134,7 +144,8 @@ const handler = async (req: Request): Promise<Response> => {
           recipients: recipients,
           recordCount: recipientAddresses.length,
           mailClass: "FirstClass",
-          greetingCard: order.production_combined_pdf_public_url
+          greetingCard: order.production_combined_pdf_public_url,
+          returnAddress: returnAddress
         }
       },
       {
@@ -143,7 +154,8 @@ const handler = async (req: Request): Promise<Response> => {
           recipients: recipients,
           recordCount: recipientAddresses.length,
           mailClass: "FirstClass",
-          greetingCard: order.production_combined_pdf_public_url
+          greetingCard: order.production_combined_pdf_public_url,
+          returnAddress: returnAddress
         }
       },
       {
@@ -153,6 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
           recordCount: recipientAddresses.length,
           mailClass: "FirstClass",
           greetingCard: order.production_combined_pdf_public_url,
+          returnAddress: returnAddress,
           listCountID: 0 // Try with 0 as dummy value
         }
       }
