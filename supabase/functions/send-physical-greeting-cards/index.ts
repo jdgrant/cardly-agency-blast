@@ -51,8 +51,8 @@ const handler = async (req: Request): Promise<Response> => {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        key: pcmApiKey,
-        secret: pcmApiSecret
+        apiKey: pcmApiKey,
+        apiSecret: pcmApiSecret
       })
     });
 
