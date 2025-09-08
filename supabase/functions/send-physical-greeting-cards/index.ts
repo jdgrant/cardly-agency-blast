@@ -162,8 +162,9 @@ const handler = async (req: Request): Promise<Response> => {
     let pcmResponseData;
     let responseText;
     let success = false;
+    let successfulEndpoint = null;
 
-    for (const endpoint of greetingCardEndpoints) {
+    for (const [index, endpoint] of greetingCardEndpoints.entries()) {
       try {
         console.log(`=== TRYING GREETING CARD ENDPOINT ===`);
         console.log('URL:', endpoint.url);
@@ -189,6 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
             pcmResponseData = responseText ? JSON.parse(responseText) : {};
             console.log('✅ Greeting card order successful!');
             success = true;
+            successfulEndpoint = endpoint;
             break;
           } catch (parseError) {
             console.error('Failed to parse response:', parseError);
@@ -222,7 +224,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: `Physical greeting cards submitted to PCM DirectMail for ${recipientAddresses.length} recipients`,
-        pcmApiInteractions: {
+        pcmOrderResponse: pcmResponseData,
+        apiInteractions: {
           authentication: {
             request: {
               url: 'https://v3.pcmintegrations.com/auth/login',
@@ -231,31 +234,17 @@ const handler = async (req: Request): Promise<Response> => {
             },
             response: {
               status: authResponse.status,
-              headers: Object.fromEntries(authResponse.headers.entries()),
               body: authData
-            }
-          },
-          listCount: {
-            request: {
-              url: 'https://v3.pcmintegrations.com/list/count/upload',
-              method: 'POST',
-              body: listCountRequest
-            },
-            response: {
-              status: listCountResponse.status,
-              headers: Object.fromEntries(listCountResponse.headers.entries()),
-              body: listCountData
             }
           },
           greetingCardOrder: {
             request: {
-              url: pcmApiUrl,
-              method: 'POST',
-              body: pcmRequest
+              url: successfulEndpoint?.url || 'unknown',
+              method: 'POST', 
+              body: successfulEndpoint?.payload || {}
             },
             response: {
               status: pcmResponse.status,
-              headers: Object.fromEntries(pcmResponse.headers.entries()),
               body: pcmResponseData
             }
           }

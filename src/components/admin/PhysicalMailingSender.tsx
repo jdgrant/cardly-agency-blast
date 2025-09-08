@@ -60,25 +60,19 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
       if (error) throw error;
 
       // Extract PCM API interactions for debug display
-      if (data && data.pcmApiInteractions) {
+      if (data && data.apiInteractions) {
         const pcmDebugInfo = `
 === PCM DirectMail API Authentication ===
-URL: ${data.pcmApiInteractions.authentication.request.url}
-Request: ${JSON.stringify(data.pcmApiInteractions.authentication.request.body, null, 2)}
-Response Status: ${data.pcmApiInteractions.authentication.response.status}
-Response: ${JSON.stringify(data.pcmApiInteractions.authentication.response.body, null, 2)}
-
-=== PCM List Count Creation ===
-URL: ${data.pcmApiInteractions.listCount.request.url}
-Request: ${JSON.stringify(data.pcmApiInteractions.listCount.request.body, null, 2)}
-Response Status: ${data.pcmApiInteractions.listCount.response.status}
-Response: ${JSON.stringify(data.pcmApiInteractions.listCount.response.body, null, 2)}
+URL: ${data.apiInteractions.authentication.request.url}
+Request: ${JSON.stringify(data.apiInteractions.authentication.request.body, null, 2)}
+Response Status: ${data.apiInteractions.authentication.response.status}
+Response: ${JSON.stringify(data.apiInteractions.authentication.response.body, null, 2)}
 
 === PCM Greeting Card Order ===
-URL: ${data.pcmApiInteractions.greetingCardOrder.request.url}
-Request: ${JSON.stringify(data.pcmApiInteractions.greetingCardOrder.request.body, null, 2)}
-Response Status: ${data.pcmApiInteractions.greetingCardOrder.response.status}
-Response: ${JSON.stringify(data.pcmApiInteractions.greetingCardOrder.response.body, null, 2)}
+URL: ${data.apiInteractions.greetingCardOrder.request.url}
+Request: ${JSON.stringify(data.apiInteractions.greetingCardOrder.request.body, null, 2)}
+Response Status: ${data.apiInteractions.greetingCardOrder.response.status}
+Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body, null, 2)}
         `.trim();
         
         setDebugInfo(pcmDebugInfo);
