@@ -43,11 +43,13 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Step 1: Authenticate with PCM to get bearer token
-    console.log('Authenticating with PCM DirectMail API...');
+    console.log('=== PCM AUTHENTICATION ===');
+    console.log('URL:', 'https://v3.pcmintegrations.com/auth/login');
     const authRequest = {
       apiKey: pcmApiKey,
       apiSecret: pcmApiSecret
     };
+    console.log('Request Packet:', JSON.stringify(authRequest, null, 2));
     
     const authResponse = await fetch('https://v3.pcmintegrations.com/auth/login', {
       method: 'POST',
@@ -105,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Step 2: Try to create list count with different endpoints
-    console.log('Creating list count for PCM...');
+    console.log('=== PCM LIST COUNT CREATION ===');
     
     // Format recipients for list count creation
     const recipients = recipientAddresses.map(addr => {
@@ -127,6 +129,8 @@ const handler = async (req: Request): Promise<Response> => {
     const listCountRequest = {
       recipients: recipients
     };
+    
+    console.log('List Count Request Packet:', JSON.stringify(listCountRequest, null, 2));
 
     // Try alternative endpoints for list count creation
     let listCountData;
@@ -142,7 +146,10 @@ const handler = async (req: Request): Promise<Response> => {
     
     for (const endpoint of listCountEndpoints) {
       try {
-        console.log(`Trying list count endpoint: ${endpoint}`);
+        console.log(`=== TRYING LIST COUNT ENDPOINT ===`);
+        console.log(`URL: ${endpoint}`);
+        console.log('Request Packet:', JSON.stringify(listCountRequest, null, 2));
+        
         listCountResponse = await fetch(endpoint, {
           method: 'POST',
           headers: {
@@ -154,14 +161,14 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         listCountText = await listCountResponse.text();
-        console.log(`List count response status for ${endpoint}:`, listCountResponse.status);
-        console.log(`List count raw response for ${endpoint}:`, listCountText);
+        console.log(`Response Status: ${listCountResponse.status}`);
+        console.log(`Response Body:`, listCountText);
         
         if (listCountResponse.ok) {
           try {
             listCountData = listCountText ? JSON.parse(listCountText) : {};
             if (listCountData.id) {
-              console.log('List count created successfully:', listCountData);
+              console.log('✅ List count created successfully:', listCountData);
               listCountSuccess = true;
               break;
             }
@@ -170,7 +177,7 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
       } catch (error) {
-        console.error(`Error trying endpoint ${endpoint}:`, error);
+        console.error(`❌ Error trying endpoint ${endpoint}:`, error);
       }
     }
 
@@ -179,6 +186,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Step 3: Place greeting card order using the list count ID
+    console.log('=== PCM GREETING CARD ORDER ===');
+    
+    const pcmApiUrl = 'https://v3.pcmintegrations.com/order/greeting-card/with-list-count';
     const pcmRequest = {
       listCountID: listCountData.id, // Use the list count ID as a number
       recordCount: recipientAddresses.length,
@@ -186,11 +196,10 @@ const handler = async (req: Request): Promise<Response> => {
       greetingCard: order.production_combined_pdf_public_url
     };
 
-    console.log('PCM API request for greeting cards:', JSON.stringify(pcmRequest, null, 2));
+    console.log('URL:', pcmApiUrl);
+    console.log('Request Packet:', JSON.stringify(pcmRequest, null, 2));
 
-    // Step 3: Make actual call to PCM DirectMail API with bearer token
-    const pcmApiUrl = 'https://v3.pcmintegrations.com/order/greeting-card/with-list-count';
-    
+    // Make actual call to PCM DirectMail API with bearer token
     const pcmResponse = await fetch(pcmApiUrl, {
       method: 'POST',
       headers: {
