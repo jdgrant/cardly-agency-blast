@@ -79,34 +79,71 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Order not found: ${orderError?.message}`);
     }
 
-    console.log('Order data:', JSON.stringify(order, null, 2));
+    console.log('Order data for PCM:', {
+      id: order.id,
+      production_combined_pdf_public_url: order.production_combined_pdf_public_url,
+      production_combined_pdf_path: order.production_combined_pdf_path,
+      front_preview_base64: order.front_preview_base64 ? 'exists' : 'null',
+      inside_preview_base64: order.inside_preview_base64 ? 'exists' : 'null'
+    });
 
     // Check if we have a production PDF URL for PCM
     if (!order.production_combined_pdf_public_url) {
-      throw new Error('No production PDF available for this order. Please generate the production PDF first.');
+      throw new Error('No production PDF available for this order. Please generate the production PDF first before sending to PCM DirectMail.');
     }
 
-    // Step 2: Place greeting card order using bearer token
+    // Step 2: Create a list count first (required by PCM)
+    console.log('Creating list count for PCM...');
+    const listCountResponse = await fetch('https://v3.pcmintegrations.com/list/count/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        recipients: recipientAddresses.map(addr => {
+          const nameParts = addr.name.trim().split(' ');
+          const firstName = nameParts[0] || '';
+          const lastName = nameParts.slice(1).join(' ') || 'Customer';
+          
+          return {
+            firstName: firstName,
+            lastName: lastName,
+            address: addr.address1,
+            address2: addr.address2 || '',
+            city: addr.city,
+            state: addr.state,
+            zipCode: addr.zip
+          };
+        })
+      })
+    });
+
+    let listCountData;
+    const listCountText = await listCountResponse.text();
+    console.log('List count response status:', listCountResponse.status);
+    console.log('List count raw response:', listCountText);
+    
+    try {
+      listCountData = listCountText ? JSON.parse(listCountText) : {};
+    } catch (parseError) {
+      console.error('Failed to parse list count response:', parseError);
+      throw new Error(`PCM List Count API returned invalid JSON. Status: ${listCountResponse.status}, Response: ${listCountText}`);
+    }
+
+    if (!listCountResponse.ok) {
+      throw new Error(`PCM List Count API error: ${listCountResponse.status} - ${JSON.stringify(listCountData)}`);
+    }
+
+    console.log('List count created successfully:', listCountData);
+
+    // Step 3: Place greeting card order using the list count ID
     const pcmRequest = {
-      listCountID: 1, // Required field - using default value
-      recordCount: recipientAddresses.length, // Required field
-      mailClass: "FirstClass", // Must be "FirstClass" or "Standard"
-      recipients: recipientAddresses.map(addr => {
-        const nameParts = addr.name.trim().split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || 'Customer'; // Ensure lastName is always present
-        
-        return {
-          firstName: firstName,
-          lastName: lastName,
-          address: addr.address1, // PCM expects 'address' not 'address1'
-          address2: addr.address2 || '',
-          city: addr.city,
-          state: addr.state,
-          zipCode: addr.zip
-        };
-      }),
-      greetingCard: order.production_combined_pdf_public_url // PCM expects a URL to the PDF design
+      listCountID: listCountData.id, // Use the actual list count ID from PCM
+      recordCount: recipientAddresses.length,
+      mailClass: "FirstClass",
+      greetingCard: order.production_combined_pdf_public_url // Use the production PDF URL
     };
 
     console.log('PCM API request for greeting cards:', JSON.stringify(pcmRequest, null, 2));
