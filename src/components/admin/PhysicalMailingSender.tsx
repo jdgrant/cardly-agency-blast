@@ -12,6 +12,7 @@ interface PhysicalMailingSenderProps {
 export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<string>("");
+  const [debugInfo, setDebugInfo] = useState<string>("");
   const { toast } = useToast();
 
   const handleSendPhysical = async () => {
@@ -29,11 +30,17 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         }
       ];
 
+      const requestPayload = {
+        orderId,
+        recipientAddresses: mockRecipients
+      };
+
+      // Set debug info showing what we're sending
+      const apiUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/send-physical-greeting-cards`;
+      setDebugInfo(`API URL: ${apiUrl}\n\nRequest Payload:\n${JSON.stringify(requestPayload, null, 2)}`);
+
       const { data, error } = await supabase.functions.invoke('send-physical-greeting-cards', {
-        body: {
-          orderId,
-          recipientAddresses: mockRecipients
-        }
+        body: requestPayload
       });
 
       if (error) throw error;
@@ -74,6 +81,18 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         >
           {isLoading ? "Sending..." : "Send Physical Greeting Cards"}
         </Button>
+        
+        {debugInfo && (
+          <div className="space-y-2">
+            <h4 className="font-medium">Debug Info:</h4>
+            <Textarea
+              value={debugInfo}
+              readOnly
+              className="min-h-[150px] font-mono text-xs"
+              placeholder="Debug information will appear here..."
+            />
+          </div>
+        )}
         
         {apiResponse && (
           <div className="space-y-2">
