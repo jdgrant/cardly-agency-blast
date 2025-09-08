@@ -81,21 +81,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Step 2: Place greeting card order using bearer token
     const pcmRequest = {
-      mailClass: "FirstClassStandard", // Required field from PCM docs
-      recipients: recipientAddresses.map(addr => ({
-        firstName: addr.name.split(' ')[0] || '',
-        lastName: addr.name.split(' ').slice(1).join(' ') || '',
-        address1: addr.address1,
-        address2: addr.address2 || '',
-        city: addr.city,
-        state: addr.state,
-        zipCode: addr.zip
-      })),
-      greetingCard: {
-        front: order.front_preview_base64 ? order.front_preview_base64.replace('data:image/png;base64,', '') : '',
-        inside: order.custom_message || order.selected_message || '',
-        back: '' // Optional back message
-      }
+      listCountID: 1, // Required field - using default value
+      recordCount: recipientAddresses.length, // Required field
+      mailClass: "FirstClass", // Must be "FirstClass" or "Standard"
+      recipients: recipientAddresses.map(addr => {
+        const nameParts = addr.name.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || 'Customer'; // Ensure lastName is always present
+        
+        return {
+          firstName: firstName,
+          lastName: lastName,
+          address: addr.address1, // PCM expects 'address' not 'address1'
+          address2: addr.address2 || '',
+          city: addr.city,
+          state: addr.state,
+          zipCode: addr.zip
+        };
+      }),
+      greetingCard: order.custom_message || order.selected_message || 'Happy Holidays!' // Must be a string
     };
 
     console.log('PCM API request for greeting cards:', JSON.stringify(pcmRequest, null, 2));
