@@ -127,6 +127,12 @@ export type Database = {
           promo_code: string | null
           readable_order_id: string | null
           regular_price: number
+          return_address_city: string | null
+          return_address_line1: string | null
+          return_address_line2: string | null
+          return_address_name: string | null
+          return_address_state: string | null
+          return_address_zip: string | null
           selected_message: string | null
           signature_needs_review: boolean | null
           signature_purchased: boolean | null
@@ -165,6 +171,12 @@ export type Database = {
           promo_code?: string | null
           readable_order_id?: string | null
           regular_price: number
+          return_address_city?: string | null
+          return_address_line1?: string | null
+          return_address_line2?: string | null
+          return_address_name?: string | null
+          return_address_state?: string | null
+          return_address_zip?: string | null
           selected_message?: string | null
           signature_needs_review?: boolean | null
           signature_purchased?: boolean | null
@@ -203,6 +215,12 @@ export type Database = {
           promo_code?: string | null
           readable_order_id?: string | null
           regular_price?: number
+          return_address_city?: string | null
+          return_address_line1?: string | null
+          return_address_line2?: string | null
+          return_address_name?: string | null
+          return_address_state?: string | null
+          return_address_zip?: string | null
           selected_message?: string | null
           signature_needs_review?: boolean | null
           signature_purchased?: boolean | null
@@ -379,6 +397,12 @@ export type Database = {
           promo_code: string | null
           readable_order_id: string | null
           regular_price: number
+          return_address_city: string | null
+          return_address_line1: string | null
+          return_address_line2: string | null
+          return_address_name: string | null
+          return_address_state: string | null
+          return_address_zip: string | null
           selected_message: string | null
           signature_needs_review: boolean | null
           signature_purchased: boolean | null
@@ -432,6 +456,12 @@ export type Database = {
           promo_code: string | null
           readable_order_id: string | null
           regular_price: number
+          return_address_city: string | null
+          return_address_line1: string | null
+          return_address_line2: string | null
+          return_address_name: string | null
+          return_address_state: string | null
+          return_address_zip: string | null
           selected_message: string | null
           signature_needs_review: boolean | null
           signature_purchased: boolean | null
