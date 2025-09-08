@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface PhysicalMailingSenderProps {
   orderId: string;
@@ -12,13 +13,38 @@ interface PhysicalMailingSenderProps {
 export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<string>("");
-  const [debugInfo, setDebugInfo] = useState<string>("");
+  const [pcmOrderId, setPcmOrderId] = useState<string>("");
+  const [pcmBatchId, setPcmBatchId] = useState<string>("");
   const { toast } = useToast();
+
+  // Fetch current PCM info on component mount
+  useEffect(() => {
+    fetchPCMInfo();
+  }, [orderId]);
+
+  const fetchPCMInfo = async () => {
+    try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) return;
+
+      const { data: orderData, error } = await supabase.rpc('get_order_by_id', {
+        order_id: orderId,
+        session_id_param: adminSessionId
+      });
+
+      if (!error && orderData && orderData.length > 0) {
+        const order = orderData[0];
+        setPcmOrderId(order.pcm_order_id || "");
+        setPcmBatchId(order.pcm_batch_id ? order.pcm_batch_id.toString() : "");
+      }
+    } catch (error) {
+      console.error('Error fetching PCM info:', error);
+    }
+  };
 
   const handleSendPhysical = async () => {
     setIsLoading(true);
     setApiResponse(""); // Clear previous responses
-    setDebugInfo(""); // Clear previous debug info
     
     try {
       // Get admin session ID from sessionStorage (same as JobDetail component)
@@ -59,28 +85,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
 
       if (error) throw error;
 
-      // Extract PCM API interactions for debug display
-      if (data && data.apiInteractions) {
-        const pcmDebugInfo = `
-=== PCM DirectMail API Authentication ===
-URL: ${data.apiInteractions.authentication.request.url}
-Request: ${JSON.stringify(data.apiInteractions.authentication.request.body, null, 2)}
-Response Status: ${data.apiInteractions.authentication.response.status}
-Response: ${JSON.stringify(data.apiInteractions.authentication.response.body, null, 2)}
-
-=== PCM Greeting Card Order ===
-URL: ${data.apiInteractions.greetingCardOrder.request.url}
-Request: ${JSON.stringify(data.apiInteractions.greetingCardOrder.request.body, null, 2)}
-Response Status: ${data.apiInteractions.greetingCardOrder.response.status}
-Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body, null, 2)}
-        `.trim();
-        
-        setDebugInfo(pcmDebugInfo);
-      } else {
-        setDebugInfo(`Client Records Found: ${clientsData.length}\nAdmin Session: ${adminSessionId ? 'Valid' : 'Missing'}`);
-      }
-
-      // Save the response for display
+      // Save the response for display  
       setApiResponse(JSON.stringify(data, null, 2));
 
       // Update order with PCM details and status if successful
@@ -102,6 +107,10 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
         }
 
         console.log('✅ PCM info updated successfully!');
+        
+        // Update local state with new PCM info
+        setPcmOrderId(data.pcmOrderId.toString());
+        setPcmBatchId(data.pcmBatchId.toString());
       } else {
         console.error('Missing required data from PCM API response:', {
           success: data.success,
@@ -146,15 +155,20 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
           {isLoading ? "Sending..." : "Send Physical Greeting Cards"}
         </Button>
         
-        {debugInfo && (
-          <div className="space-y-2">
-            <h4 className="font-medium">Debug Info:</h4>
-            <Textarea
-              value={debugInfo}
-              readOnly
-              className="min-h-[150px] font-mono text-xs"
-              placeholder="Debug information will appear here..."
-            />
+        {/* PCM Order Information */}
+        {(pcmOrderId || pcmBatchId) && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-medium text-blue-900 mb-3">PCM DirectMail Information</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm text-muted-foreground">PCM Order ID</Label>
+                <p className="font-mono text-sm">{pcmOrderId || 'Not set'}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-muted-foreground">PCM Batch ID</Label>
+                <p className="font-mono text-sm">{pcmBatchId || 'N/A'}</p>
+              </div>
+            </div>
           </div>
         )}
         

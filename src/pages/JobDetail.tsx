@@ -141,10 +141,6 @@ const JobDetail = () => {
     zip: ''
   });
 
-  // PCM Order editing state
-  const [isEditingPCMOrder, setIsEditingPCMOrder] = useState(false);
-  const [editingPCMOrder, setEditingPCMOrder] = useState('');
-
   useEffect(() => {
     if (orderId) {
       fetchOrderDetails();
@@ -550,54 +546,6 @@ const JobDetail = () => {
       toast({
         title: "Update Failed",
         description: "Failed to update return address",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const startEditingPCMOrder = () => {
-    setEditingPCMOrder(order?.pcm_order_id || '');
-    setIsEditingPCMOrder(true);
-  };
-
-  const cancelEditingPCMOrder = () => {
-    setIsEditingPCMOrder(false);
-    setEditingPCMOrder('');
-  };
-
-  const savePCMOrder = async () => {
-    try {
-      const { error } = await supabase.rpc('update_pcm_order_info', {
-        order_id_param: order!.id,
-        pcm_order_id_param: editingPCMOrder || null
-      });
-
-      if (error) throw error;
-
-      // Update local state
-      if (order) {
-        const newStatus = editingPCMOrder && !order.pcm_order_id ? 'sent_to_press' : 
-                         (!editingPCMOrder && order.pcm_order_id && order.status === 'sent_to_press' ? 'approved' : order.status);
-        
-        setOrder({
-          ...order,
-          pcm_order_id: editingPCMOrder || null,
-          status: newStatus
-        });
-      }
-
-      setIsEditingPCMOrder(false);
-      toast({
-        title: "PCM Order Updated",
-        description: editingPCMOrder 
-          ? "PCM Order Number saved and status updated to 'Sent to Press'" 
-          : "PCM Order Number cleared",
-      });
-    } catch (error: any) {
-      console.error('Error updating PCM Order:', error);
-      toast({
-        title: "Update Failed",
-        description: "Failed to update PCM Order Number",
         variant: "destructive"
       });
     }
@@ -2097,72 +2045,6 @@ const JobDetail = () => {
 
                 {!order.logo_url && !order.signature_url && !order.csv_file_url && (
                   <p className="text-gray-500 text-center py-4">No files uploaded</p>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* PCM Order Information */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle>PCM DirectMail Information</CardTitle>
-                {!isEditingPCMOrder && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={startEditingPCMOrder}
-                    className="flex items-center space-x-1"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    <span>Edit</span>
-                  </Button>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm text-muted-foreground">PCM Order ID</Label>
-                    {isEditingPCMOrder ? (
-                      <div className="space-y-2">
-                        <Input
-                          value={editingPCMOrder}
-                          onChange={(e) => setEditingPCMOrder(e.target.value)}
-                          placeholder="Enter PCM Order Number"
-                          className="font-mono text-sm"
-                        />
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={savePCMOrder}
-                            className="flex items-center space-x-1"
-                          >
-                            <Save className="w-3 h-3" />
-                            <span>Save</span>
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={cancelEditingPCMOrder}
-                            className="flex items-center space-x-1"
-                          >
-                            <X className="w-3 h-3" />
-                            <span>Cancel</span>
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="font-mono text-sm">{order.pcm_order_id || 'Not set'}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label className="text-sm text-muted-foreground">PCM Batch ID</Label>
-                    <p className="font-mono text-sm">{order.pcm_batch_id || 'N/A'}</p>
-                  </div>
-                </div>
-                {!order.pcm_order_id && !isEditingPCMOrder && (
-                  <p className="text-sm text-gray-500 italic">
-                    Add PCM Order Number to automatically mark order as "Sent to Press"
-                  </p>
                 )}
               </CardContent>
             </Card>
