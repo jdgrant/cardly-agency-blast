@@ -85,24 +85,55 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
 
       // Update order with PCM details and status if successful
       if (data.success && data.pcmOrderId && data.pcmBatchId) {
-        // Update PCM order info using RPC function to bypass RLS
-        await supabase.rpc('update_pcm_order_info', {
-          order_id_param: orderId,
-          pcm_order_id_param: data.pcmOrderId.toString()
-        });
-
-        // Update batch ID separately (we can add this to the RPC function later if needed)
+        console.log('=== UPDATING DATABASE WITH PCM INFO ===');
+        console.log('PCM Order ID:', data.pcmOrderId);
+        console.log('PCM Batch ID:', data.pcmBatchId);
+        
         try {
-          await supabase
-            .from('orders')
-            .update({
-              pcm_batch_id: data.pcmBatchId,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', orderId);
-        } catch (batchError) {
-          console.warn('Failed to update batch ID, but PCM Order ID was saved:', batchError);
+          // Update PCM order info using RPC function to bypass RLS
+          const { error: rpcError } = await supabase.rpc('update_pcm_order_info', {
+            order_id_param: orderId,
+            pcm_order_id_param: data.pcmOrderId.toString()
+          });
+
+          if (rpcError) {
+            console.error('RPC Error updating PCM Order ID:', rpcError);
+            throw new Error(`Failed to update PCM Order ID: ${rpcError.message}`);
+          }
+
+          console.log('✅ PCM Order ID updated successfully');
+
+          // Update batch ID separately (we can add this to the RPC function later if needed)
+          try {
+            const { error: batchError } = await supabase
+              .from('orders')
+              .update({
+                pcm_batch_id: data.pcmBatchId,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', orderId);
+
+            if (batchError) {
+              console.error('Batch ID update error:', batchError);
+              throw new Error(`Failed to update batch ID: ${batchError.message}`);
+            }
+            
+            console.log('✅ PCM Batch ID updated successfully');
+          } catch (batchError) {
+            console.warn('Failed to update batch ID, but PCM Order ID was saved:', batchError);
+          }
+        } catch (updateError) {
+          console.error('Database update failed:', updateError);
+          throw updateError;
         }
+      } else {
+        console.error('Missing required data from PCM API response:', {
+          success: data.success,
+          pcmOrderId: data.pcmOrderId,
+          pcmBatchId: data.pcmBatchId,
+          fullResponse: data
+        });
+        throw new Error('PCM API did not return required order information');
       }
 
       toast({
