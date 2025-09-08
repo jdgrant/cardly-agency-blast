@@ -19,10 +19,16 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
     setIsLoading(true);
     
     try {
+      // Get admin session ID from sessionStorage (same as JobDetail component)
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        throw new Error('Admin session not found. Please login as admin.');
+      }
+
       // Fetch real client records for this order
       const { data: clientsData, error: clientsError } = await supabase.rpc('get_clients_for_order', {
         order_id_param: orderId,
-        session_id_param: 'admin_' + Date.now()
+        session_id_param: adminSessionId
       });
 
       if (clientsError) throw clientsError;
