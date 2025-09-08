@@ -113,8 +113,21 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify(pcmRequest)
     });
 
-    const pcmResponseData = await pcmResponse.json();
-    console.log('PCM API response:', JSON.stringify(pcmResponseData, null, 2));
+    console.log('PCM API response status:', pcmResponse.status);
+    console.log('PCM API response headers:', Object.fromEntries(pcmResponse.headers.entries()));
+    
+    let pcmResponseData;
+    const responseText = await pcmResponse.text();
+    console.log('PCM API raw response text:', responseText);
+    
+    try {
+      pcmResponseData = responseText ? JSON.parse(responseText) : {};
+    } catch (parseError) {
+      console.error('Failed to parse PCM response as JSON:', parseError);
+      throw new Error(`PCM API returned invalid JSON. Status: ${pcmResponse.status}, Response: ${responseText}`);
+    }
+    
+    console.log('PCM API parsed response:', JSON.stringify(pcmResponseData, null, 2));
 
     if (!pcmResponse.ok) {
       throw new Error(`PCM API error: ${pcmResponse.status} - ${JSON.stringify(pcmResponseData)}`);
