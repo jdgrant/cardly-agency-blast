@@ -679,6 +679,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_admin_return_address: {
+        Args: {
+          order_id_param: string
+          return_city?: string
+          return_line1?: string
+          return_line2?: string
+          return_name?: string
+          return_state?: string
+          return_zip?: string
+          session_id_param: string
+        }
+        Returns: undefined
+      }
       update_order_client_count_for_customer: {
         Args: { new_client_count: number; short_id: string }
         Returns: boolean

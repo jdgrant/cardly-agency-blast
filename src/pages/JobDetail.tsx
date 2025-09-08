@@ -514,17 +514,16 @@ const JobDetail = () => {
         throw new Error('Admin session not found. Please login as admin.');
       }
 
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          return_address_name: editingReturnAddress.name,
-          return_address_line1: editingReturnAddress.line1,
-          return_address_line2: editingReturnAddress.line2,
-          return_address_city: editingReturnAddress.city,
-          return_address_state: editingReturnAddress.state,
-          return_address_zip: editingReturnAddress.zip
-        })
-        .eq('id', order!.id);
+      const { error } = await supabase.rpc('update_admin_return_address', {
+        session_id_param: adminSessionId,
+        order_id_param: order!.id,
+        return_name: editingReturnAddress.name,
+        return_line1: editingReturnAddress.line1,
+        return_line2: editingReturnAddress.line2,
+        return_city: editingReturnAddress.city,
+        return_state: editingReturnAddress.state,
+        return_zip: editingReturnAddress.zip
+      });
 
       if (error) throw error;
 
@@ -540,6 +539,9 @@ const JobDetail = () => {
           return_address_zip: editingReturnAddress.zip
         });
       }
+
+      // Refresh order data from database to ensure persistence
+      await fetchOrderDetails();
 
       setIsEditingReturnAddress(false);
       toast({
