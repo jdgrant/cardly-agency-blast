@@ -29,6 +29,7 @@ import SignatureExtractor from '@/components/signature/SignatureExtractor';
 import { ClientListUploader } from '@/components/admin/ClientListUploader';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import SignatureReviewCard from '@/components/admin/SignatureReviewCard';
+import { PhysicalMailingSender } from '@/components/admin/PhysicalMailingSender';
 
 interface Order {
   id: string;
@@ -1799,6 +1800,9 @@ const JobDetail = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Physical Mailing Section */}
+            <PhysicalMailingSender orderId={order.id} />
           </div>
         </div>
       </div>
