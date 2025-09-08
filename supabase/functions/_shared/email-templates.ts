@@ -82,7 +82,7 @@ export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUr
         ` : ''}
         
         <div class="header">
-          <h1>🎄 Your Holiday Card Order Update</h1>
+          <h1>Your Holiday Card Order Update</h1>
           <p>Hello ${contactName || 'Customer'},</p>
           <p>We wanted to update you on your holiday card order <strong>#${readableOrderId}</strong> from SendYourCards.io</p>
         </div>
