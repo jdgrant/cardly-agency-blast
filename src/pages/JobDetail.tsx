@@ -1372,7 +1372,7 @@ const JobDetail = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-4">
                   {/* Signature Purchase - Grey out if no signature */}
                   <div className="flex flex-col space-y-2">
                     <label className="text-sm font-medium text-gray-700">Signature Purchase</label>
@@ -1431,20 +1431,34 @@ const JobDetail = () => {
                      </div>
                   </div>
 
-                  {/* Invoice Paid */}
-                  <div className="flex flex-col space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Invoice Paid</label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        checked={order.invoice_paid || false}
-                        onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
-                      />
-                      <span className="text-sm text-gray-600">
-                        {order.invoice_paid ? 'Paid' : 'Unpaid'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                   {/* Invoice Paid */}
+                   <div className="flex flex-col space-y-2">
+                     <label className="text-sm font-medium text-gray-700">Invoice Paid</label>
+                     <div className="flex items-center space-x-2">
+                       <Checkbox 
+                         checked={order.invoice_paid || false}
+                         onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
+                       />
+                       <span className="text-sm text-gray-600">
+                         {order.invoice_paid ? 'Paid' : 'Unpaid'}
+                       </span>
+                     </div>
+                   </div>
+
+                   {/* Sent to Press Status */}
+                   <div className="flex flex-col space-y-2">
+                     <label className="text-sm font-medium text-gray-700">Sent to Press</label>
+                     <div className="flex items-center space-x-2">
+                       <Checkbox 
+                         checked={order.status === 'sent_to_press'}
+                         disabled={true}
+                       />
+                       <span className="text-sm text-gray-600">
+                         {order.status === 'sent_to_press' ? 'Sent' : 'Not sent'}
+                       </span>
+                     </div>
+                   </div>
+                 </div>
               </CardContent>
             </Card>
 
