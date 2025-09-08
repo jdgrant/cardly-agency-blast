@@ -39,5 +39,8 @@ verify_jwt = false
 [functions.serve-pdf]
 verify_jwt = false
 
+[functions.send-physical-greeting-cards]
+verify_jwt = false
+
 [functions.test-mailgun]
 verify_jwt = false
