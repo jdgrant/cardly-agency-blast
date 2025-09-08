@@ -107,7 +107,7 @@ export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUr
         </div>
 
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${orderManagementUrl}" class="button">View Order Details</a>
+          <a href="${orderManagementUrl}" class="button" style="display: inline-block; background: #007bff; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 20px 0;">View Order Details</a>
         </div>
 
         <div class="footer">
