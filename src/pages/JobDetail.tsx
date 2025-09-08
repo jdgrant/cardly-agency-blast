@@ -517,21 +517,20 @@ const JobDetail = () => {
       console.log('Saving return address with admin session:', adminSessionId);
       console.log('Return address data:', editingReturnAddress);
 
-      // Direct update like other admin operations in this file
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          return_address_name: editingReturnAddress.name,
-          return_address_line1: editingReturnAddress.line1,
-          return_address_line2: editingReturnAddress.line2,
-          return_address_city: editingReturnAddress.city,
-          return_address_state: editingReturnAddress.state,
-          return_address_zip: editingReturnAddress.zip
-        })
-        .eq('id', order!.id);
+      // Use the secure admin RPC function that properly validates the session
+      const { error } = await supabase.rpc('update_admin_return_address', {
+        session_id_param: adminSessionId,
+        order_id_param: order!.id,
+        return_name: editingReturnAddress.name || null,
+        return_line1: editingReturnAddress.line1 || null,
+        return_line2: editingReturnAddress.line2 || null,
+        return_city: editingReturnAddress.city || null,
+        return_state: editingReturnAddress.state || null,
+        return_zip: editingReturnAddress.zip || null
+      });
 
       if (error) {
-        console.error('Update Error:', error);
+        console.error('RPC Error:', error);
         throw error;
       }
 
