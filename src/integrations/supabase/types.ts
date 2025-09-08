@@ -700,6 +700,18 @@ export type Database = {
         Args: { file_type: string; file_url: string; short_id: string }
         Returns: boolean
       }
+      update_return_address: {
+        Args: {
+          city_param?: string
+          line1_param?: string
+          line2_param?: string
+          name_param?: string
+          order_id_param: string
+          state_param?: string
+          zip_param?: string
+        }
+        Returns: undefined
+      }
       update_template_preview_url: {
         Args: {
           new_preview_url: string
