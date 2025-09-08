@@ -79,6 +79,13 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Order not found: ${orderError?.message}`);
     }
 
+    console.log('Order data:', JSON.stringify(order, null, 2));
+
+    // Check if we have a production PDF URL for PCM
+    if (!order.production_combined_pdf_public_url) {
+      throw new Error('No production PDF available for this order. Please generate the production PDF first.');
+    }
+
     // Step 2: Place greeting card order using bearer token
     const pcmRequest = {
       listCountID: 1, // Required field - using default value
@@ -99,7 +106,7 @@ const handler = async (req: Request): Promise<Response> => {
           zipCode: addr.zip
         };
       }),
-      greetingCard: order.custom_message || order.selected_message || 'Happy Holidays!' // Must be a string
+      greetingCard: order.production_combined_pdf_public_url // PCM expects a URL to the PDF design
     };
 
     console.log('PCM API request for greeting cards:', JSON.stringify(pcmRequest, null, 2));
