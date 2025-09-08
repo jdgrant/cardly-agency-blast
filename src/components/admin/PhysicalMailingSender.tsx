@@ -19,20 +19,30 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
     setIsLoading(true);
     
     try {
-      // This would normally get recipient addresses from the order's client records
-      const mockRecipients = [
-        {
-          name: "John Doe",
-          address1: "123 Main St",
-          city: "Anytown",
-          state: "CA",
-          zip: "12345"
-        }
-      ];
+      // Fetch real client records for this order
+      const { data: clientsData, error: clientsError } = await supabase.rpc('get_clients_for_order', {
+        order_id_param: orderId,
+        session_id_param: 'admin_' + Date.now()
+      });
+
+      if (clientsError) throw clientsError;
+
+      if (!clientsData || clientsData.length === 0) {
+        throw new Error('No client records found for this order');
+      }
+
+      // Format client data for the API
+      const recipientAddresses = clientsData.map((client: any) => ({
+        name: `${client.first_name} ${client.last_name}`.trim(),
+        address1: client.address,
+        city: client.city,
+        state: client.state,
+        zip: client.zip
+      }));
 
       const requestPayload = {
         orderId,
-        recipientAddresses: mockRecipients
+        recipientAddresses
       };
 
       // Set debug info showing what we're sending
@@ -50,7 +60,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
 
       toast({
         title: "Physical Mailing Initiated",
-        description: `Greeting cards sent to PCM DirectMail API for ${mockRecipients.length} recipients`,
+        description: `Greeting cards sent to PCM DirectMail API for ${recipientAddresses.length} recipients`,
       });
     } catch (error) {
       console.error('Error sending physical mailing:', error);

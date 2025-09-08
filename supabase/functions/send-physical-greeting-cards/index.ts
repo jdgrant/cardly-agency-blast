@@ -51,36 +51,55 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Order not found: ${orderError?.message}`);
     }
 
-    // PCM DirectMail API expects specific format for greeting card mailings
+    // PCM DirectMail API request format based on their documentation
     const pcmRequest = {
-      // This would be the actual PCM API format - needs to be updated based on their docs
+      listCount: recipientAddresses.length,
+      productCode: "GC5X7", // 5x7 greeting card
       recipients: recipientAddresses.map(addr => ({
-        firstName: addr.name.split(' ')[0],
-        lastName: addr.name.split(' ').slice(1).join(' '),
+        firstName: addr.name.split(' ')[0] || '',
+        lastName: addr.name.split(' ').slice(1).join(' ') || '',
         address1: addr.address1,
         address2: addr.address2 || '',
         city: addr.city,
         state: addr.state,
         zipCode: addr.zip
       })),
-      // Would include greeting card design, message, etc. from the order
-      design: {
-        front: order.front_preview_base64,
-        inside: order.inside_preview_base64,
-        message: order.message
+      cardDesign: {
+        frontImageUrl: order.front_preview_base64 ? `data:image/png;base64,${order.front_preview_base64.replace('data:image/png;base64,', '')}` : '',
+        insideMessage: order.custom_message || order.selected_message || '',
+        backMessage: '' // Optional back message
       }
     };
 
-    console.log('PCM API request for greeting cards:', pcmRequest);
+    console.log('PCM API request for greeting cards:', JSON.stringify(pcmRequest, null, 2));
 
-    // For now, simulate the API call
-    console.log('Would send to PCM DirectMail API for physical greeting card printing and mailing');
+    // Make actual call to PCM DirectMail API
+    const pcmApiUrl = 'https://api.pcmintegrations.com/v1/directmail/greeting-cards';
+    
+    const pcmResponse = await fetch(pcmApiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${pcmApiKey}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(pcmRequest)
+    });
+
+    const pcmResponseData = await pcmResponse.json();
+    console.log('PCM API response:', JSON.stringify(pcmResponseData, null, 2));
+
+    if (!pcmResponse.ok) {
+      throw new Error(`PCM API error: ${pcmResponse.status} - ${JSON.stringify(pcmResponseData)}`);
+    }
     
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Physical greeting cards queued for ${recipientAddresses.length} recipients`,
-        pcmJobId: 'simulated-' + Date.now()
+        message: `Physical greeting cards submitted to PCM DirectMail for ${recipientAddresses.length} recipients`,
+        pcmResponse: pcmResponseData,
+        apiUrl: pcmApiUrl,
+        requestPayload: pcmRequest
       }),
       {
         status: 200,
