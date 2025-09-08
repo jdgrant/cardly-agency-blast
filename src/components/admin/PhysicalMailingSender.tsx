@@ -85,20 +85,24 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
 
       // Update order with PCM details and status if successful
       if (data.success && data.pcmOrderId && data.pcmBatchId) {
-        await supabase.rpc('update_admin_order_status', {
-          session_id_param: adminSessionId,
+        // Update PCM order info using RPC function to bypass RLS
+        await supabase.rpc('update_pcm_order_info', {
           order_id_param: orderId,
-          new_status_param: 'sent_to_press'
+          pcm_order_id_param: data.pcmOrderId.toString()
         });
 
-        await supabase
-          .from('orders')
-          .update({
-            pcm_order_id: data.pcmOrderId.toString(),
-            pcm_batch_id: data.pcmBatchId,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', orderId);
+        // Update batch ID separately (we can add this to the RPC function later if needed)
+        try {
+          await supabase
+            .from('orders')
+            .update({
+              pcm_batch_id: data.pcmBatchId,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', orderId);
+        } catch (batchError) {
+          console.warn('Failed to update batch ID, but PCM Order ID was saved:', batchError);
+        }
       }
 
       toast({
