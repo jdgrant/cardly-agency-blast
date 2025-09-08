@@ -9,6 +9,8 @@ export interface StatusEmailData {
   mailingListUploaded: boolean;
   signaturePurchased?: boolean;
   invoicePaid?: boolean;
+  frontPreviewUrl?: string;
+  insidePreviewUrl?: string;
 }
 
 export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUrl: string, unsubscribeUrl?: string): string {
@@ -20,7 +22,9 @@ export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUr
     signatureSubmitted,
     mailingListUploaded,
     signaturePurchased,
-    invoicePaid
+    invoicePaid,
+    frontPreviewUrl,
+    insidePreviewUrl
   } = data;
 
   // Create progress checklist
@@ -57,6 +61,26 @@ export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUr
     </head>
     <body>
       <div class="container">
+        ${(frontPreviewUrl || insidePreviewUrl) ? `
+        <div style="text-align: center; margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+          <h2 style="margin: 0 0 20px 0; color: #333;">Your Card Preview</h2>
+          <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+            ${frontPreviewUrl ? `
+            <div style="text-align: center;">
+              <h4 style="margin: 0 0 10px 0; color: #666;">Card Front</h4>
+              <img src="${frontPreviewUrl}" alt="Card Front Preview" style="max-width: 250px; max-height: 200px; border: 2px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+            </div>
+            ` : ''}
+            ${insidePreviewUrl ? `
+            <div style="text-align: center;">
+              <h4 style="margin: 0 0 10px 0; color: #666;">Card Inside</h4>
+              <img src="${insidePreviewUrl}" alt="Card Inside Preview" style="max-width: 250px; max-height: 200px; border: 2px solid #dee2e6; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+            </div>
+            ` : ''}
+          </div>
+        </div>
+        ` : ''}
+        
         <div class="header">
           <h1>🎄 Your Holiday Card Order Update</h1>
           <p>Hello ${contactName || 'Customer'},</p>
