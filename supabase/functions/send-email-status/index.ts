@@ -28,24 +28,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    console.log("=== NEW EMAIL FUNCTION START ===");
+    console.log("=== EMAIL STATUS FUNCTION START ===");
     const requestData: StatusEmailRequest = await req.json();
     console.log("Received data:", JSON.stringify(requestData, null, 2));
-
-    // Try multiple ways to get the API key
-    const mailgunKey = Deno.env.get('MAILGUN_KEY') || 
-                       Deno.env.get('MAILGUN_API_KEY') || 
-                       Deno.env.get('RESEND_API_KEY'); // fallback
-    
-    console.log("Available keys:", {
-      mailgunKey: !!Deno.env.get('MAILGUN_KEY'),
-      mailgunApiKey: !!Deno.env.get('MAILGUN_API_KEY'),
-      resendKey: !!Deno.env.get('RESEND_API_KEY')
-    });
-
-    if (!mailgunKey) {
-      throw new Error('No email API key found');
-    }
 
     const { 
       orderId,
@@ -65,6 +50,11 @@ const handler = async (req: Request): Promise<Response> => {
     if (!contactEmail) {
       throw new Error('Contact email is required');
     }
+
+    console.log("Card preview URLs:", {
+      frontPreviewUrl: frontPreviewUrl ? "present" : "missing",
+      insidePreviewUrl: insidePreviewUrl ? "present" : "missing"
+    });
 
     // Generate order management URL
     const orderManagementUrl = generateOrderManagementUrl(orderId);
@@ -96,8 +86,9 @@ const handler = async (req: Request): Promise<Response> => {
       subject: `SendYourCards.io Order Update: ${readableOrderId}`,
       html: emailHtml
     });
+
     console.log("Email sent successfully:", mailgunResult);
-    
+
     return new Response(
       JSON.stringify({ 
         success: true, 
