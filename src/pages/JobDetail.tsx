@@ -508,25 +508,48 @@ const JobDetail = () => {
 
   const saveReturnAddress = async () => {
     try {
-      console.log('Saving return address data:', editingReturnAddress);
-
-      // Use the same simple approach as updateOrderStatusField
-      const { error } = await supabase
+      console.log('=== RETURN ADDRESS SAVE DEBUG ===');
+      console.log('editingReturnAddress:', editingReturnAddress);
+      console.log('order.id:', order?.id);
+      
+      // Test if we can update a simple field first
+      const { error: testError } = await supabase
         .from('orders')
-        .update({
-          return_address_name: editingReturnAddress.name || null,
-          return_address_line1: editingReturnAddress.line1 || null,
-          return_address_line2: editingReturnAddress.line2 || null,
-          return_address_city: editingReturnAddress.city || null,
-          return_address_state: editingReturnAddress.state || null,
-          return_address_zip: editingReturnAddress.zip || null
-        })
+        .update({ status: order!.status }) // Just update with same value to test
         .eq('id', order!.id);
+      
+      if (testError) {
+        console.error('Test update failed:', testError);
+        throw new Error('Cannot update orders table: ' + testError.message);
+      }
+      
+      console.log('Test update successful, proceeding with return address update...');
+
+      const updateData = {
+        return_address_name: editingReturnAddress.name || null,
+        return_address_line1: editingReturnAddress.line1 || null,
+        return_address_line2: editingReturnAddress.line2 || null,
+        return_address_city: editingReturnAddress.city || null,
+        return_address_state: editingReturnAddress.state || null,
+        return_address_zip: editingReturnAddress.zip || null
+      };
+      
+      console.log('Update data:', updateData);
+
+      const { error, data } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', order!.id)
+        .select();
+
+      console.log('Update result:', { error, data });
 
       if (error) {
         console.error('Update Error:', error);
         throw error;
       }
+
+      console.log('Return address update successful, affected rows:', data?.length);
 
       // Update local state
       if (order) {
