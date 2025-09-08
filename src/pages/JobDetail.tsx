@@ -1,3 +1,5 @@
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +22,10 @@ import {
   Upload,
   ChevronDown,
   Mail,
-  Tag
+  Tag,
+  Edit2,
+  Save,
+  X
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
@@ -121,6 +126,17 @@ const JobDetail = () => {
   const [advancedSectionOpen, setAdvancedSectionOpen] = useState(false);
   const [showClientListUpload, setShowClientListUpload] = useState(false);
   const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string, production?: string, productionFront?: string, productionInside?: string}>({});
+  
+  // Return address editing state
+  const [isEditingReturnAddress, setIsEditingReturnAddress] = useState(false);
+  const [editingReturnAddress, setEditingReturnAddress] = useState({
+    name: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    zip: ''
+  });
 
   useEffect(() => {
     if (orderId) {
@@ -456,6 +472,76 @@ const JobDetail = () => {
       toast({
         title: "Error",
         description: "Failed to update status field",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startEditingReturnAddress = () => {
+    if (order) {
+      setEditingReturnAddress({
+        name: order.return_address_name || '',
+        line1: order.return_address_line1 || '',
+        line2: order.return_address_line2 || '',
+        city: order.return_address_city || '',
+        state: order.return_address_state || '',
+        zip: order.return_address_zip || ''
+      });
+      setIsEditingReturnAddress(true);
+    }
+  };
+
+  const cancelEditingReturnAddress = () => {
+    setIsEditingReturnAddress(false);
+    setEditingReturnAddress({
+      name: '',
+      line1: '',
+      line2: '',
+      city: '',
+      state: '',
+      zip: ''
+    });
+  };
+
+  const saveReturnAddress = async () => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          return_address_name: editingReturnAddress.name,
+          return_address_line1: editingReturnAddress.line1,
+          return_address_line2: editingReturnAddress.line2,
+          return_address_city: editingReturnAddress.city,
+          return_address_state: editingReturnAddress.state,
+          return_address_zip: editingReturnAddress.zip
+        })
+        .eq('id', order!.id);
+
+      if (error) throw error;
+
+      // Update local state
+      if (order) {
+        setOrder({
+          ...order,
+          return_address_name: editingReturnAddress.name,
+          return_address_line1: editingReturnAddress.line1,
+          return_address_line2: editingReturnAddress.line2,
+          return_address_city: editingReturnAddress.city,
+          return_address_state: editingReturnAddress.state,
+          return_address_zip: editingReturnAddress.zip
+        });
+      }
+
+      setIsEditingReturnAddress(false);
+      toast({
+        title: "Return Address Updated",
+        description: "Return address has been updated successfully",
+      });
+    } catch (error: any) {
+      console.error('Error updating return address:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update return address",
         variant: "destructive"
       });
     }
@@ -1140,34 +1226,129 @@ const JobDetail = () => {
             {/* Return Address Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                  <span>Return Address</span>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                    <span>Return Address</span>
+                  </div>
+                  {!isEditingReturnAddress ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={startEditingReturnAddress}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      <Edit2 className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  ) : (
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={cancelEditingReturnAddress}
+                        className="text-gray-600 hover:text-gray-700"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={saveReturnAddress}
+                        className="text-white bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Save className="w-4 h-4 mr-1" />
+                        Save
+                      </Button>
+                    </div>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Return Name/Company</p>
-                    <p className="font-medium">{order.return_address_name || 'Not provided'}</p>
+                {!isEditingReturnAddress ? (
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Return Name/Company</p>
+                      <p className="font-medium">{order.return_address_name || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Address Line 1</p>
+                      <p className="font-medium">{order.return_address_line1 || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Address Line 2</p>
+                      <p className="font-medium">{order.return_address_line2 || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">City, State ZIP</p>
+                      <p className="font-medium">
+                        {order.return_address_city && order.return_address_state && order.return_address_zip
+                          ? `${order.return_address_city}, ${order.return_address_state} ${order.return_address_zip}`
+                          : 'Not provided'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Address Line 1</p>
-                    <p className="font-medium">{order.return_address_line1 || 'Not provided'}</p>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="return-name">Return Name/Company *</Label>
+                      <Input
+                        id="return-name"
+                        value={editingReturnAddress.name}
+                        onChange={(e) => setEditingReturnAddress({ ...editingReturnAddress, name: e.target.value })}
+                        placeholder="Your Name or Company"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="return-line1">Address Line 1 *</Label>
+                      <Input
+                        id="return-line1"
+                        value={editingReturnAddress.line1}
+                        onChange={(e) => setEditingReturnAddress({ ...editingReturnAddress, line1: e.target.value })}
+                        placeholder="123 Main Street"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="return-line2">Address Line 2</Label>
+                      <Input
+                        id="return-line2"
+                        value={editingReturnAddress.line2}
+                        onChange={(e) => setEditingReturnAddress({ ...editingReturnAddress, line2: e.target.value })}
+                        placeholder="Suite 100 (optional)"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <Label htmlFor="return-city">City *</Label>
+                        <Input
+                          id="return-city"
+                          value={editingReturnAddress.city}
+                          onChange={(e) => setEditingReturnAddress({ ...editingReturnAddress, city: e.target.value })}
+                          placeholder="City"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="return-state">State *</Label>
+                        <Input
+                          id="return-state"
+                          value={editingReturnAddress.state}
+                          onChange={(e) => setEditingReturnAddress({ ...editingReturnAddress, state: e.target.value })}
+                          placeholder="ST"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="return-zip">ZIP *</Label>
+                        <Input
+                          id="return-zip"
+                          value={editingReturnAddress.zip}
+                          onChange={(e) => setEditingReturnAddress({ ...editingReturnAddress, zip: e.target.value })}
+                          placeholder="12345"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Address Line 2</p>
-                    <p className="font-medium">{order.return_address_line2 || 'Not provided'}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">City, State ZIP</p>
-                    <p className="font-medium">
-                      {order.return_address_city && order.return_address_state && order.return_address_zip
-                        ? `${order.return_address_city}, ${order.return_address_state} ${order.return_address_zip}`
-                        : 'Not provided'}
-                    </p>
-                  </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
