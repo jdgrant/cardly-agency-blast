@@ -567,30 +567,22 @@ const JobDetail = () => {
 
   const savePCMOrder = async () => {
     try {
-      const updateData: any = { pcm_order_id: editingPCMOrder || null };
-      
-      // If PCM Order ID is being set (and wasn't set before), automatically update status to sent_to_press
-      if (editingPCMOrder && !order?.pcm_order_id) {
-        updateData.status = 'sent_to_press';
-      }
-      // If PCM Order ID is being cleared, revert status from sent_to_press if it was set
-      else if (!editingPCMOrder && order?.pcm_order_id && order.status === 'sent_to_press') {
-        updateData.status = 'approved';
-      }
-
-      const { error } = await supabase
-        .from('orders')
-        .update(updateData)
-        .eq('id', order!.id);
+      const { error } = await supabase.rpc('update_pcm_order_info', {
+        order_id_param: order!.id,
+        pcm_order_id_param: editingPCMOrder || null
+      });
 
       if (error) throw error;
 
       // Update local state
       if (order) {
+        const newStatus = editingPCMOrder && !order.pcm_order_id ? 'sent_to_press' : 
+                         (!editingPCMOrder && order.pcm_order_id && order.status === 'sent_to_press' ? 'approved' : order.status);
+        
         setOrder({
           ...order,
           pcm_order_id: editingPCMOrder || null,
-          status: updateData.status || order.status
+          status: newStatus
         });
       }
 
