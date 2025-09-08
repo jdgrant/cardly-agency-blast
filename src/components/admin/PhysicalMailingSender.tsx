@@ -91,8 +91,18 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
         
         // Get admin session for admin table access
         const adminSessionId = sessionStorage.getItem('adminSessionId');
+        console.log('Admin session ID:', adminSessionId);
         
-        // Simple direct update using admin session context
+        // First, let's check what the order looks like before update
+        const { data: beforeData } = await supabase
+          .from('orders')
+          .select('pcm_order_id, pcm_batch_id, status')
+          .eq('id', orderId)
+          .single();
+        
+        console.log('Order BEFORE update:', beforeData);
+        
+        // Simple direct update 
         const { data: updateResult, error: updateError } = await supabase
           .from('orders')
           .update({
@@ -104,11 +114,22 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
           .eq('id', orderId)
           .select('pcm_order_id, pcm_batch_id, status');
 
+        console.log('Update result:', updateResult);
+        console.log('Update error:', updateError);
+
         if (updateError) {
           console.error('Direct update error:', updateError);
           throw new Error(`Failed to update order: ${updateError.message}`);
         }
 
+        // Check what the order looks like after update
+        const { data: afterData } = await supabase
+          .from('orders')
+          .select('pcm_order_id, pcm_batch_id, status')
+          .eq('id', orderId)
+          .single();
+        
+        console.log('Order AFTER update:', afterData);
         console.log('✅ Order updated successfully:', updateResult);
       } else {
         console.error('Missing required data from PCM API response:', {
