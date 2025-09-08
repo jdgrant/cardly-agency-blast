@@ -91,10 +91,24 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
         
         // Get admin session for admin table access
         const adminSessionId = sessionStorage.getItem('adminSessionId');
-        console.log('Admin session ID:', adminSessionId);
+        console.log('Admin session ID from storage:', adminSessionId);
         
         if (!adminSessionId) {
-          throw new Error('Admin session not found');
+          throw new Error('Admin session not found in sessionStorage');
+        }
+        
+        // Check if admin session is valid first
+        const { data: sessionCheck, error: sessionError } = await supabase
+          .from('admin_sessions')
+          .select('*')
+          .eq('session_id', adminSessionId)
+          .single();
+        
+        console.log('Session check result:', sessionCheck);
+        console.log('Session check error:', sessionError);
+        
+        if (sessionError || !sessionCheck || !sessionCheck.value) {
+          throw new Error('Admin session is not valid or has expired');
         }
         
         // Use the simple RPC function that just works
