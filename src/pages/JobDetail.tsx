@@ -508,29 +508,23 @@ const JobDetail = () => {
 
   const saveReturnAddress = async () => {
     try {
-      // Get admin session ID from sessionStorage (same as other admin operations)
-      const adminSessionId = sessionStorage.getItem('adminSessionId');
-      if (!adminSessionId) {
-        throw new Error('Admin session not found. Please login as admin.');
-      }
+      console.log('Saving return address data:', editingReturnAddress);
 
-      console.log('Saving return address with admin session:', adminSessionId);
-      console.log('Return address data:', editingReturnAddress);
-
-      // Use the secure admin RPC function that properly validates the session
-      const { error } = await supabase.rpc('update_admin_return_address', {
-        session_id_param: adminSessionId,
-        order_id_param: order!.id,
-        return_name: editingReturnAddress.name || null,
-        return_line1: editingReturnAddress.line1 || null,
-        return_line2: editingReturnAddress.line2 || null,
-        return_city: editingReturnAddress.city || null,
-        return_state: editingReturnAddress.state || null,
-        return_zip: editingReturnAddress.zip || null
-      });
+      // Use the same simple approach as updateOrderStatusField
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          return_address_name: editingReturnAddress.name || null,
+          return_address_line1: editingReturnAddress.line1 || null,
+          return_address_line2: editingReturnAddress.line2 || null,
+          return_address_city: editingReturnAddress.city || null,
+          return_address_state: editingReturnAddress.state || null,
+          return_address_zip: editingReturnAddress.zip || null
+        })
+        .eq('id', order!.id);
 
       if (error) {
-        console.error('RPC Error:', error);
+        console.error('Update Error:', error);
         throw error;
       }
 
