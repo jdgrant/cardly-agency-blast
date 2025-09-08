@@ -44,24 +44,36 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Step 1: Authenticate with PCM to get bearer token
     console.log('Authenticating with PCM DirectMail API...');
+    const authRequest = {
+      apiKey: pcmApiKey,
+      apiSecret: pcmApiSecret
+    };
+    
     const authResponse = await fetch('https://v3.pcmintegrations.com/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        apiKey: pcmApiKey,
-        apiSecret: pcmApiSecret
-      })
+      body: JSON.stringify(authRequest)
     });
 
-    if (!authResponse.ok) {
-      const authError = await authResponse.text();
-      throw new Error(`PCM authentication failed: ${authResponse.status} - ${authError}`);
+    let authData;
+    const authResponseText = await authResponse.text();
+    console.log('PCM auth response status:', authResponse.status);
+    console.log('PCM auth raw response:', authResponseText);
+    
+    try {
+      authData = authResponseText ? JSON.parse(authResponseText) : {};
+    } catch (parseError) {
+      console.error('Failed to parse PCM auth response:', parseError);
+      throw new Error(`PCM authentication returned invalid JSON. Status: ${authResponse.status}, Response: ${authResponseText}`);
     }
 
-    const authData = await authResponse.json();
+    if (!authResponse.ok) {
+      throw new Error(`PCM authentication failed: ${authResponse.status} - ${JSON.stringify(authData)}`);
+    }
+
     console.log('PCM authentication successful');
 
     if (!authData.token) {
@@ -94,6 +106,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Step 2: Create a list count first (required by PCM)
     console.log('Creating list count for PCM...');
+    // Prepare list count request data
+    const listCountRequest = {
+      recipients: recipientAddresses.map(addr => {
+        const nameParts = addr.name.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || 'Customer';
+        
+        return {
+          firstName: firstName,
+          lastName: lastName,
+          address: addr.address1,
+          address2: addr.address2 || '',
+          city: addr.city,
+          state: addr.state,
+          zipCode: addr.zip
+        };
+      })
+    };
+
     const listCountResponse = await fetch('https://v3.pcmintegrations.com/list/count/upload', {
       method: 'POST',
       headers: {
@@ -101,23 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Authorization': `Bearer ${authData.token}`,
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        recipients: recipientAddresses.map(addr => {
-          const nameParts = addr.name.trim().split(' ');
-          const firstName = nameParts[0] || '';
-          const lastName = nameParts.slice(1).join(' ') || 'Customer';
-          
-          return {
-            firstName: firstName,
-            lastName: lastName,
-            address: addr.address1,
-            address2: addr.address2 || '',
-            city: addr.city,
-            state: addr.state,
-            zipCode: addr.zip
-          };
-        })
-      })
+      body: JSON.stringify(listCountRequest)
     });
 
     let listCountData;
@@ -185,9 +200,44 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: `Physical greeting cards submitted to PCM DirectMail for ${recipientAddresses.length} recipients`,
-        pcmResponse: pcmResponseData,
-        apiUrl: pcmApiUrl,
-        requestPayload: pcmRequest
+        pcmApiInteractions: {
+          authentication: {
+            request: {
+              url: 'https://v3.pcmintegrations.com/auth/login',
+              method: 'POST',
+              body: authRequest
+            },
+            response: {
+              status: authResponse.status,
+              headers: Object.fromEntries(authResponse.headers.entries()),
+              body: authData
+            }
+          },
+          listCount: {
+            request: {
+              url: 'https://v3.pcmintegrations.com/list/count/upload',
+              method: 'POST',
+              body: listCountRequest
+            },
+            response: {
+              status: listCountResponse.status,
+              headers: Object.fromEntries(listCountResponse.headers.entries()),
+              body: listCountData
+            }
+          },
+          greetingCardOrder: {
+            request: {
+              url: pcmApiUrl,
+              method: 'POST',
+              body: pcmRequest
+            },
+            response: {
+              status: pcmResponse.status,
+              headers: Object.fromEntries(pcmResponse.headers.entries()),
+              body: pcmResponseData
+            }
+          }
+        }
       }),
       {
         status: 200,
