@@ -141,6 +141,10 @@ const JobDetail = () => {
     zip: ''
   });
 
+  // PCM Order editing state
+  const [isEditingPCMOrder, setIsEditingPCMOrder] = useState(false);
+  const [editingPCMOrder, setEditingPCMOrder] = useState('');
+
   useEffect(() => {
     if (orderId) {
       fetchOrderDetails();
@@ -546,6 +550,62 @@ const JobDetail = () => {
       toast({
         title: "Update Failed",
         description: "Failed to update return address",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startEditingPCMOrder = () => {
+    setEditingPCMOrder(order?.pcm_order_id || '');
+    setIsEditingPCMOrder(true);
+  };
+
+  const cancelEditingPCMOrder = () => {
+    setIsEditingPCMOrder(false);
+    setEditingPCMOrder('');
+  };
+
+  const savePCMOrder = async () => {
+    try {
+      const updateData: any = { pcm_order_id: editingPCMOrder || null };
+      
+      // If PCM Order ID is being set (and wasn't set before), automatically update status to sent_to_press
+      if (editingPCMOrder && !order?.pcm_order_id) {
+        updateData.status = 'sent_to_press';
+      }
+      // If PCM Order ID is being cleared, revert status from sent_to_press if it was set
+      else if (!editingPCMOrder && order?.pcm_order_id && order.status === 'sent_to_press') {
+        updateData.status = 'approved';
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', order!.id);
+
+      if (error) throw error;
+
+      // Update local state
+      if (order) {
+        setOrder({
+          ...order,
+          pcm_order_id: editingPCMOrder || null,
+          status: updateData.status || order.status
+        });
+      }
+
+      setIsEditingPCMOrder(false);
+      toast({
+        title: "PCM Order Updated",
+        description: editingPCMOrder 
+          ? "PCM Order Number saved and status updated to 'Sent to Press'" 
+          : "PCM Order Number cleared",
+      });
+    } catch (error: any) {
+      console.error('Error updating PCM Order:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update PCM Order Number",
         variant: "destructive"
       });
     }
@@ -1440,19 +1500,25 @@ const JobDetail = () => {
                      </div>
                    </div>
 
-                   {/* Sent to Press Status */}
-                   <div className="flex flex-col space-y-2">
-                     <label className="text-sm font-medium text-gray-700">Sent to Press</label>
-                     <div className="flex items-center space-x-2">
-                       <Checkbox 
-                         checked={order.status === 'sent_to_press'}
-                         disabled={true}
-                       />
-                       <span className="text-sm text-gray-600">
-                         {order.status === 'sent_to_press' ? 'Sent' : 'Not sent'}
-                       </span>
-                     </div>
-                   </div>
+                    {/* Sent to Press Status */}
+                    <div className="flex flex-col space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Sent to Press</label>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          checked={order.status === 'sent_to_press'}
+                          disabled={true}
+                        />
+                        <span className="text-sm text-gray-600">
+                          {order.status === 'sent_to_press' ? 'Sent' : 'Not sent'}
+                        </span>
+                      </div>
+                      {order.pcm_order_id && (
+                        <div className="mt-1">
+                          <span className="text-xs text-gray-500">Order #: </span>
+                          <span className="text-xs font-mono text-gray-700">{order.pcm_order_id}</span>
+                        </div>
+                      )}
+                    </div>
                  </div>
               </CardContent>
             </Card>
@@ -2044,25 +2110,70 @@ const JobDetail = () => {
             </Card>
 
             {/* PCM Order Information */}
-            {(order.pcm_order_id || order.pcm_batch_id) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>PCM DirectMail Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm text-muted-foreground">PCM Order ID</Label>
-                      <p className="font-mono text-sm">{order.pcm_order_id || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm text-muted-foreground">PCM Batch ID</Label>
-                      <p className="font-mono text-sm">{order.pcm_batch_id || 'N/A'}</p>
-                    </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle>PCM DirectMail Information</CardTitle>
+                {!isEditingPCMOrder && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={startEditingPCMOrder}
+                    className="flex items-center space-x-1"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    <span>Edit</span>
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm text-muted-foreground">PCM Order ID</Label>
+                    {isEditingPCMOrder ? (
+                      <div className="space-y-2">
+                        <Input
+                          value={editingPCMOrder}
+                          onChange={(e) => setEditingPCMOrder(e.target.value)}
+                          placeholder="Enter PCM Order Number"
+                          className="font-mono text-sm"
+                        />
+                        <div className="flex space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={savePCMOrder}
+                            className="flex items-center space-x-1"
+                          >
+                            <Save className="w-3 h-3" />
+                            <span>Save</span>
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={cancelEditingPCMOrder}
+                            className="flex items-center space-x-1"
+                          >
+                            <X className="w-3 h-3" />
+                            <span>Cancel</span>
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="font-mono text-sm">{order.pcm_order_id || 'Not set'}</p>
+                    )}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                  <div>
+                    <Label className="text-sm text-muted-foreground">PCM Batch ID</Label>
+                    <p className="font-mono text-sm">{order.pcm_batch_id || 'N/A'}</p>
+                  </div>
+                </div>
+                {!order.pcm_order_id && !isEditingPCMOrder && (
+                  <p className="text-sm text-gray-500 italic">
+                    Add PCM Order Number to automatically mark order as "Sent to Press"
+                  </p>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Physical Mailing Section */}
             <PhysicalMailingSender orderId={order.id} />
