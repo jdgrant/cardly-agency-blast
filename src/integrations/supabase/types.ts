@@ -447,6 +447,14 @@ export type Database = {
           updated_at: string
         }[]
       }
+      force_update_pcm_info: {
+        Args: {
+          order_id_param: string
+          pcm_batch_id_param: number
+          pcm_order_id_param: string
+        }
+        Returns: undefined
+      }
       generate_readable_order_id: {
         Args: { uuid_val: string }
         Returns: string
