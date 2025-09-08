@@ -83,9 +83,27 @@ Response: ${JSON.stringify(data.apiInteractions.greetingCardOrder.response.body,
       // Save the response for display
       setApiResponse(JSON.stringify(data, null, 2));
 
+      // Update order with PCM details and status if successful
+      if (data.success && data.pcmOrderId && data.pcmBatchId) {
+        await supabase.rpc('update_admin_order_status', {
+          session_id_param: adminSessionId,
+          order_id_param: orderId,
+          new_status_param: 'sent_to_press'
+        });
+
+        await supabase
+          .from('orders')
+          .update({
+            pcm_order_id: data.pcmOrderId.toString(),
+            pcm_batch_id: data.pcmBatchId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+      }
+
       toast({
         title: "Physical Mailing Initiated",
-        description: `Greeting cards sent to PCM DirectMail API for ${recipientAddresses.length} recipients`,
+        description: `Greeting cards sent to PCM DirectMail API for ${recipientAddresses.length} recipients. PCM Order ID: ${data.pcmOrderId || 'N/A'}`,
       });
     } catch (error) {
       console.error('Error sending physical mailing:', error);

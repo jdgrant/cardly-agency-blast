@@ -83,6 +83,9 @@ interface Order {
   signature_needs_review?: boolean;
   // Promo code
   promo_code?: string | null;
+  // PCM DirectMail information
+  pcm_order_id?: string | null;
+  pcm_batch_id?: number | null;
 }
 
 interface OrderWithId extends Order {
@@ -1072,6 +1075,7 @@ const JobDetail = () => {
                   <SelectItem value="blocked">Blocked</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="send_to_print">Send to Print</SelectItem>
+                  <SelectItem value="sent_to_press">Sent to Press</SelectItem>
                   <SelectItem value="sent">Sent</SelectItem>
                 </SelectContent>
               </Select>
@@ -1081,6 +1085,7 @@ const JobDetail = () => {
                 order.status === 'pending' ? 'secondary' :
                 order.status === 'approved' ? 'default' :
                 order.status === 'send_to_print' ? 'outline' :
+                order.status === 'sent_to_press' ? 'default' :
                 order.status === 'sent' ? 'default' :
                 order.status === 'blocked' ? 'destructive' :
                 'outline'
@@ -2022,6 +2027,27 @@ const JobDetail = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* PCM Order Information */}
+            {(order.pcm_order_id || order.pcm_batch_id) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>PCM DirectMail Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm text-muted-foreground">PCM Order ID</Label>
+                      <p className="font-mono text-sm">{order.pcm_order_id || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">PCM Batch ID</Label>
+                      <p className="font-mono text-sm">{order.pcm_batch_id || 'N/A'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Physical Mailing Section */}
             <PhysicalMailingSender orderId={order.id} />

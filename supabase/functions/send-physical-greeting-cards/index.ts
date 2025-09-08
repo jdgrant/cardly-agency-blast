@@ -237,6 +237,8 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ 
         success: true, 
         message: `Physical greeting cards submitted to PCM DirectMail for ${recipientAddresses.length} recipients`,
+        pcmOrderId: pcmResponseData.orderID || pcmResponseData.batchID,
+        pcmBatchId: pcmResponseData.batchID,
         pcmOrderResponse: pcmResponseData,
         apiInteractions: {
           authentication: {

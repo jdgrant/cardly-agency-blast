@@ -118,6 +118,8 @@ export type Database = {
           invoice_paid: boolean | null
           logo_url: string | null
           mailing_window: string
+          pcm_batch_id: number | null
+          pcm_order_id: string | null
           postage_cost: number | null
           postage_option: string
           previews_updated_at: string | null
@@ -162,6 +164,8 @@ export type Database = {
           invoice_paid?: boolean | null
           logo_url?: string | null
           mailing_window: string
+          pcm_batch_id?: number | null
+          pcm_order_id?: string | null
           postage_cost?: number | null
           postage_option?: string
           previews_updated_at?: string | null
@@ -206,6 +210,8 @@ export type Database = {
           invoice_paid?: boolean | null
           logo_url?: string | null
           mailing_window?: string
+          pcm_batch_id?: number | null
+          pcm_order_id?: string | null
           postage_cost?: number | null
           postage_option?: string
           previews_updated_at?: string | null
@@ -414,6 +420,8 @@ export type Database = {
           invoice_paid: boolean | null
           logo_url: string | null
           mailing_window: string
+          pcm_batch_id: number | null
+          pcm_order_id: string | null
           postage_cost: number | null
           postage_option: string
           previews_updated_at: string | null
@@ -473,6 +481,8 @@ export type Database = {
           invoice_paid: boolean | null
           logo_url: string | null
           mailing_window: string
+          pcm_batch_id: number | null
+          pcm_order_id: string | null
           postage_cost: number | null
           postage_option: string
           previews_updated_at: string | null
@@ -684,6 +694,7 @@ export type Database = {
         | "approved"
         | "sent"
         | "send_to_print"
+        | "sent_to_press"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -811,7 +822,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      order_status: ["pending", "blocked", "approved", "sent", "send_to_print"],
+      order_status: [
+        "pending",
+        "blocked",
+        "approved",
+        "sent",
+        "send_to_print",
+        "sent_to_press",
+      ],
     },
   },
 } as const
