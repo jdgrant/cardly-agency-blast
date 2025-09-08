@@ -442,6 +442,20 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_clients_for_order: {
+        Args: { order_id_param: string; session_id_param: string }
+        Returns: {
+          address: string
+          city: string
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          order_id: string
+          state: string
+          zip: string
+        }[]
+      }
       get_order_by_id: {
         Args:
           | { order_id: string }

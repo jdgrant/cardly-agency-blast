@@ -190,13 +190,14 @@ const JobDetail = () => {
         }
       }
 
-      // Fetch client records for this order
+      // Fetch client records for this order using secure admin function
       console.log('Fetching client records for order:', orderId);
       
       const { data: clientsData, error: clientsError } = await supabase
-        .from('client_records')
-        .select('*')
-        .eq('order_id', orderId);
+        .rpc('get_clients_for_order', { 
+          order_id_param: orderId,
+          session_id_param: adminSessionId
+        });
 
       console.log('Clients response:', { clientsData, clientsError });
 
