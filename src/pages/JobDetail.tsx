@@ -514,18 +514,26 @@ const JobDetail = () => {
         throw new Error('Admin session not found. Please login as admin.');
       }
 
-      const { error } = await supabase.rpc('update_admin_return_address', {
-        session_id_param: adminSessionId,
-        order_id_param: order!.id,
-        return_name: editingReturnAddress.name,
-        return_line1: editingReturnAddress.line1,
-        return_line2: editingReturnAddress.line2,
-        return_city: editingReturnAddress.city,
-        return_state: editingReturnAddress.state,
-        return_zip: editingReturnAddress.zip
-      });
+      console.log('Saving return address with admin session:', adminSessionId);
+      console.log('Return address data:', editingReturnAddress);
 
-      if (error) throw error;
+      // Direct update like other admin operations in this file
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          return_address_name: editingReturnAddress.name,
+          return_address_line1: editingReturnAddress.line1,
+          return_address_line2: editingReturnAddress.line2,
+          return_address_city: editingReturnAddress.city,
+          return_address_state: editingReturnAddress.state,
+          return_address_zip: editingReturnAddress.zip
+        })
+        .eq('id', order!.id);
+
+      if (error) {
+        console.error('Update Error:', error);
+        throw error;
+      }
 
       // Update local state
       if (order) {
