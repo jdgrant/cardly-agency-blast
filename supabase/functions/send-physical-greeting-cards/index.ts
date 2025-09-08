@@ -106,10 +106,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No production PDF available for this order. Please generate the production PDF first before sending to PCM DirectMail.');
     }
 
-    // Step 2: Try to create list count with different endpoints
-    console.log('=== PCM LIST COUNT CREATION ===');
+    // Step 2: Try direct greeting card order with recipients (skip list count)
+    console.log('=== ATTEMPTING DIRECT PCM GREETING CARD ORDER ===');
     
-    // Format recipients for list count creation
+    // Format recipients for direct greeting card order
     const recipients = recipientAddresses.map(addr => {
       const nameParts = addr.name.trim().split(' ');
       const firstName = nameParts[0] || '';
@@ -126,96 +126,84 @@ const handler = async (req: Request): Promise<Response> => {
       };
     });
 
-    const listCountRequest = {
-      recipients: recipients
-    };
-    
-    console.log('List Count Request Packet:', JSON.stringify(listCountRequest, null, 2));
-
-    // Try alternative endpoints for list count creation
-    let listCountData;
-    let listCountResponse;
-    let listCountText;
-    let listCountSuccess = false;
-    
-    const listCountEndpoints = [
-      'https://v3.pcmintegrations.com/list/count',
-      'https://v3.pcmintegrations.com/listcount',
-      'https://v3.pcmintegrations.com/list-count'
+    // Try different greeting card order approaches
+    const greetingCardEndpoints = [
+      {
+        url: 'https://v3.pcmintegrations.com/order/greeting-card',
+        payload: {
+          recipients: recipients,
+          recordCount: recipientAddresses.length,
+          mailClass: "FirstClass",
+          greetingCard: order.production_combined_pdf_public_url
+        }
+      },
+      {
+        url: 'https://v3.pcmintegrations.com/order/greeting-card/with-recipients',
+        payload: {
+          recipients: recipients,
+          recordCount: recipientAddresses.length,
+          mailClass: "FirstClass",
+          greetingCard: order.production_combined_pdf_public_url
+        }
+      },
+      {
+        url: 'https://v3.pcmintegrations.com/order/greeting-card/with-list-count',
+        payload: {
+          recipients: recipients,
+          recordCount: recipientAddresses.length,
+          mailClass: "FirstClass",
+          greetingCard: order.production_combined_pdf_public_url,
+          listCountID: 0 // Try with 0 as dummy value
+        }
+      }
     ];
-    
-    for (const endpoint of listCountEndpoints) {
+
+    let pcmResponse;
+    let pcmResponseData;
+    let responseText;
+    let success = false;
+
+    for (const endpoint of greetingCardEndpoints) {
       try {
-        console.log(`=== TRYING LIST COUNT ENDPOINT ===`);
-        console.log(`URL: ${endpoint}`);
-        console.log('Request Packet:', JSON.stringify(listCountRequest, null, 2));
-        
-        listCountResponse = await fetch(endpoint, {
+        console.log(`=== TRYING GREETING CARD ENDPOINT ===`);
+        console.log('URL:', endpoint.url);
+        console.log('Request Packet:', JSON.stringify(endpoint.payload, null, 2));
+
+        pcmResponse = await fetch(endpoint.url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authData.token}`,
             'Accept': 'application/json'
           },
-          body: JSON.stringify(listCountRequest)
+          body: JSON.stringify(endpoint.payload)
         });
 
-        listCountText = await listCountResponse.text();
-        console.log(`Response Status: ${listCountResponse.status}`);
-        console.log(`Response Body:`, listCountText);
-        
-        if (listCountResponse.ok) {
+        responseText = await pcmResponse.text();
+        console.log('Response Status:', pcmResponse.status);
+        console.log('Response Headers:', Object.fromEntries(pcmResponse.headers.entries()));
+        console.log('Response Body:', responseText);
+
+        if (pcmResponse.ok) {
           try {
-            listCountData = listCountText ? JSON.parse(listCountText) : {};
-            if (listCountData.id) {
-              console.log('✅ List count created successfully:', listCountData);
-              listCountSuccess = true;
-              break;
-            }
+            pcmResponseData = responseText ? JSON.parse(responseText) : {};
+            console.log('✅ Greeting card order successful!');
+            success = true;
+            break;
           } catch (parseError) {
-            console.error(`Failed to parse list count response for ${endpoint}:`, parseError);
+            console.error('Failed to parse response:', parseError);
           }
+        } else {
+          console.log(`❌ Endpoint ${endpoint.url} failed with status ${pcmResponse.status}`);
         }
       } catch (error) {
-        console.error(`❌ Error trying endpoint ${endpoint}:`, error);
+        console.error(`❌ Error trying endpoint ${endpoint.url}:`, error);
       }
     }
 
-    if (!listCountSuccess) {
-      throw new Error(`All list count endpoints failed. Last response: ${listCountText || 'No response'}`);
+    if (!success) {
+      throw new Error(`All greeting card endpoints failed. Last response: ${responseText || 'No response'}`);
     }
-
-    // Step 3: Place greeting card order using the list count ID
-    console.log('=== PCM GREETING CARD ORDER ===');
-    
-    const pcmApiUrl = 'https://v3.pcmintegrations.com/order/greeting-card/with-list-count';
-    const pcmRequest = {
-      listCountID: listCountData.id, // Use the list count ID as a number
-      recordCount: recipientAddresses.length,
-      mailClass: "FirstClass",
-      greetingCard: order.production_combined_pdf_public_url
-    };
-
-    console.log('URL:', pcmApiUrl);
-    console.log('Request Packet:', JSON.stringify(pcmRequest, null, 2));
-
-    // Make actual call to PCM DirectMail API with bearer token
-    const pcmResponse = await fetch(pcmApiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authData.token}`, // Use bearer token from authentication
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(pcmRequest)
-    });
-
-    console.log('PCM API response status:', pcmResponse.status);
-    console.log('PCM API response headers:', Object.fromEntries(pcmResponse.headers.entries()));
-    
-    let pcmResponseData;
-    const responseText = await pcmResponse.text();
-    console.log('PCM API raw response text:', responseText);
     
     try {
       pcmResponseData = responseText ? JSON.parse(responseText) : {};
