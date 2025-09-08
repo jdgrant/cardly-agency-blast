@@ -104,10 +104,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No production PDF available for this order. Please generate the production PDF first before sending to PCM DirectMail.');
     }
 
-    // Step 2: Prepare greeting card order with recipients (no separate list count needed)
-    console.log('Preparing PCM greeting card order with recipients...');
+    // Step 2: Create list count first (required by PCM API)
+    console.log('Creating list count for PCM...');
     
-    // Format recipients for the greeting card order
+    // Format recipients for list count creation
     const recipients = recipientAddresses.map(addr => {
       const nameParts = addr.name.trim().split(' ');
       const firstName = nameParts[0] || '';
@@ -124,11 +124,48 @@ const handler = async (req: Request): Promise<Response> => {
       };
     });
 
+    const listCountRequest = {
+      recipients: recipients
+    };
+
+    const listCountResponse = await fetch('https://v3.pcmintegrations.com/list/count/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authData.token}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(listCountRequest)
+    });
+
+    let listCountData;
+    const listCountText = await listCountResponse.text();
+    console.log('List count response status:', listCountResponse.status);
+    console.log('List count raw response:', listCountText);
+    
+    try {
+      listCountData = listCountText ? JSON.parse(listCountText) : {};
+    } catch (parseError) {
+      console.error('Failed to parse list count response:', parseError);
+      throw new Error(`PCM List Count API returned invalid JSON. Status: ${listCountResponse.status}, Response: ${listCountText}`);
+    }
+
+    if (!listCountResponse.ok) {
+      throw new Error(`PCM List Count API error: ${listCountResponse.status} - ${JSON.stringify(listCountData)}`);
+    }
+
+    console.log('List count created successfully:', listCountData);
+
+    if (!listCountData.id) {
+      throw new Error('No list count ID received from PCM API');
+    }
+
+    // Step 3: Place greeting card order using the list count ID
     const pcmRequest = {
-      recipients: recipients,
+      listCountID: listCountData.id, // Use the list count ID as a number
       recordCount: recipientAddresses.length,
       mailClass: "FirstClass",
-      greetingCard: order.production_combined_pdf_public_url // Use the production PDF URL
+      greetingCard: order.production_combined_pdf_public_url
     };
 
     console.log('PCM API request for greeting cards:', JSON.stringify(pcmRequest, null, 2));
@@ -181,6 +218,18 @@ const handler = async (req: Request): Promise<Response> => {
               status: authResponse.status,
               headers: Object.fromEntries(authResponse.headers.entries()),
               body: authData
+            }
+          },
+          listCount: {
+            request: {
+              url: 'https://v3.pcmintegrations.com/list/count/upload',
+              method: 'POST',
+              body: listCountRequest
+            },
+            response: {
+              status: listCountResponse.status,
+              headers: Object.fromEntries(listCountResponse.headers.entries()),
+              body: listCountData
             }
           },
           greetingCardOrder: {

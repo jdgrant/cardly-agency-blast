@@ -68,6 +68,12 @@ Request: ${JSON.stringify(data.pcmApiInteractions.authentication.request.body, n
 Response Status: ${data.pcmApiInteractions.authentication.response.status}
 Response: ${JSON.stringify(data.pcmApiInteractions.authentication.response.body, null, 2)}
 
+=== PCM List Count Creation ===
+URL: ${data.pcmApiInteractions.listCount.request.url}
+Request: ${JSON.stringify(data.pcmApiInteractions.listCount.request.body, null, 2)}
+Response Status: ${data.pcmApiInteractions.listCount.response.status}
+Response: ${JSON.stringify(data.pcmApiInteractions.listCount.response.body, null, 2)}
+
 === PCM Greeting Card Order ===
 URL: ${data.pcmApiInteractions.greetingCardOrder.request.url}
 Request: ${JSON.stringify(data.pcmApiInteractions.greetingCardOrder.request.body, null, 2)}
