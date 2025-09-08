@@ -878,7 +878,9 @@ const JobDetail = () => {
           signatureSubmitted: !!order.signature_url,
           mailingListUploaded: !!order.csv_file_url,
           signaturePurchased: order.signature_purchased,
-          invoicePaid: order.invoice_paid
+          invoicePaid: order.invoice_paid,
+          frontPreviewUrl: order.front_preview_base64 ? `data:image/png;base64,${order.front_preview_base64}` : undefined,
+          insidePreviewUrl: order.inside_preview_base64 ? `data:image/png;base64,${order.inside_preview_base64}` : undefined
         }
       });
 
