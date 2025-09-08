@@ -508,6 +508,12 @@ const JobDetail = () => {
 
   const saveReturnAddress = async () => {
     try {
+      // Get admin session ID from sessionStorage (same as other admin operations)
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        throw new Error('Admin session not found. Please login as admin.');
+      }
+
       const { error } = await supabase
         .from('orders')
         .update({
