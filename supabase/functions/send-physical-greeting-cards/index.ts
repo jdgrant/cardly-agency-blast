@@ -34,10 +34,38 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get PCM API key
+    // Get PCM API credentials
     const pcmApiKey = Deno.env.get('PCM_API_KEY');
-    if (!pcmApiKey) {
-      throw new Error('PCM_API_KEY not found in environment variables');
+    const pcmApiSecret = Deno.env.get('PCM_API_SECRET');
+    
+    if (!pcmApiKey || !pcmApiSecret) {
+      throw new Error('PCM_API_KEY and PCM_API_SECRET must be configured in environment variables');
+    }
+
+    // Step 1: Authenticate with PCM to get bearer token
+    console.log('Authenticating with PCM DirectMail API...');
+    const authResponse = await fetch('https://v3.pcmintegrations.com/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        key: pcmApiKey,
+        secret: pcmApiSecret
+      })
+    });
+
+    if (!authResponse.ok) {
+      const authError = await authResponse.text();
+      throw new Error(`PCM authentication failed: ${authResponse.status} - ${authError}`);
+    }
+
+    const authData = await authResponse.json();
+    console.log('PCM authentication successful');
+
+    if (!authData.token) {
+      throw new Error('No bearer token received from PCM authentication');
     }
 
     // Fetch order details including card previews
@@ -51,10 +79,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Order not found: ${orderError?.message}`);
     }
 
-    // PCM DirectMail API request format based on their documentation
+    // Step 2: Place greeting card order using bearer token
     const pcmRequest = {
-      listCount: recipientAddresses.length,
-      productCode: "GC5X7", // 5x7 greeting card
+      mailClass: "FirstClassStandard", // Required field from PCM docs
       recipients: recipientAddresses.map(addr => ({
         firstName: addr.name.split(' ')[0] || '',
         lastName: addr.name.split(' ').slice(1).join(' ') || '',
@@ -64,23 +91,23 @@ const handler = async (req: Request): Promise<Response> => {
         state: addr.state,
         zipCode: addr.zip
       })),
-      cardDesign: {
-        frontImageUrl: order.front_preview_base64 ? `data:image/png;base64,${order.front_preview_base64.replace('data:image/png;base64,', '')}` : '',
-        insideMessage: order.custom_message || order.selected_message || '',
-        backMessage: '' // Optional back message
+      greetingCard: {
+        front: order.front_preview_base64 ? order.front_preview_base64.replace('data:image/png;base64,', '') : '',
+        inside: order.custom_message || order.selected_message || '',
+        back: '' // Optional back message
       }
     };
 
     console.log('PCM API request for greeting cards:', JSON.stringify(pcmRequest, null, 2));
 
-    // Make actual call to PCM DirectMail API
-    const pcmApiUrl = 'https://api.pcmintegrations.com/v1/directmail/greeting-cards';
+    // Step 3: Make actual call to PCM DirectMail API with bearer token
+    const pcmApiUrl = 'https://v3.pcmintegrations.com/order/greeting-card/with-list-count';
     
     const pcmResponse = await fetch(pcmApiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${pcmApiKey}`,
+        'Authorization': `Bearer ${authData.token}`, // Use bearer token from authentication
         'Accept': 'application/json'
       },
       body: JSON.stringify(pcmRequest)
