@@ -17,6 +17,8 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
 
   const handleSendPhysical = async () => {
     setIsLoading(true);
+    setApiResponse(""); // Clear previous responses
+    setDebugInfo(""); // Clear previous debug info
     
     try {
       // Get admin session ID from sessionStorage (same as JobDetail component)
@@ -53,7 +55,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
 
       // Set debug info showing what we're sending
       const apiUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/send-physical-greeting-cards`;
-      setDebugInfo(`API URL: ${apiUrl}\n\nRequest Payload:\n${JSON.stringify(requestPayload, null, 2)}`);
+      setDebugInfo(`API URL: ${apiUrl}\n\nRequest Payload:\n${JSON.stringify(requestPayload, null, 2)}\n\nClient Records Found: ${clientsData.length}\n\nAdmin Session: ${adminSessionId ? 'Valid' : 'Missing'}`);
 
       const { data, error } = await supabase.functions.invoke('send-physical-greeting-cards', {
         body: requestPayload
