@@ -310,6 +310,10 @@ export type Database = {
         Args: { order_readable_id: string; promo_code_param: string }
         Returns: boolean
       }
+      cancel_pcm_order: {
+        Args: { order_id_param: string; session_id_param: string }
+        Returns: Json
+      }
       clear_admin_session: {
         Args: { session_id: string }
         Returns: undefined

@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Trash2 } from "lucide-react";
 
 interface PhysicalMailingSenderProps {
   orderId: string;
@@ -12,6 +13,7 @@ interface PhysicalMailingSenderProps {
 
 export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [apiResponse, setApiResponse] = useState<string>("");
   const [pcmOrderId, setPcmOrderId] = useState<string>("");
   const [pcmBatchId, setPcmBatchId] = useState<string>("");
@@ -138,6 +140,54 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!pcmOrderId) return;
+    
+    setIsCancelling(true);
+    try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        throw new Error('Admin session not found. Please login as admin.');
+      }
+
+      const { data, error } = await supabase.functions.invoke('cancel-pcm-order', {
+        body: {
+          orderId,
+          pcmOrderId,
+          adminSessionId
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        // Clear local state
+        setPcmOrderId("");
+        setPcmBatchId("");
+        setApiResponse("");
+        
+        // Refresh PCM info from database
+        fetchPCMInfo();
+        
+        toast({
+          title: "Order Cancelled",
+          description: "PCM order has been cancelled successfully",
+        });
+      } else {
+        throw new Error(data.error || 'Failed to cancel order');
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel PCM order",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -147,18 +197,32 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Button 
-          onClick={handleSendPhysical}
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? "Sending..." : "Send Physical Greeting Cards"}
-        </Button>
+        {/* Only show send button if no PCM order ID exists */}
+        {!pcmOrderId && (
+          <Button 
+            onClick={handleSendPhysical}
+            disabled={isLoading}
+            className="w-full"
+          >
+            {isLoading ? "Sending..." : "Send Physical Greeting Cards"}
+          </Button>
+        )}
         
         {/* PCM Order Information */}
         {(pcmOrderId || pcmBatchId) && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-3">PCM DirectMail Information</h4>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 relative">
+            <div className="flex justify-between items-start mb-3">
+              <h4 className="font-medium text-blue-900">PCM DirectMail Information</h4>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCancelOrder}
+                disabled={isCancelling}
+                className="text-red-600 hover:text-red-800 hover:bg-red-50 h-8 w-8 p-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-sm text-muted-foreground">PCM Order ID</Label>
@@ -172,17 +236,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
           </div>
         )}
         
-        {apiResponse && (
-          <div className="space-y-2">
-            <h4 className="font-medium">API Response:</h4>
-            <Textarea
-              value={apiResponse}
-              readOnly
-              className="min-h-[200px] font-mono text-xs"
-              placeholder="API response will appear here..."
-            />
-          </div>
-        )}
+        {/* Hide debug API response */}
       </CardContent>
     </Card>
   );
