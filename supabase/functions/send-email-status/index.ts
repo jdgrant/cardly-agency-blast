@@ -1,11 +1,54 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
 import { generateStatusEmailHtml, StatusEmailData } from "../_shared/email-templates.ts";
 import { sendEmailViaMailgun, generateOrderManagementUrl } from "../_shared/mailgun-client.ts";
+
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Helper function to upload base64 image to storage and return public URL
+async function uploadBase64ToStorage(base64Data: string, orderId: string, type: 'front' | 'inside'): Promise<string | null> {
+  try {
+    // Remove data:image/png;base64, prefix if present
+    const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+    
+    // Convert base64 to binary
+    const binaryData = Uint8Array.from(atob(cleanBase64), c => c.charCodeAt(0));
+    
+    // Create filename
+    const fileName = `email-previews/${orderId}-${type}-preview.png`;
+    
+    // Upload to storage
+    const { data, error } = await supabase.storage
+      .from('holiday-cards')
+      .upload(fileName, binaryData, {
+        contentType: 'image/png',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error(`Failed to upload ${type} preview for order ${orderId}:`, error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('holiday-cards')
+      .getPublicUrl(fileName);
+    
+    return publicUrlData.publicUrl;
+    
+  } catch (error) {
+    console.error(`Error uploading ${type} preview for order ${orderId}:`, error);
+    return null;
+  }
+}
 
 interface StatusEmailRequest {
   orderId: string;
@@ -56,6 +99,22 @@ const handler = async (req: Request): Promise<Response> => {
       insidePreviewUrl: insidePreviewUrl ? "present" : "missing"
     });
 
+    // Convert base64 images to hosted URLs for email compatibility
+    let processedFrontPreviewUrl: string | undefined;
+    let processedInsidePreviewUrl: string | undefined;
+    
+    if (frontPreviewUrl && frontPreviewUrl.startsWith('data:image/')) {
+      processedFrontPreviewUrl = await uploadBase64ToStorage(frontPreviewUrl, orderId, 'front');
+    } else {
+      processedFrontPreviewUrl = frontPreviewUrl;
+    }
+    
+    if (insidePreviewUrl && insidePreviewUrl.startsWith('data:image/')) {
+      processedInsidePreviewUrl = await uploadBase64ToStorage(insidePreviewUrl, orderId, 'inside');
+    } else {
+      processedInsidePreviewUrl = insidePreviewUrl;
+    }
+
     // Generate order management URL
     const orderManagementUrl = generateOrderManagementUrl(orderId);
 
@@ -71,8 +130,8 @@ const handler = async (req: Request): Promise<Response> => {
       mailingListUploaded,
       signaturePurchased,
       invoicePaid,
-      frontPreviewUrl,
-      insidePreviewUrl
+      frontPreviewUrl: processedFrontPreviewUrl,
+      insidePreviewUrl: processedInsidePreviewUrl
     };
 
     // Generate HTML using shared template
