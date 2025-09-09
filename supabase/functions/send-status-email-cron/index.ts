@@ -10,6 +10,44 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Helper function to upload base64 image to storage and return public URL
+async function uploadBase64ToStorage(base64Data: string, orderId: string, type: 'front' | 'inside'): Promise<string | null> {
+  try {
+    // Remove data:image/png;base64, prefix if present
+    const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+    
+    // Convert base64 to binary
+    const binaryData = Uint8Array.from(atob(cleanBase64), c => c.charCodeAt(0));
+    
+    // Create filename
+    const fileName = `email-previews/${orderId}-${type}-preview.png`;
+    
+    // Upload to storage
+    const { data, error } = await supabase.storage
+      .from('holiday-cards')
+      .upload(fileName, binaryData, {
+        contentType: 'image/png',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error(`Failed to upload ${type} preview for order ${orderId}:`, error);
+      return null;
+    }
+    
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from('holiday-cards')
+      .getPublicUrl(fileName);
+    
+    return publicUrlData.publicUrl;
+    
+  } catch (error) {
+    console.error(`Error uploading ${type} preview for order ${orderId}:`, error);
+    return null;
+  }
+}
+
 interface CronEmailRequest {
   ordersToEmail?: string[]; // Optional array of order IDs to email
   statusFilter?: string; // Optional status filter (e.g., 'pending', 'approved')
@@ -97,6 +135,18 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
+        // Convert base64 images to hosted URLs for email compatibility
+        let frontPreviewUrl: string | undefined;
+        let insidePreviewUrl: string | undefined;
+        
+        if (order.front_preview_base64) {
+          frontPreviewUrl = await uploadBase64ToStorage(order.front_preview_base64, order.id, 'front');
+        }
+        
+        if (order.inside_preview_base64) {
+          insidePreviewUrl = await uploadBase64ToStorage(order.inside_preview_base64, order.id, 'inside');
+        }
+
         // Use the same send-email-status function to ensure identical emails
         const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email-status', {
           body: {
@@ -110,8 +160,8 @@ const handler = async (req: Request): Promise<Response> => {
             mailingListUploaded: !!order.csv_file_url,
             signaturePurchased: order.signature_purchased,
             invoicePaid: order.invoice_paid,
-            frontPreviewUrl: order.front_preview_base64 ? `data:image/png;base64,${order.front_preview_base64}` : undefined,
-            insidePreviewUrl: order.inside_preview_base64 ? `data:image/png;base64,${order.inside_preview_base64}` : undefined
+            frontPreviewUrl,
+            insidePreviewUrl
           }
         });
 
