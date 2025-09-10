@@ -138,7 +138,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
   const imgSrc = content.templatePreviewUrl || '';
   
   if (layout.isSpread) {
-    // Production format: front on left half, blank on right half
+    // Production format: front on left half, branding on right half
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -149,8 +149,11 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         body { font-family: Arial, sans-serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
         .front-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; overflow: hidden; }
-        .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; }
+        .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; position: relative; }
         .front-img { width: 100%; height: 100%; object-fit: cover; object-position: left center; display: block; }
+        .branding { position: absolute; bottom: 40px; right: 40px; text-align: center; }
+        .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
+        .branding-logo { height: 32px; width: auto; }
       </style>
     </head>
     <body>
@@ -158,7 +161,12 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         <div class="front-half">
           ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="Card front"/>` : ''}
         </div>
-        <div class="blank-half"></div>
+        <div class="blank-half">
+          <div class="branding">
+            <div class="branding-text">Sent with</div>
+            <img class="branding-logo" src="/lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png" alt="SendYourCards.io" />
+          </div>
+        </div>
       </div>
     </body>
     </html>`;
@@ -207,7 +215,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
   `;
 
   if (layout.isSpread) {
-    // Spread layout: left blank, right content  
+    // Spread layout: left blank, right content with branding
     return `<!DOCTYPE html>
     <html>
     <head>
@@ -218,6 +226,9 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
         .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; }
         .inside-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; position: relative; }
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: none; border-radius: 0; overflow: hidden; background: #ffffff; }
+        .branding { position: absolute; bottom: 40px; right: 40px; text-align: center; z-index: 10; }
+        .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
+        .branding-logo { height: 32px; width: auto; }
       </style>
     </head>
     <body>
@@ -231,6 +242,10 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
               </div>
               ${content.logoDataUrl ? `<div class="logoRow"><img class="logo" src="${content.logoDataUrl}" alt="Logo"/></div>` : ''}
               ${content.signatureDataUrl ? `<div class="sigRow"><img class="sig" src="${content.signatureDataUrl}" alt="Signature"/></div>` : ''}
+            </div>
+            <div class="branding">
+              <div class="branding-text">Sent with</div>
+              <img class="branding-logo" src="/lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png" alt="SendYourCards.io" />
             </div>
           </div>
         </div>
