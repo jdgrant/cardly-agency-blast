@@ -245,7 +245,7 @@ serve(async (req) => {
         logoDataUrl,
         signatureDataUrl,
         templatePreviewUrl: previewDataUrl,
-        brandingLogoDataUrl,
+        brandingLogoDataUrl: '', // Don't show branding on inside page in debug mode
       }, format, format === 'production');
       
       let debugHTML = '';
@@ -303,14 +303,14 @@ serve(async (req) => {
         useInsideUrl = true;
       } else {
         // For combined pages, always generate inside HTML regardless of URL preferences  
-        console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
-        insideHTML = generateUnifiedCardHTML('inside', {
-          message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
-          logoDataUrl,
-          signatureDataUrl,
-          templatePreviewUrl: previewDataUrl,
-          brandingLogoDataUrl,
-        }, format, format === 'production');
+      console.log('Combined PDF: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
+      insideHTML = generateUnifiedCardHTML('inside', {
+        message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
+        logoDataUrl,
+        signatureDataUrl,
+        templatePreviewUrl: previewDataUrl,
+        brandingLogoDataUrl: '', // Don't show branding on inside page
+      }, format, format === 'production');
       }
 
       if (includeFront && !includeInside) {
@@ -339,7 +339,7 @@ serve(async (req) => {
           logoDataUrl,
           signatureDataUrl,
           templatePreviewUrl: previewDataUrl,
-          brandingLogoDataUrl,
+          brandingLogoDataUrl: '', // Don't show branding on inside-only PDF
         }, format, format === 'production');
         
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
@@ -365,7 +365,7 @@ serve(async (req) => {
           logoDataUrl,
           signatureDataUrl,
           templatePreviewUrl: previewDataUrl,
-          brandingLogoDataUrl,
+          brandingLogoDataUrl: '', // Don't show branding on inside page of combined PDF
         }, format, format === 'production');
         
         // Make signature smaller for combined PDF
