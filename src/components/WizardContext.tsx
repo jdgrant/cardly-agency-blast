@@ -34,6 +34,7 @@ export interface WizardState {
   signature: File | null;
   signatureUrl: string | null; // Add this field
   signatureSelected: boolean;
+  signaturePurchased: boolean; // Add this field to track signature upsell
   mailingWindow: string | null;
   shippingWindow: string | null;
   postageOption: 'standard' | 'first-class';
@@ -82,6 +83,7 @@ const initialState: WizardState = {
   signature: null,
   signatureUrl: null, // Add this field
   signatureSelected: false,
+  signaturePurchased: false, // Add this field
   mailingWindow: null,
   shippingWindow: null,
   postageOption: 'standard',

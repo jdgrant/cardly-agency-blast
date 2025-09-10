@@ -45,8 +45,9 @@ const Step7ReviewAndSubmit = () => {
   const rushFeeTotal = rushFeePerCard * clientCount;
   
   const subtotal = clientCount * 1.91;
+  const signatureCost = state.signaturePurchased ? 50 : 0; // Add signature cost
   const discount = validatedPromoCode ? (subtotal * (validatedPromoCode.discount_percentage / 100)) : 0;
-  const total = subtotal + rushFeeTotal - discount;
+  const total = subtotal + rushFeeTotal + signatureCost - discount;
 
   const validatePromoCode = async (code: string) => {
     if (!code.trim()) {
@@ -154,7 +155,7 @@ const Step7ReviewAndSubmit = () => {
         p_template_id: state.selectedTemplate,
         p_tier_name: state.selectedTier?.name || 'Custom',
         p_card_quantity: Math.max(clientCount, 1),
-        p_regular_price: subtotal + rushFeeTotal,
+        p_regular_price: subtotal + rushFeeTotal + signatureCost,
         p_final_price: total,
         p_mailing_window: state.mailingWindow,
         p_postage_option: state.postageOption,
@@ -181,7 +182,7 @@ const Step7ReviewAndSubmit = () => {
         p_template_id: state.selectedTemplate,
         p_tier_name: state.selectedTier?.name || 'Custom',
         p_card_quantity: Math.max(clientCount, 1), // Ensure minimum of 1
-        p_regular_price: subtotal + rushFeeTotal,
+        p_regular_price: subtotal + rushFeeTotal + signatureCost,
         p_final_price: total,
         p_mailing_window: state.mailingWindow,
         p_postage_option: state.postageOption,
@@ -203,6 +204,14 @@ const Step7ReviewAndSubmit = () => {
         p_return_address_state: state.returnAddressState,
         p_return_address_zip: state.returnAddressZip,
       });
+
+      // Update signature purchase status after order creation if needed
+      if (state.signaturePurchased && orderId) {
+        await supabase
+          .from('orders')
+          .update({ signature_purchased: true })
+          .eq('id', orderId);
+      }
 
       if (orderError) {
         console.error('Order creation error:', orderError);
@@ -542,6 +551,13 @@ const Step7ReviewAndSubmit = () => {
                      <div className="flex justify-between">
                        <span>Rush Fee ({clientCount} × $0.25)</span>
                        <span>${rushFeeTotal.toFixed(2)}</span>
+                     </div>
+                   )}
+
+                   {signatureCost > 0 && (
+                     <div className="flex justify-between">
+                       <span>Professional Signature Service</span>
+                       <span>${signatureCost.toFixed(2)}</span>
                      </div>
                    )}
 

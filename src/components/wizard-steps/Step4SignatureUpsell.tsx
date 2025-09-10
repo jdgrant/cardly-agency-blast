@@ -14,7 +14,8 @@ const Step4SignatureUpsell = () => {
   const handleSignatureToggle = (checked: boolean) => {
     updateState({ 
       signature: checked ? (state.signature || null) : null,
-      signatureSelected: checked 
+      signatureSelected: checked,
+      signaturePurchased: checked // This tracks the upsell purchase
     });
   };
 
