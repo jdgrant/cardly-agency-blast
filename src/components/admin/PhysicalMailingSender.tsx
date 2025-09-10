@@ -46,7 +46,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
       });
 
       if (!error && orderData && orderData.length > 0) {
-        const order = orderData[0];
+        const order = orderData[0] as any; // Cast to any to handle dynamic properties
         setPcmOrderId(order.pcm_order_id || "");
         setPcmBatchId(order.pcm_batch_id ? order.pcm_batch_id.toString() : "");
       }

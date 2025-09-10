@@ -105,19 +105,22 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('No production PDF available for this order. Please generate the production PDF first before sending to PCM DirectMail.');
     }
 
-    // Calculate mailDate from mailing window (2 days before)
+    // Use stored drop_date from database instead of calculating
     let mailDate = '';
-    if (order.mailing_window) {
-      const year = new Date().getFullYear(); // Use current year
+    if (order.drop_date) {
+      mailDate = order.drop_date;
+      console.log(`Using stored drop date: ${mailDate}`);
+    } else {
+      console.log('No drop date found in order, using fallback calculation');
+      // Fallback calculation if drop_date is not set
+      const year = new Date().getFullYear();
       const mailingWindowMap: Record<string, string> = {
-        'dec-1-5': `${year}-11-29`,     // 2 days before Dec 1
-        'dec-6-10': `${year}-12-04`,    // 2 days before Dec 6  
-        'dec-11-15': `${year}-12-09`,   // 2 days before Dec 11
-        'dec-16-20': `${year}-12-14`    // 2 days before Dec 16
+        'dec-1-5': `${year}-11-29`,
+        'dec-6-10': `${year}-12-04`,
+        'dec-11-15': `${year}-12-09`,
+        'dec-16-20': `${year}-12-14`
       };
-      
       mailDate = mailingWindowMap[order.mailing_window] || '';
-      console.log(`Mailing window: ${order.mailing_window}, Calculated mailDate: ${mailDate}`);
     }
 
     // Step 2: Try direct greeting card order with recipients (skip list count)
