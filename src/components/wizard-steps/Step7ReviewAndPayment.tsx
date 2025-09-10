@@ -203,15 +203,8 @@ const Step7ReviewAndSubmit = () => {
         p_return_address_city: state.returnAddressCity,
         p_return_address_state: state.returnAddressState,
         p_return_address_zip: state.returnAddressZip,
+        p_signature_purchased: state.signaturePurchased, // Add the signature purchase parameter
       });
-
-      // Update signature purchase status after order creation if needed
-      if (state.signaturePurchased && orderId) {
-        await supabase
-          .from('orders')
-          .update({ signature_purchased: true })
-          .eq('id', orderId);
-      }
 
       if (orderError) {
         console.error('Order creation error:', orderError);
