@@ -100,11 +100,11 @@ const Step7ReviewAndSubmit = () => {
       console.log('Starting order submission...');
       
       // Upload files to storage if they exist
-      let logoUrl = null;
-      let signatureUrl = null;
+      let logoUrl = state.logoUrl; // Use existing storage path if available
+      let signatureUrl = state.signatureUrl; // Use existing storage path if available
       let csvFileUrl = null;
 
-      if (state.logo) {
+      if (state.logo && !logoUrl) {
         console.log('Uploading logo...');
         const logoFile = `logos/${Date.now()}-${state.logo.name}`;
         const { data: logoData, error: logoError } = await supabase.storage
@@ -119,7 +119,7 @@ const Step7ReviewAndSubmit = () => {
         console.log('Logo uploaded:', logoUrl);
       }
 
-      if (state.signature) {
+      if (state.signature && !signatureUrl) {
         console.log('Uploading signature...');
         const signatureFile = `signatures/${Date.now()}-${state.signature.name}`;
         const { data: signatureData, error: signatureError } = await supabase.storage

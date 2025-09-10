@@ -30,7 +30,9 @@ export interface WizardState {
   selectedMessage: string;
   customMessage: string;
   logo: File | null;
+  logoUrl: string | null; // Add this field
   signature: File | null;
+  signatureUrl: string | null; // Add this field
   signatureSelected: boolean;
   mailingWindow: string | null;
   shippingWindow: string | null;
@@ -76,7 +78,9 @@ const initialState: WizardState = {
   selectedMessage: '',
   customMessage: '',
   logo: null,
+  logoUrl: null, // Add this field
   signature: null,
+  signatureUrl: null, // Add this field
   signatureSelected: false,
   mailingWindow: null,
   shippingWindow: null,
@@ -133,7 +137,9 @@ const loadSessionFromStorage = (): WizardState | null => {
         return {
           ...sessionData,
           logo: null,
+          logoUrl: sessionData.logoUrl || null, // Preserve storage URLs
           signature: null,
+          signatureUrl: sessionData.signatureUrl || null, // Preserve storage URLs
           csvFile: null
         };
       }

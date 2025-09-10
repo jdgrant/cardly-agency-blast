@@ -346,12 +346,20 @@ const OrderManagement = () => {
       } : null);
       setShowSignatureUpload(false);
 
+      // Generate new previews with the updated signature
+      try {
+        await generatePreviews(order.id);
+      } catch (previewError) {
+        console.error('Failed to regenerate previews:', previewError);
+        // Don't fail the upload if preview generation fails
+      }
+
       // Refresh the entire order data to ensure we have the latest state
       await fetchOrderByHashedId();
 
       toast({
         title: "Success",
-        description: "Signature uploaded successfully and marked for review",
+        description: "Signature uploaded and previews updated successfully",
       });
 
     } catch (error) {
@@ -361,6 +369,27 @@ const OrderManagement = () => {
         description: `Failed to upload signature: ${error.message}`,
         variant: "destructive"
       });
+    }
+  };
+
+  const generatePreviews = async (orderId: string) => {
+    try {
+      console.log('Generating previews for order:', orderId);
+      
+      const { data, error } = await supabase.functions.invoke('generate-card-previews', {
+        body: { orderId, regenerate: true }
+      });
+      
+      if (error) {
+        console.error('Preview generation error:', error);
+        throw error;
+      }
+      
+      console.log('Previews generated successfully:', data);
+      return data;
+    } catch (error) {
+      console.error('Failed to generate previews:', error);
+      throw error;
     }
   };
 
@@ -389,12 +418,22 @@ const OrderManagement = () => {
 
       if (updateError) throw updateError;
 
-
+      // Update local state
       setOrder(prev => prev ? { ...prev, logo_url: fileName } : null);
+
+      // Generate new previews with the updated logo
+      try {
+        await generatePreviews(order.id);
+        // Refresh order data to get updated previews
+        await fetchOrderByHashedId();
+      } catch (previewError) {
+        console.error('Failed to regenerate previews:', previewError);
+        // Don't fail the upload if preview generation fails
+      }
 
       toast({
         title: "Success",
-        description: "Logo uploaded successfully",
+        description: "Logo uploaded and previews updated successfully",
       });
 
     } catch (error) {

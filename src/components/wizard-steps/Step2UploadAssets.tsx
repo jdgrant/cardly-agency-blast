@@ -4,29 +4,102 @@ import { useWizard } from '../WizardContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload, Image } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Step2UploadAssets = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      updateState({ logo: file });
-      const reader = new FileReader();
-      reader.onload = (e) => setLogoPreview(e.target?.result as string);
-      reader.readAsDataURL(file);
+      try {
+        // Upload logo to storage immediately
+        const fileName = `logos/${Date.now()}-${file.name}`;
+        const { data, error } = await supabase.storage
+          .from('holiday-cards')
+          .upload(fileName, file, { upsert: true });
+
+        if (error) {
+          console.error('Logo upload error:', error);
+          toast({
+            title: "Upload Failed",
+            description: "Failed to upload logo to storage",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Update wizard state with both file and storage path
+        updateState({ 
+          logo: file,
+          logoUrl: fileName // Store the storage path
+        });
+        
+        const reader = new FileReader();
+        reader.onload = (e) => setLogoPreview(e.target?.result as string);
+        reader.readAsDataURL(file);
+        
+        toast({
+          title: "Success",
+          description: "Logo uploaded successfully",
+        });
+      } catch (error) {
+        console.error('Logo upload error:', error);
+        toast({
+          title: "Upload Failed", 
+          description: "Failed to upload logo",
+          variant: "destructive"
+        });
+      }
     }
   };
 
-  const handleSignatureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      updateState({ signature: file });
-      const reader = new FileReader();
-      reader.onload = (e) => setSignaturePreview(e.target?.result as string);
-      reader.readAsDataURL(file);
+      try {
+        // Upload signature to storage immediately  
+        const fileName = `signatures/${Date.now()}-${file.name}`;
+        const { data, error } = await supabase.storage
+          .from('holiday-cards')
+          .upload(fileName, file, { upsert: true });
+
+        if (error) {
+          console.error('Signature upload error:', error);
+          toast({
+            title: "Upload Failed",
+            description: "Failed to upload signature to storage", 
+            variant: "destructive"
+          });
+          return;
+        }
+
+        // Update wizard state with both file and storage path
+        updateState({ 
+          signature: file,
+          signatureUrl: fileName // Store the storage path
+        });
+        
+        const reader = new FileReader();
+        reader.onload = (e) => setSignaturePreview(e.target?.result as string);
+        reader.readAsDataURL(file);
+        
+        toast({
+          title: "Success",
+          description: "Signature uploaded successfully",
+        });
+      } catch (error) {
+        console.error('Signature upload error:', error);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload signature",
+          variant: "destructive"
+        });
+      }
     }
   };
 
