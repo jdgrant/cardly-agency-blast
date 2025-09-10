@@ -268,7 +268,7 @@ serve(async (req) => {
       
       if (includeFront) {
         // Always generate clean HTML for front cards to avoid badges and ensure proper positioning
-        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight, brandingLogoDataUrl);
         form.append('files', new Blob([frontHTML], { type: 'text/html' }), 'front.html');
       }
       
@@ -315,7 +315,7 @@ serve(async (req) => {
 
       if (includeFront && !includeInside) {
         // Front-only generation always uses HTML mode for clean output
-        form.append('files', new File([buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight)], 'index.html', { type: 'text/html' }));
+        form.append('files', new File([buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight, brandingLogoDataUrl)], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
         form.append('paperHeight', paperHeight);
         form.append('marginTop', '0');
