@@ -325,6 +325,10 @@ export type Database = {
         Args: { session_id: string }
         Returns: undefined
       }
+      clear_order_signatures: {
+        Args: { order_id_param: string; session_id_param: string }
+        Returns: undefined
+      }
       create_order: {
         Args:
           | {

@@ -615,6 +615,42 @@ const JobDetail = () => {
     }
   };
 
+  const clearSignatures = async () => {
+    try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        toast({
+          title: "Authentication Required",
+          description: "Please login as admin to clear signatures.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .rpc('clear_order_signatures', {
+          session_id_param: adminSessionId,
+          order_id_param: order!.id
+        });
+
+      if (error) throw error;
+
+      await fetchOrderDetails();
+      
+      toast({
+        title: "Success",
+        description: "All signature data cleared successfully."
+      });
+    } catch (error: any) {
+      console.error('Error clearing signatures:', error);
+      toast({
+        title: "Error",
+        description: `Failed to clear signatures: ${error.message}`,
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSignatureUpload = async (signatureUrl: string) => {
     if (!order?.id) return;
 
@@ -2038,6 +2074,28 @@ const JobDetail = () => {
               }}
               onOrderUpdate={fetchOrderDetails}
             />
+
+            {/* Admin Testing Tools */}
+            {(order.signature_url || order.cropped_signature_url) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-orange-700">Testing Tools</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={clearSignatures}
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    Clear All Signatures
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-2">
+                    This will clear both original and cropped signatures for testing purposes.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Uploaded Files */}
             <Card>
