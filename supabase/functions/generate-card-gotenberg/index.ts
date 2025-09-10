@@ -119,8 +119,27 @@ serve(async (req) => {
     // Download and encode branding logo
     let brandingLogoDataUrl = '';
     try {
-      brandingLogoDataUrl = await downloadAndEncodeImageForGotenberg(supabase, 'lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png') || '';
-      console.log('Branding logo download result - length:', brandingLogoDataUrl?.length || 0);
+      // Build the correct URL for the branding logo
+      const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
+      let brandingLogoUrl = '/lovable-uploads/ce5b8b96-5181-4aa0-aff5-f557cb94b17e.png';
+      
+      if (base) {
+        brandingLogoUrl = `${base}${brandingLogoUrl}`;
+      } else {
+        // Fallback to full URL if no origin available
+        brandingLogoUrl = `https://sendyourcards.io${brandingLogoUrl}`;
+      }
+      
+      console.log('Fetching branding logo from:', brandingLogoUrl);
+      const brandingLogoResponse = await fetch(brandingLogoUrl);
+      if (brandingLogoResponse.ok) {
+        const brandingLogoBuffer = await brandingLogoResponse.arrayBuffer();
+        const brandingLogoBase64 = encodeBase64(new Uint8Array(brandingLogoBuffer));
+        brandingLogoDataUrl = `data:image/png;base64,${brandingLogoBase64}`;
+        console.log('Branding logo fetched successfully - length:', brandingLogoDataUrl?.length || 0);
+      } else {
+        console.log('Failed to fetch branding logo, status:', brandingLogoResponse.status);
+      }
     } catch (error) {
       console.error('Error downloading branding logo:', error);
     }
