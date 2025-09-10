@@ -156,6 +156,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
         .branding-logo { height: 32px; width: auto; margin: 4px 0; }
         .branding-logo-text { font-size: 14px; color: #333; font-family: Arial, sans-serif; font-weight: bold; }
+        .branding-logo-svg { width: 40px; height: 32px; margin: 4px 0; display: inline-block; }
       </style>
     </head>
     <body>
@@ -166,7 +167,13 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         <div class="blank-half">
           <div class="branding">
             <div class="branding-text">Sent with</div>
-            ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="SendYourCards Logo" />` : '<div style="font-size: 11px; color: #999;">Logo loading...</div>'}
+            <svg class="branding-logo-svg" viewBox="0 0 40 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="32" rx="6" fill="#FF6B6B"/>
+              <path d="M8 12L20 18L32 12V24C32 25.1 31.1 26 30 26H10C8.9 26 8 25.1 8 24V12Z" fill="white"/>
+              <path d="M8 10C8 8.9 8.9 8 10 8H30C31.1 8 32 8.9 32 10V12L20 18L8 12V10Z" fill="white"/>
+              <circle cx="18" cy="14" r="2" fill="#FF6B6B"/>
+              <path d="M18 12C18.6 12 19 12.4 19 13S18.6 14 18 14S17 13.6 17 13S17.4 12 18 12Z" fill="white"/>
+            </svg>
             <div class="branding-logo-text">SendYourCards.io</div>
           </div>
         </div>
@@ -233,6 +240,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
         .branding-logo { height: 32px; width: auto; margin: 4px 0; }
         .branding-logo-text { font-size: 14px; color: #333; font-family: Arial, sans-serif; font-weight: bold; }
+        .branding-logo-svg { width: 40px; height: 32px; margin: 4px 0; display: inline-block; }
       </style>
     </head>
     <body>
@@ -249,7 +257,13 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
             </div>
             <div class="branding">
               <div class="branding-text">Sent with</div>
-              ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="SendYourCards Logo" />` : '<div style="font-size: 11px; color: #999;">Logo loading...</div>'}
+              <svg class="branding-logo-svg" viewBox="0 0 40 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="40" height="32" rx="6" fill="#FF6B6B"/>
+                <path d="M8 12L20 18L32 12V24C32 25.1 31.1 26 30 26H10C8.9 26 8 25.1 8 24V12Z" fill="white"/>
+                <path d="M8 10C8 8.9 8.9 8 10 8H30C31.1 8 32 8.9 32 10V12L20 18L8 12V10Z" fill="white"/>
+                <circle cx="18" cy="14" r="2" fill="#FF6B6B"/>
+                <path d="M18 12C18.6 12 19 12.4 19 13S18.6 14 18 14S17 13.6 17 13S17.4 12 18 12Z" fill="white"/>
+              </svg>
               <div class="branding-logo-text">SendYourCards.io</div>
             </div>
           </div>

@@ -116,35 +116,9 @@ serve(async (req) => {
 
     console.log('Final encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
 
-    // Download and encode branding logo
+    // No longer need to download branding logo - using SVG instead
     let brandingLogoDataUrl = '';
-    try {
-      // Build the correct URL for the branding logo - use the latest uploaded image
-      const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
-      let brandingLogoUrl = '/lovable-uploads/d7d0bd48-15da-410a-bda1-d8be5ae7e55b.png';
-      
-      if (base) {
-        brandingLogoUrl = `${base}${brandingLogoUrl}`;
-      } else {
-        // Fallback to full URL if no origin available
-        brandingLogoUrl = `https://sendyourcards.io${brandingLogoUrl}`;
-      }
-      
-      console.log('Fetching branding logo from:', brandingLogoUrl);
-      const brandingLogoResponse = await fetch(brandingLogoUrl);
-      if (brandingLogoResponse.ok) {
-        const brandingLogoBuffer = await brandingLogoResponse.arrayBuffer();
-        const brandingLogoBase64 = encodeBase64(new Uint8Array(brandingLogoBuffer));
-        brandingLogoDataUrl = `data:image/png;base64,${brandingLogoBase64}`;
-        console.log('✅ Branding logo SUCCESS - length:', brandingLogoDataUrl?.length || 0);
-      } else {
-        console.log('❌ Failed to fetch branding logo, status:', brandingLogoResponse.status);
-      }
-    } catch (error) {
-      console.error('❌ Error downloading branding logo:', error);
-    }
-    
-    console.log('🔍 DEBUGGING - brandingLogoDataUrl empty?', !brandingLogoDataUrl, 'length:', brandingLogoDataUrl?.length || 0);
+    console.log('✅ Using embedded SVG logo instead of downloading image');
 
     // Inline template preview image for reliable rendering in Gotenberg
     let previewDataUrl = '';
