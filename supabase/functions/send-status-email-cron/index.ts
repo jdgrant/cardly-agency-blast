@@ -157,7 +157,7 @@ const handler = async (req: Request): Promise<Response> => {
             contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
             readableOrderId: order.readable_order_id || order.id.slice(0, 8),
             logoUploaded: !!order.logo_url,
-            signatureSubmitted: !!order.signature_url,
+            signatureSubmitted: !!order.signature_url || !!order.cropped_signature_url,
             mailingListUploaded: !!order.csv_file_url,
             signaturePurchased: order.signature_purchased,
             invoicePaid: order.invoice_paid,
