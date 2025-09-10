@@ -245,7 +245,7 @@ const OrderManagement = () => {
 
   const canProceedToPayment = () => {
     const baseRequirements = order?.logo_url && order?.csv_file_url;
-    const signatureRequirement = order?.signature_purchased === true ? (order?.signature_url && order?.cropped_signature_url) : true;
+    const signatureRequirement = order?.signature_purchased === true ? (order?.signature_url || order?.cropped_signature_url) : true;
     return baseRequirements && signatureRequirement;
   };
 
@@ -329,7 +329,7 @@ const OrderManagement = () => {
       const { data, error: updateError } = await supabase
         .rpc('update_order_file_for_customer', {
           short_id: shortId,
-          file_type: 'cropped_signature',
+          file_type: 'signature',
           file_url: signatureUrl
         });
 
@@ -341,7 +341,7 @@ const OrderManagement = () => {
       console.log('Order update successful:', data);
       setOrder(prev => prev ? { 
         ...prev, 
-        cropped_signature_url: signatureUrl,
+        signature_url: signatureUrl,
         signature_needs_review: true
       } : null);
       setShowSignatureUpload(false);
