@@ -67,7 +67,8 @@ const handler = async (req: Request): Promise<Response> => {
     let query = supabase
       .from('orders')
       .select('*')
-      .not('contact_email', 'is', null);
+      .not('contact_email', 'is', null)
+      .neq('invoice_paid', true); // Skip orders with paid invoices for cron emails
 
     // Apply filters if provided
     if (requestData.ordersToEmail && requestData.ordersToEmail.length > 0) {
