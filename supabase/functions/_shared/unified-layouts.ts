@@ -166,7 +166,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         <div class="blank-half">
           <div class="branding">
             <div class="branding-text">Sent with</div>
-            ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="Logo" />` : ''}
+            ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="SendYourCards Logo" />` : '<div style="font-size: 11px; color: #999;">Logo loading...</div>'}
             <div class="branding-logo-text">SendYourCards.io</div>
           </div>
         </div>
@@ -249,7 +249,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
             </div>
             <div class="branding">
               <div class="branding-text">Sent with</div>
-              ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="Logo" />` : ''}
+              ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="SendYourCards Logo" />` : '<div style="font-size: 11px; color: #999;">Logo loading...</div>'}
               <div class="branding-logo-text">SendYourCards.io</div>
             </div>
           </div>

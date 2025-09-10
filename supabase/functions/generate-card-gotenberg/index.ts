@@ -119,9 +119,9 @@ serve(async (req) => {
     // Download and encode branding logo
     let brandingLogoDataUrl = '';
     try {
-      // Build the correct URL for the branding logo
+      // Build the correct URL for the branding logo - use the latest uploaded image
       const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
-      let brandingLogoUrl = '/lovable-uploads/21ef4ae9-23db-46df-bbf9-3e9afa7f5815.png';
+      let brandingLogoUrl = '/lovable-uploads/d7d0bd48-15da-410a-bda1-d8be5ae7e55b.png';
       
       if (base) {
         brandingLogoUrl = `${base}${brandingLogoUrl}`;
@@ -136,13 +136,15 @@ serve(async (req) => {
         const brandingLogoBuffer = await brandingLogoResponse.arrayBuffer();
         const brandingLogoBase64 = encodeBase64(new Uint8Array(brandingLogoBuffer));
         brandingLogoDataUrl = `data:image/png;base64,${brandingLogoBase64}`;
-        console.log('Branding logo fetched successfully - length:', brandingLogoDataUrl?.length || 0);
+        console.log('✅ Branding logo SUCCESS - length:', brandingLogoDataUrl?.length || 0);
       } else {
-        console.log('Failed to fetch branding logo, status:', brandingLogoResponse.status);
+        console.log('❌ Failed to fetch branding logo, status:', brandingLogoResponse.status);
       }
     } catch (error) {
-      console.error('Error downloading branding logo:', error);
+      console.error('❌ Error downloading branding logo:', error);
     }
+    
+    console.log('🔍 DEBUGGING - brandingLogoDataUrl empty?', !brandingLogoDataUrl, 'length:', brandingLogoDataUrl?.length || 0);
 
     // Inline template preview image for reliable rendering in Gotenberg
     let previewDataUrl = '';
