@@ -116,9 +116,24 @@ serve(async (req) => {
 
     console.log('Final encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
 
-    // No longer need to download branding logo - using SVG instead
+    // Download and encode branding logo from SendYourCards.io
     let brandingLogoDataUrl = '';
-    console.log('✅ Using embedded SVG logo instead of downloading image');
+    try {
+      const brandingLogoUrl = 'https://sendyourcards.io/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png';
+      
+      console.log('Fetching SendYourCards.io logo from:', brandingLogoUrl);
+      const brandingLogoResponse = await fetch(brandingLogoUrl);
+      if (brandingLogoResponse.ok) {
+        const brandingLogoBuffer = await brandingLogoResponse.arrayBuffer();
+        const brandingLogoBase64 = encodeBase64(new Uint8Array(brandingLogoBuffer));
+        brandingLogoDataUrl = `data:image/png;base64,${brandingLogoBase64}`;
+        console.log('✅ SendYourCards.io logo SUCCESS - length:', brandingLogoDataUrl?.length || 0);
+      } else {
+        console.log('❌ Failed to fetch SendYourCards.io logo, status:', brandingLogoResponse.status);
+      }
+    } catch (error) {
+      console.error('❌ Error downloading SendYourCards.io logo:', error);
+    }
 
     // Inline template preview image for reliable rendering in Gotenberg
     let previewDataUrl = '';
