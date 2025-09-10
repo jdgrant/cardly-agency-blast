@@ -248,10 +248,10 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
               ${content.logoDataUrl ? `<div class="logoRow"><img class="logo" src="${content.logoDataUrl}" alt="Logo"/></div>` : ''}
               ${content.signatureDataUrl ? `<div class="sigRow"><img class="sig" src="${content.signatureDataUrl}" alt="Signature"/></div>` : ''}
             </div>
-            <div class="branding">
+            ${content.brandingLogoDataUrl ? `<div class="branding">
               <div class="branding-text">Sent with</div>
-              ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="SendYourCards.io Logo" />` : '<div class="branding-fallback">SendYourCards.io</div>'}
-            </div>
+              <img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="SendYourCards.io Logo" />
+            </div>` : ''}
           </div>
         </div>
       </div>
