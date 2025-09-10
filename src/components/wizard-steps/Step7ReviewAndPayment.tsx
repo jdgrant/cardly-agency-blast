@@ -244,8 +244,8 @@ const Step7ReviewAndSubmit = () => {
         console.log('Client records inserted successfully');
       }
 
-      // Generate shortId directly from orderId (last 8 characters without hyphens)
-      const shortId = orderId.toString().replace(/-/g, '').slice(-8);
+      // Generate shortId from first 8 characters of UUID (to match database function)
+      const shortId = orderId.toString().replace(/-/g, '').substring(0, 8);
 
       toast({
         title: "Order Submitted Successfully!",
