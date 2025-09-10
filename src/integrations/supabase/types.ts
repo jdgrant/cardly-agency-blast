@@ -556,7 +556,6 @@ export type Database = {
           contact_lastname: string
           contact_phone: string
           created_at: string
-          cropped_signature_url: string
           csv_file_url: string
           custom_message: string
           early_bird_discount: boolean
@@ -564,28 +563,16 @@ export type Database = {
           front_preview_base64: string
           id: string
           inside_preview_base64: string
-          invoice_paid: boolean
           logo_url: string
           mailing_window: string
-          pcm_batch_id: number
-          pcm_order_id: string
           postage_cost: number
           postage_option: string
           production_combined_pdf_generated_at: string
           production_combined_pdf_path: string
           production_combined_pdf_public_url: string
-          promo_code: string
           readable_order_id: string
           regular_price: number
-          return_address_city: string
-          return_address_line1: string
-          return_address_line2: string
-          return_address_name: string
-          return_address_state: string
-          return_address_zip: string
           selected_message: string
-          signature_needs_review: boolean
-          signature_purchased: boolean
           signature_url: string
           status: string
           template_id: string
