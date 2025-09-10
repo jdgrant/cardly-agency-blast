@@ -933,7 +933,7 @@ const Admin = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -954,18 +954,6 @@ const Admin = () => {
                   <p className="text-2xl font-bold text-orange-600">{pendingOrders}</p>
                 </div>
                 <Calendar className="w-8 h-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-2xl font-bold text-green-600">{approvedOrders}</p>
-                </div>
-                <Users className="w-8 h-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
