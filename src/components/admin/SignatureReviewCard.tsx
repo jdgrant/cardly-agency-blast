@@ -25,14 +25,15 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
   const { toast } = useToast();
 
   const downloadSignature = async () => {
-    if (!order.signature_url) return;
+    const signatureUrlToUse = order.signature_url || order.cropped_signature_url;
+    if (!signatureUrlToUse) return;
 
     try {
       // Check if signature_url is a full URL or just a file path
-      let actualPath = order.signature_url;
-      if (order.signature_url.startsWith('https://')) {
+      let actualPath = signatureUrlToUse;
+      if (signatureUrlToUse.startsWith('https://')) {
         // Extract file path from full URL
-        const urlParts = order.signature_url.split('/');
+        const urlParts = signatureUrlToUse.split('/');
         const bucketIndex = urlParts.findIndex(part => part === 'holiday-cards');
         if (bucketIndex !== -1 && bucketIndex < urlParts.length - 1) {
           actualPath = urlParts.slice(bucketIndex + 1).join('/');
@@ -163,7 +164,7 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
     }
   };
 
-  if (!order.signature_url) {
+  if (!order.signature_url && !order.cropped_signature_url) {
     return (
       <Card>
         <CardHeader>
@@ -217,9 +218,10 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
                 variant="outline"
                 onClick={downloadSignature}
                 className="w-full justify-start"
+                disabled={!order.signature_url && !order.cropped_signature_url}
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download Original Signature
+                {order.signature_url ? 'Download Original Signature' : 'Download Signature'}
               </Button>
               
                <Button

@@ -2097,18 +2097,18 @@ const JobDetail = () => {
                   </Button>
                 )}
                 
-                {order.signature_url && (
+                {(order.signature_url || order.cropped_signature_url) && (
                   <Button
                     variant="outline"
                     className="w-full justify-start"
-                    onClick={() => downloadFile(order.signature_url!, 'signature')}
+                    onClick={() => downloadFile(order.signature_url || order.cropped_signature_url!, 'signature')}
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Download Signature
                   </Button>
                 )}
 
-                {!order.signature_url && (
+                {!(order.signature_url || order.cropped_signature_url) && (
                   <Button
                     variant="outline"
                     className="w-full justify-start"

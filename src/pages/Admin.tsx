@@ -861,7 +861,7 @@ const Admin = () => {
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
   const approvedOrders = orders.filter(o => o.status === 'approved').length;
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.final_price), 0);
-  const signaturesForReview = orders.filter(o => o.signature_url && !o.cropped_signature_url).length;
+  const signaturesForReview = orders.filter(o => o.signature_needs_review === true).length;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -984,14 +984,14 @@ const Admin = () => {
         </div>
 
         {/* Signatures for Review Section */}
-        {orders.filter(o => o.signature_url && !o.cropped_signature_url).length > 0 && (
+        {orders.filter(o => o.signature_needs_review === true).length > 0 && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ImageIcon className="w-5 h-5 text-purple-600" />
                 <span>Signatures for Review</span>
                 <Badge variant="secondary" className="ml-2">
-                  {orders.filter(o => o.signature_url && !o.cropped_signature_url).length}
+                  {orders.filter(o => o.signature_needs_review === true).length}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -1013,7 +1013,7 @@ const Admin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {orders.filter(o => o.signature_url && !o.cropped_signature_url).map((order) => (
+                     {orders.filter(o => o.signature_needs_review === true).map((order) => (
                        <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
                         <TableCell className="font-mono text-xs">
                           {order.id.slice(0, 8)}...
