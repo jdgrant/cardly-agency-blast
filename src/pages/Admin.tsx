@@ -53,6 +53,7 @@ interface Order {
   status: string;
   logo_url: string | null;
   signature_url: string | null;
+  cropped_signature_url: string | null;
   csv_file_url: string | null;
   created_at: string;
   updated_at: string;
@@ -860,6 +861,7 @@ const Admin = () => {
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
   const approvedOrders = orders.filter(o => o.status === 'approved').length;
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.final_price), 0);
+  const signaturesForReview = orders.filter(o => o.signature_url && !o.cropped_signature_url).length;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -931,7 +933,7 @@ const Admin = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -972,6 +974,18 @@ const Admin = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
+                  <p className="text-sm font-medium text-gray-600">Signatures for Review</p>
+                  <p className="text-2xl font-bold text-purple-600">{signaturesForReview}</p>
+                </div>
+                <ImageIcon className="w-8 h-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
                   <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                   <p className="text-2xl font-bold text-green-600">${totalRevenue.toFixed(2)}</p>
                 </div>
@@ -980,6 +994,99 @@ const Admin = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Signatures for Review Section */}
+        {orders.filter(o => o.signature_url && !o.cropped_signature_url).length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <ImageIcon className="w-5 h-5 text-purple-600" />
+                <span>Signatures for Review</span>
+                <Badge variant="secondary" className="ml-2">
+                  {orders.filter(o => o.signature_url && !o.cropped_signature_url).length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Customer Name</TableHead>
+                      <TableHead>Cards</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Sig Purchase</TableHead>
+                      <TableHead>Sig Submit</TableHead>
+                      <TableHead>Cropped Sig</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                     {orders.filter(o => o.signature_url && !o.cropped_signature_url).map((order) => (
+                       <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
+                        <TableCell className="font-mono text-xs">
+                          {order.id.slice(0, 8)}...
+                        </TableCell>
+                        <TableCell>{getCustomerName(order)}</TableCell>
+                        <TableCell>{order.card_quantity}</TableCell>
+                        <TableCell className="font-semibold">
+                          ${Number(order.final_price).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                            <Badge 
+                              variant={
+                                order.status === 'pending' ? 'secondary' :
+                                order.status === 'approved' ? 'default' :
+                                order.status === 'send_to_print' ? 'outline' :
+                                order.status === 'sent' ? 'default' :
+                                order.status === 'blocked' ? 'destructive' :
+                                'outline'
+                              }
+                            >
+                              {order.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox 
+                            checked={order.signature_purchased || false}
+                            onCheckedChange={(checked) => updateOrderStatusField(order.id, 'signature_purchased', !!checked)}
+                          />
+                        </TableCell>
+                         <TableCell onClick={(e) => e.stopPropagation()}>
+                           <Checkbox 
+                             checked={!!order.signature_url}
+                             disabled={true}
+                           />
+                         </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox 
+                            checked={!!order.cropped_signature_url}
+                            disabled={true}
+                          />
+                        </TableCell>
+                         <TableCell className="text-xs">
+                           {new Date(order.created_at).toLocaleDateString()}
+                         </TableCell>
+                         <TableCell onClick={(e) => e.stopPropagation()}>
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => handleViewOrder(order)}
+                           >
+                             View Details
+                           </Button>
+                         </TableCell>
+                       </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {activeTab === 'orders' && (
           /* Orders Table */
