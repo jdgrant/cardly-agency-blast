@@ -121,7 +121,7 @@ serve(async (req) => {
     try {
       // Build the correct URL for the branding logo
       const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
-      let brandingLogoUrl = '/lovable-uploads/ce5b8b96-5181-4aa0-aff5-f557cb94b17e.png';
+      let brandingLogoUrl = '/lovable-uploads/21ef4ae9-23db-46df-bbf9-3e9afa7f5815.png';
       
       if (base) {
         brandingLogoUrl = `${base}${brandingLogoUrl}`;
