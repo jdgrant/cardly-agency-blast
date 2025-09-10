@@ -176,6 +176,7 @@ const Step7ReviewAndSubmit = () => {
         p_return_address_city: state.returnAddressCity,
         p_return_address_state: state.returnAddressState,
         p_return_address_zip: state.returnAddressZip,
+        p_signature_purchased: state.signaturePurchased,
       });
       
       const { data: orderId, error: orderError } = await supabase.rpc('create_order', {
