@@ -16,6 +16,7 @@ interface CardContent {
   logoDataUrl?: string | null;
   signatureDataUrl?: string | null;
   templatePreviewUrl?: string;
+  brandingLogoDataUrl?: string | null;
 }
 
 const LAYOUT_CONFIGS = {
@@ -153,6 +154,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         .front-img { width: 100%; height: 100%; object-fit: cover; object-position: left center; display: block; }
         .branding { position: absolute; bottom: 12.5%; left: 50%; transform: translateX(-50%); text-align: center; }
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
+        .branding-logo { height: 32px; width: auto; margin: 4px 0; }
         .branding-logo-text { font-size: 14px; color: #333; font-family: Arial, sans-serif; font-weight: bold; }
       </style>
     </head>
@@ -164,6 +166,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         <div class="blank-half">
           <div class="branding">
             <div class="branding-text">Sent with</div>
+            ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="Logo" />` : ''}
             <div class="branding-logo-text">SendYourCards.io</div>
           </div>
         </div>
@@ -228,6 +231,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: none; border-radius: 0; overflow: hidden; background: #ffffff; }
         .branding { position: absolute; bottom: 12.5%; left: 50%; transform: translateX(-50%); text-align: center; z-index: 10; }
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
+        .branding-logo { height: 32px; width: auto; margin: 4px 0; }
         .branding-logo-text { font-size: 14px; color: #333; font-family: Arial, sans-serif; font-weight: bold; }
       </style>
     </head>
@@ -245,6 +249,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
             </div>
             <div class="branding">
               <div class="branding-text">Sent with</div>
+              ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="Logo" />` : ''}
               <div class="branding-logo-text">SendYourCards.io</div>
             </div>
           </div>
@@ -293,6 +298,7 @@ export function generateInsideCardHTML(
     message,
     logoDataUrl,
     signatureDataUrl,
+    brandingLogoDataUrl: null, // Legacy function doesn't have branding logo
   }, format, isSpread);
 }
 

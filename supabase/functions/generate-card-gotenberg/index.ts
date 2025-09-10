@@ -6,13 +6,14 @@ import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
 import { generateUnifiedCardHTML } from "../_shared/unified-layouts.ts";
 import { downloadAndEncodeImageForGotenberg } from "../_shared/image-utils.ts";
 
-function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7') {
+function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7', brandingLogoDataUrl = '') {
   const imgSrc = previewDataUrl || template.preview_url || '';
   const isSpread = format === 'production';
   
   return generateUnifiedCardHTML('front', {
     message: '', // Front cards don't have messages
     templatePreviewUrl: imgSrc,
+    brandingLogoDataUrl,
   }, format, isSpread);
 }
 
@@ -114,6 +115,15 @@ serve(async (req) => {
     }
 
     console.log('Final encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
+
+    // Download and encode branding logo
+    let brandingLogoDataUrl = '';
+    try {
+      brandingLogoDataUrl = await downloadAndEncodeImageForGotenberg(supabase, 'lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png') || '';
+      console.log('Branding logo download result - length:', brandingLogoDataUrl?.length || 0);
+    } catch (error) {
+      console.error('Error downloading branding logo:', error);
+    }
 
     // Inline template preview image for reliable rendering in Gotenberg
     let previewDataUrl = '';
@@ -218,13 +228,14 @@ serve(async (req) => {
       gotenbergResp = await fetch(gotenbergUrl, { method: 'POST', headers, body: form as any });
     } else if (mode === 'debug') {
       // Return the HTML content for debugging
-      const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+      const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight, brandingLogoDataUrl);
       // Generate HTML content for inside card using unified layout
       const insideHTML = generateUnifiedCardHTML('inside', {
         message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
         logoDataUrl,
         signatureDataUrl,
         templatePreviewUrl: previewDataUrl,
+        brandingLogoDataUrl,
       }, format, format === 'production');
       
       let debugHTML = '';
@@ -288,6 +299,7 @@ serve(async (req) => {
           logoDataUrl,
           signatureDataUrl,
           templatePreviewUrl: previewDataUrl,
+          brandingLogoDataUrl,
         }, format, format === 'production');
       }
 
@@ -317,6 +329,7 @@ serve(async (req) => {
           logoDataUrl,
           signatureDataUrl,
           templatePreviewUrl: previewDataUrl,
+          brandingLogoDataUrl,
         }, format, format === 'production');
         
         form.append('files', new File([insideHTML], 'index.html', { type: 'text/html' }));
@@ -336,12 +349,13 @@ serve(async (req) => {
         // Combined PDF: Generate as single HTML document with both pages
         console.log('Combined PDF Inside page: Signature data available:', !!signatureDataUrl, 'Logo data available:', !!logoDataUrl);
         
-        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight);
+        const frontHTML = buildFrontHTML(template, previewDataUrl, format, paperWidth, paperHeight, brandingLogoDataUrl);
         let insideHTML = generateUnifiedCardHTML('inside', {
           message: order.custom_message || order.selected_message || 'Warmest wishes for a joyful and restful holiday season.',
           logoDataUrl,
           signatureDataUrl,
           templatePreviewUrl: previewDataUrl,
+          brandingLogoDataUrl,
         }, format, format === 'production');
         
         // Make signature smaller for combined PDF
