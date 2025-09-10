@@ -110,6 +110,7 @@ export type Database = {
           cropped_signature_url: string | null
           csv_file_url: string | null
           custom_message: string | null
+          drop_date: string | null
           early_bird_discount: boolean | null
           final_price: number
           front_preview_base64: string | null
@@ -156,6 +157,7 @@ export type Database = {
           cropped_signature_url?: string | null
           csv_file_url?: string | null
           custom_message?: string | null
+          drop_date?: string | null
           early_bird_discount?: boolean | null
           final_price: number
           front_preview_base64?: string | null
@@ -202,6 +204,7 @@ export type Database = {
           cropped_signature_url?: string | null
           csv_file_url?: string | null
           custom_message?: string | null
+          drop_date?: string | null
           early_bird_discount?: boolean | null
           final_price?: number
           front_preview_base64?: string | null
@@ -310,6 +313,10 @@ export type Database = {
         Args: { order_readable_id: string; promo_code_param: string }
         Returns: boolean
       }
+      calculate_drop_date: {
+        Args: { mailing_window_param: string; year_param?: number }
+        Returns: string
+      }
       cancel_pcm_order: {
         Args: { order_id_param: string; session_id_param: string }
         Returns: Json
@@ -416,6 +423,7 @@ export type Database = {
           cropped_signature_url: string | null
           csv_file_url: string | null
           custom_message: string | null
+          drop_date: string | null
           early_bird_discount: boolean | null
           final_price: number
           front_preview_base64: string | null
@@ -485,6 +493,7 @@ export type Database = {
           cropped_signature_url: string | null
           csv_file_url: string | null
           custom_message: string | null
+          drop_date: string | null
           early_bird_discount: boolean | null
           final_price: number
           front_preview_base64: string | null
@@ -707,6 +716,14 @@ export type Database = {
       update_order_client_count_for_customer: {
         Args: { new_client_count: number; short_id: string }
         Returns: boolean
+      }
+      update_order_drop_date_admin: {
+        Args: {
+          new_drop_date: string
+          order_id_param: string
+          session_id_param: string
+        }
+        Returns: undefined
       }
       update_order_file_for_customer: {
         Args: { file_type: string; file_url: string; short_id: string }

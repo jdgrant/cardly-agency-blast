@@ -86,6 +86,8 @@ interface Order {
   // PCM DirectMail information
   pcm_order_id?: string | null;
   pcm_batch_id?: number | null;
+  // Drop date
+  drop_date?: string | null;
 }
 
 interface OrderWithId extends Order {
@@ -140,6 +142,10 @@ const JobDetail = () => {
     state: '',
     zip: ''
   });
+
+  // Drop date editing state
+  const [isEditingDropDate, setIsEditingDropDate] = useState(false);
+  const [editingDropDate, setEditingDropDate] = useState('');
 
   useEffect(() => {
     if (orderId) {
@@ -546,6 +552,64 @@ const JobDetail = () => {
       toast({
         title: "Update Failed",
         description: "Failed to update return address",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startEditingDropDate = () => {
+    if (order) {
+      setEditingDropDate(order.drop_date || '');
+      setIsEditingDropDate(true);
+    }
+  };
+
+  const cancelEditingDropDate = () => {
+    setIsEditingDropDate(false);
+    setEditingDropDate('');
+  };
+
+  const saveDropDate = async () => {
+    try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        toast({
+          title: "Authentication Required",
+          description: "Please login as admin to update drop date.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error } = await supabase.rpc('update_order_drop_date_admin', {
+        session_id_param: adminSessionId,
+        order_id_param: order!.id,
+        new_drop_date: editingDropDate || null
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      if (order) {
+        setOrder({
+          ...order,
+          drop_date: editingDropDate
+        });
+      }
+
+      // Refresh order data from database to ensure persistence
+      await fetchOrderDetails();
+
+      setIsEditingDropDate(false);
+      toast({
+        title: "Drop Date Updated",
+        description: "Drop date has been updated successfully",
+      });
+    } catch (error: any) {
+      console.error('Error updating drop date:', error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update drop date",
         variant: "destructive"
       });
     }
@@ -1132,6 +1196,34 @@ const JobDetail = () => {
                   <div>
                     <p className="text-sm text-gray-600">Mailing Window</p>
                     <p className="font-medium">{formatMailingWindow(order.mailing_window)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Drop Date</p>
+                    {isEditingDropDate ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="date"
+                          value={editingDropDate}
+                          onChange={(e) => setEditingDropDate(e.target.value)}
+                          className="w-32 h-7 text-sm"
+                        />
+                        <Button size="sm" onClick={saveDropDate} className="h-7 px-2">
+                          <Save className="w-3 h-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={cancelEditingDropDate} className="h-7 px-2">
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">
+                          {order.drop_date ? new Date(order.drop_date).toLocaleDateString() : 'Not set'}
+                        </p>
+                        <Button size="sm" variant="ghost" onClick={startEditingDropDate} className="h-6 px-1">
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Postage Option</p>
