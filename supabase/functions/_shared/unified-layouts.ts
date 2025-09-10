@@ -165,7 +165,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         <div class="blank-half">
           <div class="branding">
             <div class="branding-text">Sent with</div>
-            <img class="branding-logo" src="https://wsibvneidsmtsazfbmgc.supabase.co/storage/v1/object/public/holiday-cards/lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png" alt="Logo" />
+            <img class="branding-logo" src="https://sendyourcards.io/logo.png" alt="Logo" />
             <div class="branding-logo-text">SendYourCards.io</div>
           </div>
         </div>
@@ -248,7 +248,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
             </div>
             <div class="branding">
               <div class="branding-text">Sent with</div>
-              <img class="branding-logo" src="https://wsibvneidsmtsazfbmgc.supabase.co/storage/v1/object/public/holiday-cards/lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png" alt="Logo" />
+              <img class="branding-logo" src="https://sendyourcards.io/logo.png" alt="Logo" />
               <div class="branding-logo-text">SendYourCards.io</div>
             </div>
           </div>
