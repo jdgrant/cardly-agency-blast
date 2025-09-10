@@ -151,7 +151,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         .front-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; overflow: hidden; }
         .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; position: relative; }
         .front-img { width: 100%; height: 100%; object-fit: cover; object-position: left center; display: block; }
-        .branding { position: absolute; bottom: 80px; right: 40px; text-align: center; }
+        .branding { position: absolute; top: 50%; left: 40px; transform: translateY(-50%); text-align: center; }
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
         .branding-logo { height: 32px; width: auto; }
       </style>
@@ -164,7 +164,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         <div class="blank-half">
           <div class="branding">
             <div class="branding-text">Sent with</div>
-            <img class="branding-logo" src="https://lovable.dev/lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png" alt="SendYourCards.io" />
+            <img class="branding-logo" src="/lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png" alt="SendYourCards.io" />
           </div>
         </div>
       </div>
@@ -226,7 +226,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
         .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; }
         .inside-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; position: relative; }
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: none; border-radius: 0; overflow: hidden; background: #ffffff; }
-        .branding { position: absolute; bottom: 80px; right: 40px; text-align: center; z-index: 10; }
+        .branding { position: absolute; top: 50%; left: 40px; transform: translateY(-50%); text-align: center; z-index: 10; }
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
         .branding-logo { height: 32px; width: auto; }
       </style>
@@ -245,7 +245,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
             </div>
             <div class="branding">
               <div class="branding-text">Sent with</div>
-              <img class="branding-logo" src="https://lovable.dev/lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png" alt="SendYourCards.io" />
+              <img class="branding-logo" src="/lovable-uploads/3d8de3a3-aa92-4970-9844-1f7f7ac8616f.png" alt="SendYourCards.io" />
             </div>
           </div>
         </div>
