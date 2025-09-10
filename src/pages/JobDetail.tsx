@@ -844,9 +844,12 @@ const JobDetail = () => {
         body: { orderId: order.id, format: 'production', only: 'front', mode: 'url', origin: window.location.origin }
       });
       if (error) throw error;
-      const url = data?.downloadUrl;
-      if (!url) throw new Error('No PDF URL returned');
-      window.open(url, '_blank');
+      const pdfPath = data?.pdfPath;
+      if (!pdfPath) throw new Error('No PDF path returned');
+      
+      // Use serve-pdf function instead of direct Supabase URL
+      const servePdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
+      window.open(servePdfUrl, '_blank');
       toast({ title: 'Production Front PDF Ready', description: 'Opened production front PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating Production Front PDF:', error);
@@ -868,9 +871,12 @@ const JobDetail = () => {
         body: { orderId: order.id, format: 'production', only: 'inside', mode: 'url', origin: window.location.origin }
       });
       if (error) throw error;
-      const url = data?.downloadUrl;
-      if (!url) throw new Error('No PDF URL returned');
-      window.open(url, '_blank');
+      const pdfPath = data?.pdfPath;
+      if (!pdfPath) throw new Error('No PDF path returned');
+      
+      // Use serve-pdf function instead of direct Supabase URL
+      const servePdfUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-pdf?path=${encodeURIComponent(pdfPath)}`;
+      window.open(servePdfUrl, '_blank');
       toast({ title: 'Production Inside PDF Ready', description: 'Opened production inside PDF in a new tab.' });
     } catch (error: any) {
       console.error('Error generating Production Inside PDF:', error);
