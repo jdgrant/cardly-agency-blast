@@ -153,8 +153,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         .front-img { width: 100%; height: 100%; object-fit: cover; object-position: left center; display: block; }
         .branding { position: absolute; bottom: 12.5%; left: 50%; transform: translateX(-50%); text-align: center; }
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
-        .branding-logo { height: 32px; width: auto; }
-        .branding-logo-text { font-size: 14px; color: #333; font-family: Arial, sans-serif; font-weight: bold; margin-top: 4px; }
+        .branding-logo-text { font-size: 14px; color: #333; font-family: Arial, sans-serif; font-weight: bold; }
       </style>
     </head>
     <body>
@@ -165,7 +164,6 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         <div class="blank-half">
           <div class="branding">
             <div class="branding-text">Sent with</div>
-            <img class="branding-logo" src="https://sendyourcards.io/logo.png" alt="Logo" />
             <div class="branding-logo-text">SendYourCards.io</div>
           </div>
         </div>
@@ -230,8 +228,7 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
         .inside-content { width: 100%; height: 100%; box-sizing: border-box; border: none; border-radius: 0; overflow: hidden; background: #ffffff; }
         .branding { position: absolute; bottom: 12.5%; left: 50%; transform: translateX(-50%); text-align: center; z-index: 10; }
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
-        .branding-logo { height: 32px; width: auto; }
-        .branding-logo-text { font-size: 14px; color: #333; font-family: Arial, sans-serif; font-weight: bold; margin-top: 4px; }
+        .branding-logo-text { font-size: 14px; color: #333; font-family: Arial, sans-serif; font-weight: bold; }
       </style>
     </head>
     <body>
@@ -248,7 +245,6 @@ function generateInsideHTML(layout: LayoutConfig, content: CardContent): string 
             </div>
             <div class="branding">
               <div class="branding-text">Sent with</div>
-              <img class="branding-logo" src="https://sendyourcards.io/logo.png" alt="Logo" />
               <div class="branding-logo-text">SendYourCards.io</div>
             </div>
           </div>
