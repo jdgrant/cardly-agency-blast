@@ -244,15 +244,8 @@ const Step7ReviewAndSubmit = () => {
         console.log('Client records inserted successfully');
       }
 
-      // Get the order details to get the readable order ID
-      const { data: orderDetails, error: detailsError } = await supabase.rpc('get_order_by_id', { order_id: orderId });
-      
-      if (detailsError) {
-        console.error('Error fetching order details:', detailsError);
-      }
-
-      const readableOrderId = orderDetails?.[0]?.readable_order_id;
-      const shortId = readableOrderId ? readableOrderId.split('-').pop() : orderId.toString().slice(-8);
+      // Generate shortId directly from orderId (last 8 characters without hyphens)
+      const shortId = orderId.toString().replace(/-/g, '').slice(-8);
 
       toast({
         title: "Order Submitted Successfully!",
