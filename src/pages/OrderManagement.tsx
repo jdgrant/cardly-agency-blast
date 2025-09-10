@@ -245,7 +245,7 @@ const OrderManagement = () => {
 
   const canProceedToPayment = () => {
     const baseRequirements = order?.logo_url && order?.csv_file_url;
-    const signatureRequirement = order?.signature_purchased === true ? (order?.signature_url || order?.cropped_signature_url) : true;
+    const signatureRequirement = order?.signature_purchased === true ? (order?.signature_url && order?.cropped_signature_url) : true;
     return baseRequirements && signatureRequirement;
   };
 
