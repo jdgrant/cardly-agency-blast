@@ -846,7 +846,7 @@ const OrderManagement = () => {
                             Unable to preview signature
                           </div>
                         </div>
-                        {order.signature_needs_review && (
+                        {order.signature_needs_review && !order.cropped_signature_url && (
                           <div className="mt-2 flex items-center text-sm text-amber-600">
                             <AlertTriangle className="w-4 h-4 mr-1" />
                             Signature pending review
