@@ -144,6 +144,10 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     console.log(`Creating batch for drop date: ${mailDate} with ${recipients.length} recipients`);
+    
+    // Create unique batch identifier with timestamp to prevent PCM auto-grouping
+    const uniqueBatchId = `${order.readable_order_id}-${mailDate}-${Date.now()}`;
+    console.log(`Using unique batch name: ${uniqueBatchId}`);
 
     // Prepare return address from order data
     const returnAddress = {
@@ -166,7 +170,7 @@ const handler = async (req: Request): Promise<Response> => {
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
-          batchName: `Order-${order.readable_order_id}-${mailDate}`, // Explicit batch naming by drop date
+          batchName: uniqueBatchId, // Unique batch naming by drop date + timestamp
           addOns: [
             {
               "addon": "Livestamping"
@@ -183,7 +187,7 @@ const handler = async (req: Request): Promise<Response> => {
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
-          batchName: `Order-${order.readable_order_id}-${mailDate}`, // Explicit batch naming by drop date
+          batchName: uniqueBatchId, // Unique batch naming by drop date + timestamp
           addOns: [
             {
               "addon": "Livestamping"
@@ -201,7 +205,7 @@ const handler = async (req: Request): Promise<Response> => {
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
           listCountID: 0, // Try with 0 as dummy value
-          batchName: `Order-${order.readable_order_id}-${mailDate}`, // Explicit batch naming by drop date
+          batchName: uniqueBatchId, // Unique batch naming by drop date + timestamp
           addOns: [
             {
               "addon": "Livestamping"
