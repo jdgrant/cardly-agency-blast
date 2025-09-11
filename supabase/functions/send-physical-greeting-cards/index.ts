@@ -123,10 +123,10 @@ const handler = async (req: Request): Promise<Response> => {
       mailDate = mailingWindowMap[order.mailing_window] || '';
     }
 
-    // Step 2: Try direct greeting card order with recipients (skip list count)
-    console.log('=== ATTEMPTING DIRECT PCM GREETING CARD ORDER ===');
+    // Step 2: Group recipients by drop date and send separate batches
+    console.log('=== GROUPING RECIPIENTS BY DROP DATE FOR SEPARATE BATCHES ===');
     
-    // Format recipients for direct greeting card order
+    // Group recipients by their drop dates (assuming all recipients for this order have same drop date)
     const recipients = recipientAddresses.map(addr => {
       const nameParts = addr.name.trim().split(' ');
       const firstName = nameParts[0] || '';
@@ -142,6 +142,8 @@ const handler = async (req: Request): Promise<Response> => {
         zipCode: addr.zip
       };
     });
+
+    console.log(`Creating batch for drop date: ${mailDate} with ${recipients.length} recipients`);
 
     // Prepare return address from order data
     const returnAddress = {
@@ -164,6 +166,7 @@ const handler = async (req: Request): Promise<Response> => {
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
+          batchName: `Order-${order.readable_order_id}-${mailDate}`, // Explicit batch naming by drop date
           addOns: [
             {
               "addon": "Livestamping"
@@ -180,6 +183,7 @@ const handler = async (req: Request): Promise<Response> => {
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
+          batchName: `Order-${order.readable_order_id}-${mailDate}`, // Explicit batch naming by drop date
           addOns: [
             {
               "addon": "Livestamping"
@@ -197,6 +201,7 @@ const handler = async (req: Request): Promise<Response> => {
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
           listCountID: 0, // Try with 0 as dummy value
+          batchName: `Order-${order.readable_order_id}-${mailDate}`, // Explicit batch naming by drop date
           addOns: [
             {
               "addon": "Livestamping"
