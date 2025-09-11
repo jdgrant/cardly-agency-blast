@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,12 +29,21 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
   const [apiResponse, setApiResponse] = useState<string>("");
   const [pcmOrderId, setPcmOrderId] = useState<string>("");
   const [pcmBatchId, setPcmBatchId] = useState<string>("");
+  const [isProduction, setIsProduction] = useState(() => {
+    // Load from localStorage or default to sandbox (false)
+    return localStorage.getItem('pcm-mode') === 'production';
+  });
   const { toast } = useToast();
 
   // Fetch current PCM info on component mount
   useEffect(() => {
     fetchPCMInfo();
   }, [orderId]);
+
+  // Save PCM mode to localStorage
+  useEffect(() => {
+    localStorage.setItem('pcm-mode', isProduction ? 'production' : 'sandbox');
+  }, [isProduction]);
 
   const fetchPCMInfo = async () => {
     try {
@@ -89,7 +99,8 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
 
       const requestPayload = {
         orderId,
-        recipientAddresses
+        recipientAddresses,
+        isProduction
       };
 
       const { data, error } = await supabase.functions.invoke('send-physical-greeting-cards', {
@@ -208,6 +219,25 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Environment Toggle */}
+        <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+          <div className="space-y-0.5">
+            <Label className="text-sm font-medium">
+              PCM Environment: {isProduction ? 'Production' : 'Sandbox'}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {isProduction 
+                ? 'Real orders will be processed and charged' 
+                : 'Test mode - no actual cards will be sent'
+              }
+            </p>
+          </div>
+          <Switch
+            checked={isProduction}
+            onCheckedChange={setIsProduction}
+            disabled={isLoading || isCancelling}
+          />
+        </div>
         {/* Only show send button if no PCM order ID exists */}
         {!pcmOrderId && (
           <Button 

@@ -5,6 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Request interface for the physical mailing endpoint
 interface PhysicalMailingRequest {
   orderId: string;
   recipientAddresses: Array<{
@@ -15,6 +16,7 @@ interface PhysicalMailingRequest {
     state: string;
     zip: string;
   }>;
+  isProduction?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -24,18 +26,23 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { orderId, recipientAddresses }: PhysicalMailingRequest = await req.json();
+    // Parse request body
+    const { orderId, recipientAddresses, isProduction = false }: PhysicalMailingRequest = await req.json();
     
-    console.log('Sending physical greeting cards for order:', orderId);
+    console.log(`Sending physical greeting cards for order: ${orderId} in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get PCM API credentials
-    const pcmApiKey = Deno.env.get('PCM_API_KEY');
-    const pcmApiSecret = Deno.env.get('PCM_API_SECRET');
+    // Get PCM API credentials based on production mode
+    const pcmApiKey = isProduction 
+      ? Deno.env.get('PCM_PRODUCTION_API_KEY')
+      : Deno.env.get('PCM_API_KEY');
+    const pcmApiSecret = isProduction 
+      ? Deno.env.get('PCM_PRODUCTION_API_SECRET')
+      : Deno.env.get('PCM_API_SECRET');
     
     if (!pcmApiKey || !pcmApiSecret) {
       throw new Error('PCM_API_KEY and PCM_API_SECRET must be configured in environment variables');
@@ -46,7 +53,8 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('URL:', 'https://v3.pcmintegrations.com/auth/login');
     const authRequest = {
       apiKey: pcmApiKey,
-      apiSecret: pcmApiSecret
+      apiSecret: pcmApiSecret,
+      isSandbox: !isProduction // Use production mode based on toggle
     };
     console.log('Request Packet:', JSON.stringify(authRequest, null, 2));
     
