@@ -32,6 +32,72 @@ export type Database = {
         }
         Relationships: []
       }
+      batch_orders: {
+        Row: {
+          added_at: string
+          batch_id: string
+          id: string
+          order_id: string
+        }
+        Insert: {
+          added_at?: string
+          batch_id: string
+          id?: string
+          order_id: string
+        }
+        Update: {
+          added_at?: string
+          batch_id?: string
+          id?: string
+          order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "batch_orders_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "batch_orders_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      batches: {
+        Row: {
+          created_at: string
+          drop_date: string
+          id: string
+          name: string
+          pcm_batch_id: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          drop_date: string
+          id?: string
+          name: string
+          pcm_batch_id?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          drop_date?: string
+          id?: string
+          name?: string
+          pcm_batch_id?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_records: {
         Row: {
           address: string
@@ -309,6 +375,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_orders_to_batch: {
+        Args: {
+          batch_id_param: string
+          order_ids: string[]
+          session_id_param: string
+        }
+        Returns: number
+      }
       apply_promocode_to_order: {
         Args: { order_readable_id: string; promo_code_param: string }
         Returns: boolean
@@ -328,6 +402,14 @@ export type Database = {
       clear_order_signatures: {
         Args: { order_id_param: string; session_id_param: string }
         Returns: undefined
+      }
+      create_batch: {
+        Args: {
+          batch_drop_date: string
+          batch_name: string
+          session_id_param: string
+        }
+        Returns: string
       }
       create_order: {
         Args:
@@ -557,6 +639,69 @@ export type Database = {
           status: string | null
           template_id: string
           tier_name: string
+          updated_at: string
+        }[]
+      }
+      get_batch_orders: {
+        Args: { batch_id_param: string; session_id_param: string }
+        Returns: {
+          billing_address: string | null
+          card_quantity: number
+          client_count: number | null
+          contact_email: string | null
+          contact_firstname: string | null
+          contact_lastname: string | null
+          contact_phone: string | null
+          created_at: string
+          cropped_signature_url: string | null
+          csv_file_url: string | null
+          custom_message: string | null
+          drop_date: string | null
+          early_bird_discount: boolean | null
+          final_price: number
+          front_preview_base64: string | null
+          id: string
+          inside_preview_base64: string | null
+          invoice_paid: boolean | null
+          logo_url: string | null
+          mailing_window: string
+          pcm_batch_id: number | null
+          pcm_order_id: string | null
+          postage_cost: number | null
+          postage_option: string
+          previews_updated_at: string | null
+          production_combined_pdf_generated_at: string | null
+          production_combined_pdf_path: string | null
+          production_combined_pdf_public_url: string | null
+          promo_code: string | null
+          readable_order_id: string | null
+          regular_price: number
+          return_address_city: string | null
+          return_address_line1: string | null
+          return_address_line2: string | null
+          return_address_name: string | null
+          return_address_state: string | null
+          return_address_zip: string | null
+          selected_message: string | null
+          signature_needs_review: boolean | null
+          signature_purchased: boolean | null
+          signature_url: string | null
+          status: string | null
+          template_id: string
+          tier_name: string
+          updated_at: string
+        }[]
+      }
+      get_batches: {
+        Args: { session_id_param: string }
+        Returns: {
+          created_at: string
+          drop_date: string
+          id: string
+          name: string
+          order_count: number
+          pcm_batch_id: number
+          status: string
           updated_at: string
         }[]
       }

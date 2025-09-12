@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PromoCodeForm } from '@/components/admin/PromoCodeForm';
+import BatchManager from '@/components/admin/BatchManager';
 
 interface Order {
   id: string;
@@ -94,7 +95,7 @@ const Admin = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [promocodes, setPromocodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'orders' | 'templates' | 'promocodes'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'templates' | 'promocodes' | 'batches'>('orders');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [originalNames, setOriginalNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -894,6 +895,14 @@ const Admin = () => {
                 <Tags className="w-4 h-4" />
                 <span>Promo Codes</span>
               </Button>
+              <Button 
+                variant={activeTab === 'batches' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('batches')}
+                className="flex items-center space-x-2"
+              >
+                <Package2 className="w-4 h-4" />
+                <span>Batches</span>
+              </Button>
             </div>
           </div>
           <div className="flex space-x-2">
@@ -1388,7 +1397,13 @@ const Admin = () => {
                </CardContent>
              </Card>
            </div>
-         )}
+          )}
+
+          {activeTab === 'batches' && (
+            <div className="space-y-6">
+              <BatchManager />
+            </div>
+          )}
 
          {/* Preview Modal */}
         <Dialog open={!!previewTemplate} onOpenChange={() => setPreviewTemplate(null)}>
