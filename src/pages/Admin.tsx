@@ -907,22 +907,6 @@ const Admin = () => {
           </div>
           <div className="flex space-x-2">
             <Button 
-              variant="outline" 
-              onClick={() => exportOrders('csv')}
-              className="flex items-center space-x-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export CSV</span>
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => exportOrders('json')}
-              className="flex items-center space-x-2"
-            >
-              <Download className="w-4 h-4" />
-              <span>Export JSON</span>
-            </Button>
-            <Button 
               onClick={fetchData}
               disabled={loading}
               className="flex items-center space-x-2"
