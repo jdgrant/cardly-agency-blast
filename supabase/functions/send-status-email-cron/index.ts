@@ -10,6 +10,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Boot marker for deployment
+console.log('send-status-email-cron edge function loaded');
+
 // Helper function to upload base64 image to storage and return public URL
 async function uploadBase64ToStorage(base64Data: string, orderId: string, type: 'front' | 'inside'): Promise<string | null> {
   try {
