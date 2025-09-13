@@ -52,7 +52,16 @@ const BatchManager = () => {
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
   const [newBatchName, setNewBatchName] = useState('');
   const [newBatchDropDate, setNewBatchDropDate] = useState('');
+  const [showCreateStandardDialog, setShowCreateStandardDialog] = useState(false);
   const { toast } = useToast();
+
+  // Standard mailing windows and their drop dates
+  const standardMailingWindows = [
+    { window: 'dec-1-5', name: 'December 1-5 Batch', dropDate: `${new Date().getFullYear()}-11-29` },
+    { window: 'dec-6-10', name: 'December 6-10 Batch', dropDate: `${new Date().getFullYear()}-12-04` },
+    { window: 'dec-11-15', name: 'December 11-15 Batch', dropDate: `${new Date().getFullYear()}-12-09` },
+    { window: 'dec-16-20', name: 'December 16-20 Batch', dropDate: `${new Date().getFullYear()}-12-14` },
+  ];
 
   useEffect(() => {
     fetchData();
@@ -142,6 +151,58 @@ const BatchManager = () => {
     }
   };
 
+  const createStandardBatches = async () => {
+    try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
+      let created = 0;
+      const existingBatchNames = batches.map(b => b.name);
+
+      for (const window of standardMailingWindows) {
+        // Skip if batch already exists
+        if (existingBatchNames.includes(window.name)) {
+          continue;
+        }
+
+        const { error } = await supabase
+          .rpc('create_batch', { 
+            session_id_param: sessionId,
+            batch_name: window.name,
+            batch_drop_date: window.dropDate
+          });
+
+        if (error) {
+          console.error(`Error creating batch for ${window.name}:`, error);
+        } else {
+          created++;
+        }
+      }
+
+      if (created > 0) {
+        toast({
+          title: "Standard Batches Created",
+          description: `${created} standard mailing window batches created`,
+        });
+        fetchData();
+      } else {
+        toast({
+          title: "No New Batches",
+          description: "All standard batches already exist",
+        });
+      }
+    } catch (error) {
+      console.error('Create standard batches error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create standard batches",
+        variant: "destructive"
+      });
+    }
+  };
+
   const addOrdersToBatch = async () => {
     if (!selectedBatch || selectedOrders.length === 0) {
       toast({
@@ -208,14 +269,25 @@ const BatchManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Create Batch Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogTrigger asChild>
-          <Button className="flex items-center space-x-2">
-            <Plus className="w-4 h-4" />
-            <span>Create New Batch</span>
-          </Button>
-        </DialogTrigger>
+      <div className="flex space-x-2">
+        {/* Create Standard Batches Button */}
+        <Button 
+          className="flex items-center space-x-2"
+          variant="default"
+          onClick={createStandardBatches}
+        >
+          <Calendar className="w-4 h-4" />
+          <span>Create Standard Drop Date Batches</span>
+        </Button>
+        
+        {/* Create Custom Batch Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="flex items-center space-x-2">
+              <Plus className="w-4 h-4" />
+              <span>Create Custom Batch</span>
+            </Button>
+          </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Batch</DialogTitle>
@@ -245,6 +317,27 @@ const BatchManager = () => {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
+
+      {/* Standard Batches Information Card */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="text-blue-800 text-sm">Standard Mailing Window Batches</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-blue-700 mb-3">
+            Click "Create Standard Drop Date Batches" to automatically create batches for all mailing windows:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+            {standardMailingWindows.map((window) => (
+              <div key={window.window} className="flex justify-between bg-white px-2 py-1 rounded">
+                <span className="font-medium">{window.name}</span>
+                <span className="text-gray-600">Drop: {new Date(window.dropDate).toLocaleDateString()}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Add Orders to Batch Dialog */}
       <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
