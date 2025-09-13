@@ -79,7 +79,21 @@ const Step2SelectMessage = () => {
         // Find the template and get its occasions
         const template = await getTemplateById(state.selectedTemplate);
         if (template) {
-          setAvailableOccasions(template.occasions || ['holidays']);
+          const normalize = (arr: string[]) => {
+            const set = new Set<string>();
+            arr.forEach((item) => {
+              const key = (item || '').toLowerCase().trim().replace(/\s+/g, '-').replace(/_/g, '-');
+              if (key === 'general-holiday' || key === 'holiday' || key === 'holidays') {
+                set.add('holidays');
+              } else if (key === 'new-year' || key === 'newyear') {
+                set.add('new-year');
+              } else {
+                set.add(key);
+              }
+            });
+            return Array.from(set).filter((k) => Object.prototype.hasOwnProperty.call(messagesByOccasion, k));
+          };
+          setAvailableOccasions(normalize(template.occasions || ['holidays']));
         }
       }
     };
