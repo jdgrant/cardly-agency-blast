@@ -254,61 +254,70 @@ const BatchManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        {/* Create Batch Dialog */}
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center space-x-2">
-              <Plus className="w-4 h-4" />
-              <span>Create New Batch</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Batch</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="batch-name">Batch Name</Label>
-                <Input
-                  id="batch-name"
-                  value={newBatchName}
-                  onChange={(e) => setNewBatchName(e.target.value)}
-                  placeholder="e.g., December 1-5 Batch"
-                />
-              </div>
-              <div>
-                <Label htmlFor="drop-date">Drop Date</Label>
-                <Input
-                  id="drop-date"
-                  type="date"
-                  value={newBatchDropDate}
-                  onChange={(e) => setNewBatchDropDate(e.target.value)}
-                />
-              </div>
-              <Button onClick={createBatch} className="w-full">
-                Create Batch
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          {/* Create Batch Dialog */}
+          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center space-x-2">
+                <Plus className="w-4 h-4" />
+                <span>Create New Batch</span>
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Create New Batch</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="batch-name">Batch Name</Label>
+                  <Input
+                    id="batch-name"
+                    value={newBatchName}
+                    onChange={(e) => setNewBatchName(e.target.value)}
+                    placeholder="e.g., December 1-5 Batch"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="drop-date">Drop Date</Label>
+                  <Input
+                    id="drop-date"
+                    type="date"
+                    value={newBatchDropDate}
+                    onChange={(e) => setNewBatchDropDate(e.target.value)}
+                  />
+                </div>
+                <Button onClick={createBatch} className="w-full">
+                  Create Batch
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
 
-        {/* Process Paid Orders Button */}
-        <Button 
-          onClick={processExistingPaidOrders}
-          disabled={processingPaidOrders}
-          variant="outline"
-          className="flex items-center space-x-2"
-        >
-          {processingPaidOrders ? (
-            <RefreshCw className="w-4 h-4 animate-spin" />
-          ) : (
-            <Package className="w-4 h-4" />
-          )}
-          <span>
-            {processingPaidOrders ? 'Processing...' : 'Auto-Add Paid Orders'}
-          </span>
-        </Button>
+          {/* Process Paid Orders Button */}
+          <Button 
+            onClick={processExistingPaidOrders}
+            disabled={processingPaidOrders}
+            variant="outline"
+            className="flex items-center space-x-2"
+          >
+            {processingPaidOrders ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Package className="w-4 h-4" />
+            )}
+            <span>
+              {processingPaidOrders ? 'Processing...' : 'Auto-Add Paid Orders'}
+            </span>
+          </Button>
+        </div>
+        
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800">
+            <strong>Automatic Batch Assignment:</strong> Orders are automatically added to their corresponding batch when payment is received. 
+            Use "Auto-Add Paid Orders" to process any existing paid orders that haven't been assigned yet.
+          </p>
+        </div>
       </div>
 
       {/* Add Orders to Batch Dialog */}
