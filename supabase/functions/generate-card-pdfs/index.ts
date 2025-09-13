@@ -7,9 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Boot marker for deployment
-console.log('generate-card-pdfs edge function loaded');
-
 interface GeneratePDFRequest {
   orderId: string;
   format?: 'preview' | 'production';

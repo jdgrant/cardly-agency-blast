@@ -1,8 +1,5 @@
 project_id = "wsibvneidsmtsazfbmgc"
 
-[functions.auto-create-batches]
-verify_jwt = false
-
 [functions.convert-pdf-to-image]
 verify_jwt = false
 
@@ -15,6 +12,8 @@ verify_jwt = false
 [functions.send-email-status]
 verify_jwt = false
 
+[functions.send-status-email-cron]
+verify_jwt = false
 
 [functions.unsubscribe-email]
 verify_jwt = false

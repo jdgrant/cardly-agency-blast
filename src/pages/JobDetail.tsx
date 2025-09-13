@@ -433,35 +433,14 @@ const JobDetail = () => {
 
       // Send automatic status email after successful update
       try {
-        const { data: fullOrderArr } = await supabase.rpc('get_order_by_id', { order_id: orderId });
-        const fullOrder = Array.isArray(fullOrderArr) ? fullOrderArr[0] : (fullOrderArr as any);
-        const contactEmail = fullOrder?.contact_email || order?.contact_email;
-        const contactName = `${fullOrder?.contact_firstname || order?.contact_firstname || ''} ${fullOrder?.contact_lastname || order?.contact_lastname || ''}`.trim() || 'Customer';
-
-        if (contactEmail) {
-          const payload = {
-            orderId,
-            orderStatus: newStatus,
-            contactEmail,
-            contactName,
-            readableOrderId: fullOrder?.readable_order_id || orderId.slice(0, 8),
-            logoUploaded: !!order?.logo_url,
-            signatureSubmitted: !!(order?.signature_url || order?.cropped_signature_url),
-            mailingListUploaded: !!order?.csv_file_url,
-            signaturePurchased: !!order?.signature_purchased,
-            invoicePaid: !!order?.invoice_paid,
-            frontPreviewUrl: fullOrder?.front_preview_base64 ? `data:image/png;base64,${fullOrder.front_preview_base64}` : undefined,
-            insidePreviewUrl: fullOrder?.inside_preview_base64 ? `data:image/png;base64,${fullOrder.inside_preview_base64}` : undefined,
-          };
-
-          const { error: emailError } = await supabase.functions.invoke('send-email-status', { body: payload });
-          if (emailError) {
-            console.error('Error sending status email:', emailError);
-          } else {
-            console.log('Status email sent successfully for order:', orderId);
-          }
+        const { error: emailError } = await supabase.functions.invoke('send-status-email-cron', {
+          body: { ordersToEmail: [orderId] }
+        });
+        
+        if (emailError) {
+          console.error('Error sending status email:', emailError);
         } else {
-          console.warn('No contact email found for order:', orderId);
+          console.log('Status email sent successfully for order:', orderId);
         }
       } catch (emailError) {
         console.error('Failed to send status email:', emailError);
