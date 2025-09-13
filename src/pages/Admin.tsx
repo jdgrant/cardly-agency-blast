@@ -251,19 +251,42 @@ const Admin = () => {
       ));
 
       // Send automatic status email after successful update
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-status-email-cron', {
-          body: { ordersToEmail: [orderId] }
-        });
-        
-        if (emailError) {
-          console.error('Error sending status email:', emailError);
-        } else {
-          console.log('Status email sent successfully for order:', orderId);
+        try {
+          // Fetch full order details including readable_order_id and previews
+          const { data: fullOrderArr } = await supabase.rpc('get_order_by_id', { order_id: orderId });
+          const fullOrder = Array.isArray(fullOrderArr) ? fullOrderArr[0] : (fullOrderArr as any);
+          const listOrder = orders.find(o => o.id === orderId);
+          const contactEmail = fullOrder?.contact_email || listOrder?.contact_email;
+          const contactName = `${fullOrder?.contact_firstname || listOrder?.contact_firstname || ''} ${fullOrder?.contact_lastname || listOrder?.contact_lastname || ''}`.trim() || 'Customer';
+
+          if (contactEmail) {
+            const payload = {
+              orderId,
+              orderStatus: newStatus,
+              contactEmail,
+              contactName,
+              readableOrderId: fullOrder?.readable_order_id || orderId.slice(0, 8),
+              logoUploaded: !!listOrder?.logo_url,
+              signatureSubmitted: !!(listOrder?.signature_url || listOrder?.cropped_signature_url),
+              mailingListUploaded: !!listOrder?.csv_file_url,
+              signaturePurchased: !!listOrder?.signature_purchased,
+              invoicePaid: !!listOrder?.invoice_paid,
+              frontPreviewUrl: fullOrder?.front_preview_base64 ? `data:image/png;base64,${fullOrder.front_preview_base64}` : undefined,
+              insidePreviewUrl: fullOrder?.inside_preview_base64 ? `data:image/png;base64,${fullOrder.inside_preview_base64}` : undefined,
+            };
+
+            const { error: emailError } = await supabase.functions.invoke('send-email-status', { body: payload });
+            if (emailError) {
+              console.error('Error sending status email:', emailError);
+            } else {
+              console.log('Status email sent successfully for order:', orderId);
+            }
+          } else {
+            console.warn('No contact email found for order:', orderId);
+          }
+        } catch (emailError) {
+          console.error('Failed to send status email:', emailError);
         }
-      } catch (emailError) {
-        console.error('Failed to send status email:', emailError);
-      }
 
       toast({
         title: "Status Updated",
