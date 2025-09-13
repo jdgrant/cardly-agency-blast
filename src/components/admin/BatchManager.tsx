@@ -203,6 +203,42 @@ const BatchManager = () => {
     }
   };
 
+  const autoCreateBatchesForExistingOrders = async () => {
+    try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
+      toast({
+        title: "Auto-Creating Batches",
+        description: "Creating batches for existing orders...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('auto-create-batches', {
+        body: { session_id: sessionId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: data.success ? "Batches Created" : "No Action Needed",
+        description: data.message,
+      });
+
+      if (data.success && data.created_count > 0) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Auto-create batches error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to auto-create batches",
+        variant: "destructive"
+      });
+    }
+  };
+
   const addOrdersToBatch = async () => {
     if (!selectedBatch || selectedOrders.length === 0) {
       toast({
@@ -269,7 +305,7 @@ const BatchManager = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex space-x-2">
+      <div className="flex flex-wrap gap-2">
         {/* Create Standard Batches Button */}
         <Button 
           className="flex items-center space-x-2"
@@ -278,6 +314,16 @@ const BatchManager = () => {
         >
           <Calendar className="w-4 h-4" />
           <span>Create Standard Drop Date Batches</span>
+        </Button>
+        
+        {/* Auto-Create Batches for Existing Orders Button */}
+        <Button 
+          className="flex items-center space-x-2"
+          variant="secondary"
+          onClick={autoCreateBatchesForExistingOrders}
+        >
+          <Package className="w-4 h-4" />
+          <span>Auto-Create Batches for Existing Orders</span>
         </Button>
         
         {/* Create Custom Batch Dialog */}
@@ -319,22 +365,38 @@ const BatchManager = () => {
       </Dialog>
       </div>
 
-      {/* Standard Batches Information Card */}
+      {/* Batch Creation Information Card */}
       <Card className="bg-blue-50 border-blue-200">
         <CardHeader>
-          <CardTitle className="text-blue-800 text-sm">Standard Mailing Window Batches</CardTitle>
+          <CardTitle className="text-blue-800 text-sm">Batch Creation Options</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-blue-700 mb-3">
-            Click "Create Standard Drop Date Batches" to automatically create batches for all mailing windows:
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-            {standardMailingWindows.map((window) => (
-              <div key={window.window} className="flex justify-between bg-white px-2 py-1 rounded">
-                <span className="font-medium">{window.name}</span>
-                <span className="text-gray-600">Drop: {new Date(window.dropDate).toLocaleDateString()}</span>
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-blue-700 font-medium mb-2">
+                🎯 Auto-Create Batches for Existing Orders:
+              </p>
+              <p className="text-xs text-blue-600 mb-2">
+                Automatically creates batches only for mailing windows that have approved orders.
+              </p>
+            </div>
+            
+            <div>
+              <p className="text-sm text-blue-700 font-medium mb-2">
+                📅 Create Standard Drop Date Batches:
+              </p>
+              <p className="text-xs text-blue-600 mb-2">
+                Creates batches for all standard mailing windows:
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                {standardMailingWindows.map((window) => (
+                  <div key={window.window} className="flex justify-between bg-white px-2 py-1 rounded">
+                    <span className="font-medium">{window.name}</span>
+                    <span className="text-gray-600">Drop: {new Date(window.dropDate).toLocaleDateString()}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </CardContent>
       </Card>
