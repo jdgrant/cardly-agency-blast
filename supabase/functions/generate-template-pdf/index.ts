@@ -7,6 +7,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Boot marker for deployment
+console.log('generate-template-pdf edge function loaded');
+
 interface GenerateTemplatePDFRequest {
   templateId: string;
 }
