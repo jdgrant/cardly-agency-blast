@@ -55,24 +55,36 @@ const BatchManager = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('BatchManager: Component mounted, calling fetchData');
     fetchData();
   }, []);
+
+  useEffect(() => {
+    console.log('BatchManager: Batches state updated:', batches);
+  }, [batches]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const sessionId = sessionStorage.getItem('adminSessionId');
+      console.log('BatchManager: Admin session ID:', sessionId);
+      
       if (!sessionId) {
+        console.error('BatchManager: No admin session found');
         throw new Error('No admin session found');
       }
 
       // Fetch batches
+      console.log('BatchManager: Fetching batches...');
       const { data: batchesData, error: batchesError } = await supabase
         .rpc('get_batches', { session_id_param: sessionId });
+
+      console.log('BatchManager: Batches response:', { batchesData, batchesError });
 
       if (batchesError) throw batchesError;
 
       setBatches(batchesData || []);
+      console.log('BatchManager: Set batches count:', (batchesData || []).length);
 
       // Fetch approved orders not in any batch
       const { data: ordersData, error: ordersError } = await supabase
@@ -87,7 +99,7 @@ const BatchManager = () => {
 
       setAvailableOrders(approvedOrders);
     } catch (error) {
-      console.error('Fetch data error:', error);
+      console.error('BatchManager fetch data error:', error);
       toast({
         title: "Error",
         description: "Failed to fetch batches data",
@@ -393,6 +405,13 @@ const BatchManager = () => {
             {batches.length === 0 && !loading && (
               <div className="text-center py-8 text-muted-foreground">
                 No batches created yet. Create your first batch to get started.
+                <p className="text-xs mt-2">Debug: Batches count: {batches.length}, Loading: {loading.toString()}</p>
+              </div>
+            )}
+            
+            {loading && (
+              <div className="text-center py-8 text-muted-foreground">
+                Loading batches...
               </div>
             )}
           </div>
