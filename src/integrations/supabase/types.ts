@@ -830,6 +830,10 @@ export type Database = {
         Args: { email_address: string }
         Returns: boolean
       }
+      process_existing_paid_orders: {
+        Args: { session_id_param: string }
+        Returns: number
+      }
       reset_order_client_list: {
         Args: { order_readable_id: string }
         Returns: boolean

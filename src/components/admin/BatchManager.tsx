@@ -16,7 +16,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Send, Calendar, Package } from 'lucide-react';
+import { Plus, Send, Calendar, Package, RefreshCw } from 'lucide-react';
 
 interface Batch {
   id: string;
@@ -52,6 +52,7 @@ const BatchManager = () => {
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
   const [newBatchName, setNewBatchName] = useState('');
   const [newBatchDropDate, setNewBatchDropDate] = useState('');
+  const [processingPaidOrders, setProcessingPaidOrders] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -198,6 +199,39 @@ const BatchManager = () => {
     }
   };
 
+  const processExistingPaidOrders = async () => {
+    setProcessingPaidOrders(true);
+    try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
+      const { data: addedCount, error } = await supabase
+        .rpc('process_existing_paid_orders', { 
+          session_id_param: sessionId
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Paid Orders Processed",
+        description: `${addedCount} paid orders automatically added to appropriate batches`,
+      });
+
+      fetchData(); // Refresh the data
+    } catch (error) {
+      console.error('Process paid orders error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process paid orders",
+        variant: "destructive"
+      });
+    } finally {
+      setProcessingPaidOrders(false);
+    }
+  };
+
   const getCustomerName = (order: Order) => {
     if (order.contact_firstname && order.contact_lastname) {
       return `${order.contact_firstname} ${order.contact_lastname}`;
@@ -220,43 +254,62 @@ const BatchManager = () => {
 
   return (
     <div className="space-y-6">
-      {/* Create Batch Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogTrigger asChild>
-          <Button className="flex items-center space-x-2">
-            <Plus className="w-4 h-4" />
-            <span>Create New Batch</span>
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Batch</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="batch-name">Batch Name</Label>
-              <Input
-                id="batch-name"
-                value={newBatchName}
-                onChange={(e) => setNewBatchName(e.target.value)}
-                placeholder="e.g., December 1-5 Batch"
-              />
-            </div>
-            <div>
-              <Label htmlFor="drop-date">Drop Date</Label>
-              <Input
-                id="drop-date"
-                type="date"
-                value={newBatchDropDate}
-                onChange={(e) => setNewBatchDropDate(e.target.value)}
-              />
-            </div>
-            <Button onClick={createBatch} className="w-full">
-              Create Batch
+      <div className="flex justify-between items-center">
+        {/* Create Batch Dialog */}
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogTrigger asChild>
+            <Button className="flex items-center space-x-2">
+              <Plus className="w-4 h-4" />
+              <span>Create New Batch</span>
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Batch</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="batch-name">Batch Name</Label>
+                <Input
+                  id="batch-name"
+                  value={newBatchName}
+                  onChange={(e) => setNewBatchName(e.target.value)}
+                  placeholder="e.g., December 1-5 Batch"
+                />
+              </div>
+              <div>
+                <Label htmlFor="drop-date">Drop Date</Label>
+                <Input
+                  id="drop-date"
+                  type="date"
+                  value={newBatchDropDate}
+                  onChange={(e) => setNewBatchDropDate(e.target.value)}
+                />
+              </div>
+              <Button onClick={createBatch} className="w-full">
+                Create Batch
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Process Paid Orders Button */}
+        <Button 
+          onClick={processExistingPaidOrders}
+          disabled={processingPaidOrders}
+          variant="outline"
+          className="flex items-center space-x-2"
+        >
+          {processingPaidOrders ? (
+            <RefreshCw className="w-4 h-4 animate-spin" />
+          ) : (
+            <Package className="w-4 h-4" />
+          )}
+          <span>
+            {processingPaidOrders ? 'Processing...' : 'Auto-Add Paid Orders'}
+          </span>
+        </Button>
+      </div>
 
       {/* Add Orders to Batch Dialog */}
       <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
