@@ -5,6 +5,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Boot marker for deployment
+console.log('send-physical-greeting-cards edge function loaded');
+
 // Request interface for the physical mailing endpoint
 interface PhysicalMailingRequest {
   orderId: string;
