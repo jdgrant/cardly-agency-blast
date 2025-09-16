@@ -144,54 +144,76 @@ serve(async (req) => {
 
     // CRITICAL: Inline template preview image for reliable rendering in Gotenberg
     // This prevents broken images in PCM production PDFs
-    let previewDataUrl = '';
+    const includeFront = (only !== 'inside');
+    const includeInside = (only !== 'front');
     const isProductionPDF = format === 'production' && includeFront && includeInside;
-    
+
+    let previewDataUrl = '';
+
     try {
       if (template.preview_url) {
-        const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
-        let fullUrl = template.preview_url;
-
-        if (/^https?:\/\//i.test(fullUrl)) {
-          // already absolute
-        } else if (fullUrl.startsWith('/lovable-uploads/')) {
-          // public asset served by the web app
-          if (base) fullUrl = `${base}${fullUrl}`;
-        } else if (fullUrl.startsWith('/')) {
-          // try Supabase storage public path or fall back to app origin
-          const supa = 'https://wsibvneidsmtsazfbmgc.supabase.co';
-          fullUrl = `${supa}${fullUrl}`;
+        // First, try to download directly from Supabase storage if this is a public storage URL
+        let loadedFromStorage = false;
+        const storageMatch = template.preview_url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/);
+        if (storageMatch) {
+          const bucket = storageMatch[1];
+          const path = storageMatch[2];
+          console.log('Attempting storage download for preview:', bucket, path);
+          const { data: fileData, error: fileErr } = await supabase.storage.from(bucket).download(path);
+          if (!fileErr && fileData) {
+            const buf = await fileData.arrayBuffer();
+            // best-effort content type from extension
+            const ext = path.split('.').pop()?.toLowerCase() || 'png';
+            const ct = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'webp' ? 'image/webp' : ext === 'svg' ? 'image/svg+xml' : 'image/png';
+            const base64 = encodeBase64(new Uint8Array(buf));
+            previewDataUrl = `data:${ct};base64,${base64}`;
+            loadedFromStorage = true;
+            console.log('✅ Preview loaded from storage and encoded - size:', base64.length);
+          } else {
+            console.log('Storage download failed, will try HTTP fetch:', fileErr?.message);
+          }
         }
 
-        console.log('🖼️ Fetching preview from:', fullUrl);
-        let resp = await fetch(fullUrl);
-        if (!resp.ok && base && !/^https?:\/\//i.test(template.preview_url)) {
-          // Retry with app origin for any relative URL
-          const retryUrl = `${base}${template.preview_url}`;
-          console.log('🔄 Retrying preview fetch from:', retryUrl);
-          resp = await fetch(retryUrl);
-        }
+        if (!loadedFromStorage) {
+          const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
+          let fullUrl = template.preview_url;
 
-        if (resp.ok) {
-          const ct = resp.headers.get('content-type') || 'image/png';
-          const buf = await resp.arrayBuffer();
-          const base64 = encodeBase64(new Uint8Array(buf));
-          previewDataUrl = `data:${ct};base64,${base64}`;
-          console.log('✅ Preview image fetched and encoded successfully - size:', base64.length);
-        } else {
-          const errorMsg = `❌ Preview fetch failed with status: ${resp.status}`;
-          console.log(errorMsg);
-          
-          // For production PCM PDFs, fail immediately rather than create broken PDFs
-          if (isProductionPDF) {
-            throw new Error(`${errorMsg} - Cannot create production PDF with broken images`);
+          if (!/^https?:\/\//i.test(fullUrl)) {
+            if (fullUrl.startsWith('/lovable-uploads/')) {
+              if (base) fullUrl = `${base}${fullUrl}`;
+            } else if (fullUrl.startsWith('/')) {
+              const supa = 'https://wsibvneidsmtsazfbmgc.supabase.co';
+              fullUrl = `${supa}${fullUrl}`;
+            } else if (base) {
+              fullUrl = `${base}/${fullUrl.replace(/^\.?\//,'')}`;
+            }
+          }
+
+          console.log('🖼️ Fetching preview over HTTP from:', fullUrl);
+          let resp = await fetch(fullUrl);
+          if (!resp.ok && base && !/^https?:\/\//i.test(template.preview_url)) {
+            const retryUrl = `${base}${template.preview_url}`;
+            console.log('🔄 Retrying preview fetch from:', retryUrl);
+            resp = await fetch(retryUrl);
+          }
+
+          if (resp.ok) {
+            const ct = resp.headers.get('content-type') || 'image/png';
+            const buf = await resp.arrayBuffer();
+            const base64 = encodeBase64(new Uint8Array(buf));
+            previewDataUrl = `data:${ct};base64,${base64}`;
+            console.log('✅ Preview image fetched and encoded successfully - size:', base64.length);
+          } else {
+            const errorMsg = `❌ Preview fetch failed with status: ${resp.status}`;
+            console.log(errorMsg);
+            if (isProductionPDF) {
+              throw new Error(`${errorMsg} - Cannot create production PDF with broken images`);
+            }
           }
         }
       } else {
         const errorMsg = '❌ No template preview_url available';
         console.log(errorMsg);
-        
-        // For production PCM PDFs, fail immediately
         if (isProductionPDF) {
           throw new Error(`${errorMsg} - Cannot create production PDF without template image`);
         }
@@ -199,8 +221,6 @@ serve(async (req) => {
     } catch (e) {
       const errorMsg = `❌ Preview image fetch failed: ${(e as any)?.message}`;
       console.log(errorMsg);
-      
-      // For production PCM PDFs, re-throw the error to prevent broken PDFs
       if (isProductionPDF) {
         throw new Error(`${errorMsg} - Production PDFs require valid embedded images`);
       }
@@ -210,9 +230,6 @@ serve(async (req) => {
     const headers: Record<string, string> = {};
     headers['Authorization'] = `Bearer ${GOTENBERG_API_KEY}`;
     headers['X-Api-Key'] = GOTENBERG_API_KEY;
-
-    const includeFront = (only !== 'inside');
-    const includeInside = (only !== 'front');
 
     let gotenbergResp: Response;
 
