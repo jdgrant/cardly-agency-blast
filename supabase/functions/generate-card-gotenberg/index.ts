@@ -462,8 +462,8 @@ serve(async (req) => {
         
         // Extract head and body from each HTML to preserve their styles/scripts
         const extractSections = (html: string) => {
-          const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\\/head>/i);
-          const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\\/body>/i);
+          const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\/head>/i);
+          const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
           return { head: headMatch?.[1] || '', body: bodyMatch?.[1] || html };
         };
         
