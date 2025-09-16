@@ -9,32 +9,20 @@ import { PDFDocument, degrees } from "https://esm.sh/pdf-lib@^1.17.1";
 
 async function rotatePDFClockwise90(pdfBytes: Uint8Array): Promise<Uint8Array> {
   try {
-    console.log('🔄 Evaluating PDF pages for 90° clockwise rotation...');
+    console.log('🔄 Rotating all pages 90° clockwise…');
     
     // Load the PDF
     const pdfDoc = await PDFDocument.load(pdfBytes);
     const pages = pdfDoc.getPages();
 
-    let rotatedAny = false;
-
-    // Rotate only portrait pages (height > width) 90 degrees clockwise
+    // Rotate every page 90° clockwise to convert landscape spreads to portrait view
     pages.forEach((page, idx) => {
-      // pdf-lib provides width/height getters
       const width = page.getWidth();
       const height = page.getHeight();
-      const isPortrait = height > width;
-      console.log(`📄 Page ${idx + 1} size: ${width} × ${height} — ${isPortrait ? 'portrait → rotating' : 'landscape → skipping'}`);
-      if (isPortrait) {
-        page.setRotation(degrees(90));
-        rotatedAny = true;
-      }
+      console.log(`📄 Rotating page ${idx + 1} (${width}×${height})`);
+      page.setRotation(degrees(90));
     });
 
-    if (!rotatedAny) {
-      console.log('ℹ️ Skipped rotation — all pages already landscape.');
-      return pdfBytes; // Return original if no rotation needed
-    }
-    
     // Save the rotated PDF
     const rotatedPdfBytes = await pdfDoc.save();
     console.log('✅ PDF rotation completed successfully');
@@ -98,7 +86,10 @@ serve(async (req) => {
 
     // Default orientation and rotation
     const pageOrientation = orientation || (format === 'production' ? 'landscape' : 'portrait');
-    const shouldRotate = (typeof rotate === 'boolean') ? rotate : (format === 'production' && pageOrientation === 'landscape');
+    // Force rotation for portrait requests so the landscape spread renders in portrait view
+    const shouldRotate = pageOrientation === 'portrait'
+      ? true
+      : (typeof rotate === 'boolean' ? rotate : false);
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
