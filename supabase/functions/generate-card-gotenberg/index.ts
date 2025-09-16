@@ -77,7 +77,9 @@ interface GenerateRequest {
   format?: 'preview' | 'production'; // new format option
   origin?: string; // e.g., https://your-app.lovableproject.com
   fullUrl?: string; // direct URL to render
-  rotate?: boolean; // Add rotation option - defaults to true for production
+  rotate?: boolean; // Add rotation option - defaults based on orientation
+  orientation?: 'portrait' | 'landscape'; // Page orientation for production
+  previewOnly?: boolean; // If true, do not lock or persist URLs
 }
 
 serve(async (req) => {
@@ -86,7 +88,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, only, mode = 'url', format = 'preview', origin, fullUrl, rotate } = await req.json() as GenerateRequest;
+    const { orderId, only, mode = 'url', format = 'preview', origin, fullUrl, rotate, orientation, previewOnly } = await req.json() as GenerateRequest;
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
         status: 400,
@@ -94,8 +96,9 @@ serve(async (req) => {
       });
     }
 
-    // Default rotation to true for production PDFs
-    const shouldRotate = rotate !== undefined ? rotate : (format === 'production');
+    // Default orientation and rotation
+    const pageOrientation = orientation || (format === 'production' ? 'landscape' : 'portrait');
+    const shouldRotate = (typeof rotate === 'boolean') ? rotate : (format === 'production' && pageOrientation === 'landscape');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -278,9 +281,11 @@ serve(async (req) => {
 
     let gotenbergResp: Response;
 
-    // Set dimensions based on format
-    const paperWidth = format === 'production' ? '10.25' : '5.125';
-    const paperHeight = format === 'production' ? '7' : '7';
+    // Set dimensions based on format and orientation
+    const isProd = format === 'production';
+    const prodPortrait = pageOrientation === 'portrait';
+    const paperWidth = isProd ? (prodPortrait ? '7' : '10.25') : '5.125';
+    const paperHeight = isProd ? (prodPortrait ? '10.25' : '7') : '7';
 
     if (mode === 'url' && only === 'inside') {
       // Only use URL mode for inside cards to maintain consistency
