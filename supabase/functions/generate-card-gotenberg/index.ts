@@ -44,7 +44,7 @@ function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; mime: string; ext
   const b64 = match[match.length - 1];
   const mime = fullMime.split(';')[0].trim();
   // atob is available in Deno runtime
-  const binary = atob(b64);
+  const binary = atob(b64.replace(/\s+/g, ''));
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   let ext = 'png';
