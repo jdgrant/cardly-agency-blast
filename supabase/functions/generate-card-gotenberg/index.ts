@@ -523,7 +523,9 @@ serve(async (req) => {
       pdfBytes = await rotatePDFClockwise90(pdfBytes);
     }
 
-    const pdfPath = `cards/${orderId}_gotenberg_${Date.now()}.pdf`;
+    // Use a different folder for preview-only runs
+    const folder = (format === 'production' && includeFront && includeInside && previewOnly) ? 'cards/previews' : 'cards';
+    const pdfPath = `${folder}/${orderId}_gotenberg_${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from('holiday-cards')
       .upload(pdfPath, pdfBytes, { contentType: 'application/pdf', upsert: true });

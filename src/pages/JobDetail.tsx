@@ -128,6 +128,7 @@ const JobDetail = () => {
   const [generatingFront, setGeneratingFront] = useState(false);
   const [generatingGotenberg, setGeneratingGotenberg] = useState(false);
   const [generatingProduction, setGeneratingProduction] = useState(false);
+  const [generatingPortraitPreview, setGeneratingPortraitPreview] = useState(false);
   const [advancedSectionOpen, setAdvancedSectionOpen] = useState(false);
   const [showClientListUpload, setShowClientListUpload] = useState(false);
   const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string, production?: string, productionFront?: string, productionInside?: string}>({});
@@ -1012,6 +1013,49 @@ const JobDetail = () => {
       });
     } finally {
       setGeneratingProduction(false);
+    }
+};
+
+  const handleGeneratePortraitPreviewCombinedPDF = async () => {
+    if (!order?.id) return;
+    setGeneratingPortraitPreview(true);
+    toast({ title: 'Building Portrait Preview', description: 'Generating portrait 7" × 10.25" combined PDF (not saved)…' });
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: {
+          orderId: order.id,
+          format: 'production',
+          only: 'front+inside',
+          mode: 'html',
+          origin: window.location.origin,
+          orientation: 'portrait',
+          rotate: false,
+          previewOnly: true
+        }
+      });
+
+      if (error) throw error;
+      if (!data?.pdfPath) throw new Error('No PDF path returned');
+
+      const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(data.pdfPath)}`;
+      const resp = await fetch(servePdfUrl);
+      if (!resp.ok) throw new Error(`Failed to download PDF: ${resp.status}`);
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `order-${order.readable_order_id || order.id}-portrait-preview.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({ title: 'Portrait Preview Ready', description: 'Downloaded portrait combined PDF (not saved to order).' });
+    } catch (err: any) {
+      console.error('Portrait preview generation error', err);
+      toast({ title: 'Generation failed', description: err?.message || 'Could not generate portrait preview.', variant: 'destructive' });
+    } finally {
+      setGeneratingPortraitPreview(false);
     }
   };
 
@@ -1995,6 +2039,25 @@ const JobDetail = () => {
                       <div className="flex items-center space-x-2">
                         <FileText className="w-4 h-4" />
                         <span>Generate / Open Combined Production PDF</span>
+                      </div>
+                    )}
+                  </Button>
+
+                  <Button
+                    onClick={handleGeneratePortraitPreviewCombinedPDF}
+                    disabled={generatingPortraitPreview}
+                    variant="secondary"
+                    className="w-full"
+                  >
+                    {generatingPortraitPreview ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating Portrait Preview (not saved)...</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="w-4 h-4" />
+                        <span>Portrait Preview (not saved)</span>
                       </div>
                     )}
                   </Button>
