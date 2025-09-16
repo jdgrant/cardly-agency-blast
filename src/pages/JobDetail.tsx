@@ -1014,7 +1014,7 @@ const JobDetail = () => {
     } finally {
       setGeneratingProduction(false);
     }
-};
+  };
 
   const handleGeneratePortraitPreviewCombinedPDF = async () => {
     if (!order?.id) return;
