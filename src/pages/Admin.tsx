@@ -472,7 +472,15 @@ const Admin = () => {
 
       if (error) throw error;
 
-      if (data?.downloadUrl) {
+      if (data?.locked) {
+        // Production PDF is locked and existing version served
+        setDownloadUrls(prev => ({ ...prev, [key]: data.downloadUrl }));
+        toast({ 
+          title: "🔒 Production PDF Locked", 
+          description: "Order is in production. Serving existing PDF to prevent changes.", 
+          variant: "default"
+        });
+      } else if (data?.downloadUrl) {
         setDownloadUrls(prev => ({ ...prev, [key]: data.downloadUrl }));
         toast({ title: "Production PDF Ready", description: "7\"x10.25\" format ready for printing. Click Download to open." });
       } else {

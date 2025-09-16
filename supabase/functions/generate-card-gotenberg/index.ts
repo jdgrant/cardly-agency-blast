@@ -491,6 +491,38 @@ serve(async (req) => {
 
     // Persist URL on the order when generating the combined production PDF
     if (format === 'production' && includeFront && includeInside) {
+      // Check if order already has a production PDF and is sent to press - if so, prevent regeneration
+      const { data: existingOrder } = await supabase
+        .from('orders')
+        .select('production_combined_pdf_path, status, pcm_order_id')
+        .eq('id', orderId)
+        .single();
+      
+      if (existingOrder?.production_combined_pdf_path && 
+          (existingOrder.status === 'sent_to_press' || existingOrder.pcm_order_id)) {
+        console.log('🔒 Production PDF already exists and order is in production - serving existing PDF');
+        
+        // Return the existing production PDF instead of regenerating
+        const { data: existingSignedUrl } = await supabase.storage
+          .from('holiday-cards')
+          .createSignedUrl(existingOrder.production_combined_pdf_path, 60 * 60);
+          
+        const { data: existingPublicData } = supabase.storage
+          .from('holiday-cards')
+          .getPublicUrl(existingOrder.production_combined_pdf_path);
+        
+        return new Response(JSON.stringify({
+          success: true,
+          pdfPath: existingOrder.production_combined_pdf_path,
+          downloadUrl: existingSignedUrl?.signedUrl || null,
+          publicUrl: existingPublicData?.publicUrl || null,
+          message: '🔒 Existing production PDF served (order locked for production)',
+          locked: true
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       const { error: updErr } = await supabase
         .from('orders')
         .update({
