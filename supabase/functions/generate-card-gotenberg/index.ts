@@ -188,9 +188,7 @@ serve(async (req) => {
     const isProductionPDF = format === 'production' && includeFront && includeInside;
 
     // Determine final rotation: default to true for combined production PDFs unless explicitly disabled
-    const finalShouldRotate = (format === 'production' && includeFront && includeInside && typeof rotate !== 'boolean')
-      ? true
-      : (pageOrientation === 'portrait' ? true : (typeof rotate === 'boolean' ? rotate : false));
+    const finalShouldRotate = (typeof rotate === 'boolean') ? rotate : false;
 
     let previewDataUrl = '';
     try {

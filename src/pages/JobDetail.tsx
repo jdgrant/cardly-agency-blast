@@ -950,7 +950,7 @@ const JobDetail = () => {
           mode: 'html',  // Use HTML mode for combined PDFs
           origin: window.location.origin,
           orientation: 'portrait',
-          rotate: true
+          rotate: false
         }
       });
       
@@ -976,6 +976,7 @@ const JobDetail = () => {
             mode: 'html',
             origin: window.location.origin,
             orientation: 'portrait',
+            rotate: false,
             previewOnly: true
           }
         });
