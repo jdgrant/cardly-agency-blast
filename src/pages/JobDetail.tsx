@@ -950,7 +950,7 @@ const JobDetail = () => {
           mode: 'html',  // Use HTML mode for combined PDFs
           origin: window.location.origin,
           orientation: 'portrait',
-          rotate: false
+          rotate: true
         }
       });
       
@@ -965,49 +965,6 @@ const JobDetail = () => {
         throw new Error('No data returned from PDF generation function');
       }
       
-      // If production is locked, create a rotated preview copy and serve that instead
-      if (data.locked) {
-        console.log('Order is locked. Generating rotated preview copy (does not modify production file)…');
-        const { data: previewData, error: previewErr } = await supabase.functions.invoke('generate-card-gotenberg', {
-          body: {
-            orderId: order.id,
-            format: 'production',
-            only: 'front+inside',
-            mode: 'html',
-            origin: window.location.origin,
-            orientation: 'portrait',
-            rotate: false,
-            previewOnly: true
-          }
-        });
-        if (previewErr) throw previewErr;
-        if (!previewData?.pdfPath) throw new Error('No PDF path returned from rotated preview');
-        
-        const servePdfUrl = `https://wsibvneidsmtsazfbmgc.supabase.co/functions/v1/serve-pdf?path=${encodeURIComponent(previewData.pdfPath)}`;
-        console.log('Attempting to download rotated preview PDF from:', servePdfUrl);
-
-        try {
-          const response = await fetch(servePdfUrl);
-          console.log('Rotated preview PDF fetch response status:', response.status, response.statusText);
-          if (!response.ok) throw new Error(`Failed to download rotated preview PDF: ${response.status} ${response.statusText}`);
-          const blob = await response.blob();
-          console.log('Rotated preview PDF blob size:', blob.size, 'bytes');
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `order-${order.readable_order_id || order.id}-combined-portrait-preview.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-          console.log('Rotated preview PDF download triggered successfully');
-        } catch (fetchError) {
-          console.warn('Blob download for rotated preview failed, trying direct URL:', fetchError);
-          window.open(servePdfUrl, '_blank');
-        }
-        toast({ title: 'Rotated Preview Ready', description: 'Served a portrait preview since production file is locked.' });
-        return;
-      }
 
       const pdfPath = data?.pdfPath;
       const publicUrl = data?.publicUrl as string | undefined;
