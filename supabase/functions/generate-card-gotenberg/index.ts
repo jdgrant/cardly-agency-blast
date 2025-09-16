@@ -7,8 +7,15 @@ import { generateUnifiedCardHTML } from "../_shared/unified-layouts.ts";
 import { downloadAndEncodeImageForGotenberg } from "../_shared/image-utils.ts";
 
 function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7', brandingLogoDataUrl = '') {
-  const imgSrc = previewDataUrl || template.preview_url || '';
+  // CRITICAL: Never use template.preview_url as fallback in production - it creates broken PDFs
+  // Only use previewDataUrl which is the base64 encoded version
+  const imgSrc = previewDataUrl || '';
   const isSpread = format === 'production';
+  
+  // For production PDFs, ensure we have a valid image
+  if (format === 'production' && !previewDataUrl) {
+    throw new Error('Production PDF requires base64 encoded preview image - template image could not be downloaded');
+  }
   
   return generateUnifiedCardHTML('front', {
     message: '', // Front cards don't have messages
@@ -135,8 +142,11 @@ serve(async (req) => {
       console.error('❌ Error downloading SendYourCards.io logo:', error);
     }
 
-    // Inline template preview image for reliable rendering in Gotenberg
+    // CRITICAL: Inline template preview image for reliable rendering in Gotenberg
+    // This prevents broken images in PCM production PDFs
     let previewDataUrl = '';
+    const isProductionPDF = format === 'production' && includeFront && includeInside;
+    
     try {
       if (template.preview_url) {
         const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
@@ -153,12 +163,12 @@ serve(async (req) => {
           fullUrl = `${supa}${fullUrl}`;
         }
 
-        console.log('Fetching preview from:', fullUrl);
+        console.log('🖼️ Fetching preview from:', fullUrl);
         let resp = await fetch(fullUrl);
         if (!resp.ok && base && !/^https?:\/\//i.test(template.preview_url)) {
           // Retry with app origin for any relative URL
           const retryUrl = `${base}${template.preview_url}`;
-          console.log('Retrying preview fetch from:', retryUrl);
+          console.log('🔄 Retrying preview fetch from:', retryUrl);
           resp = await fetch(retryUrl);
         }
 
@@ -167,13 +177,33 @@ serve(async (req) => {
           const buf = await resp.arrayBuffer();
           const base64 = encodeBase64(new Uint8Array(buf));
           previewDataUrl = `data:${ct};base64,${base64}`;
-          console.log('Preview image fetched and inlined successfully');
+          console.log('✅ Preview image fetched and encoded successfully - size:', base64.length);
         } else {
-          console.log('Preview fetch failed with status:', resp.status);
+          const errorMsg = `❌ Preview fetch failed with status: ${resp.status}`;
+          console.log(errorMsg);
+          
+          // For production PCM PDFs, fail immediately rather than create broken PDFs
+          if (isProductionPDF) {
+            throw new Error(`${errorMsg} - Cannot create production PDF with broken images`);
+          }
+        }
+      } else {
+        const errorMsg = '❌ No template preview_url available';
+        console.log(errorMsg);
+        
+        // For production PCM PDFs, fail immediately
+        if (isProductionPDF) {
+          throw new Error(`${errorMsg} - Cannot create production PDF without template image`);
         }
       }
     } catch (e) {
-      console.log('Preview image fetch failed:', (e as any)?.message);
+      const errorMsg = `❌ Preview image fetch failed: ${(e as any)?.message}`;
+      console.log(errorMsg);
+      
+      // For production PCM PDFs, re-throw the error to prevent broken PDFs
+      if (isProductionPDF) {
+        throw new Error(`${errorMsg} - Production PDFs require valid embedded images`);
+      }
     }
 
     // Build PDF via Gotenberg

@@ -138,6 +138,11 @@ export function generateUnifiedCardHTML(
 function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
   const imgSrc = content.templatePreviewUrl || '';
   
+  // CRITICAL: For production PDFs, ensure we have a valid image to prevent broken PDFs sent to PCM
+  if (!imgSrc && content.templatePreviewUrl !== undefined) {
+    console.error('🚨 CRITICAL: No template image available for front card generation');
+  }
+  
   if (layout.isSpread) {
     // Production format: front on left half, branding on right half
     return `<!DOCTYPE html>
@@ -149,9 +154,10 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
         html, body { margin: 0; padding: 0; width: ${layout.overallWidth}; height: ${layout.overallHeight}; }
         body { font-family: Arial, sans-serif; background: #ffffff; }
         .production-layout { width: 100%; height: 100%; display: flex; }
-        .front-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; overflow: hidden; }
+        .front-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; overflow: hidden; background: #f5f5f5; display: flex; align-items: center; justify-content: center; }
         .blank-half { width: ${layout.contentWidth}; height: ${layout.contentHeight}; background: #ffffff; position: relative; }
         .front-img { width: 100%; height: 100%; object-fit: cover; object-position: left center; display: block; }
+        .no-image-placeholder { color: #999; font-size: 14px; text-align: center; }
         .branding { position: absolute; bottom: 12.5%; left: 50%; transform: translateX(-50%); text-align: center; }
         .branding-text { font-size: 12px; color: #666; margin-bottom: 8px; font-family: Arial, sans-serif; }
         .branding-logo { height: 32px; width: auto; margin: 4px 0; }
@@ -162,7 +168,7 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
     <body>
       <div class="production-layout">
         <div class="front-half">
-          ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="Card front"/>` : ''}
+          ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="Card front"/>` : '<div class="no-image-placeholder">Image not available</div>'}
         </div>
         <div class="blank-half">
           <div class="branding">
@@ -185,14 +191,15 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
       html, body { margin: 0; padding: 0; width: ${layout.overallWidth}; height: ${layout.overallHeight}; }
       body { font-family: Arial, sans-serif; background: #ffffff; }
       .wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-      .frame { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; }
+      .frame { width: 100%; height: 100%; box-sizing: border-box; border: 2px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff; display: flex; align-items: center; justify-content: center; }
       .img { width: 100%; height: 100%; object-fit: contain; display: block; background: #ffffff; }
+      .no-image-placeholder { color: #999; font-size: 14px; text-align: center; }
     </style>
   </head>
   <body>
     <div class="wrap">
       <div class="frame">
-        ${imgSrc ? `<img class="img" src="${imgSrc}" alt="Card front preview"/>` : ''}
+        ${imgSrc ? `<img class="img" src="${imgSrc}" alt="Card front preview"/>` : '<div class="no-image-placeholder">Image not available</div>'}
       </div>
     </div>
   </body>
