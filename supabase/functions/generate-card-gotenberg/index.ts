@@ -9,15 +9,30 @@ import { PDFDocument, degrees } from "https://esm.sh/pdf-lib@^1.17.1";
 
 async function rotatePDFClockwise90(pdfBytes: Uint8Array): Promise<Uint8Array> {
   try {
-    console.log('🔄 Rotating PDF 90 degrees clockwise...');
+    console.log('🔄 Evaluating PDF pages for 90° clockwise rotation...');
     
     // Load the PDF
     const pdfDoc = await PDFDocument.load(pdfBytes);
     const pages = pdfDoc.getPages();
-    
-    // Rotate each page 90 degrees clockwise
-    for (const page of pages) {
-      page.setRotation(degrees(90));
+
+    let rotatedAny = false;
+
+    // Rotate only portrait pages (height > width) 90 degrees clockwise
+    pages.forEach((page, idx) => {
+      // pdf-lib provides width/height getters
+      const width = page.getWidth();
+      const height = page.getHeight();
+      const isPortrait = height > width;
+      console.log(`📄 Page ${idx + 1} size: ${width} × ${height} — ${isPortrait ? 'portrait → rotating' : 'landscape → skipping'}`);
+      if (isPortrait) {
+        page.setRotation(degrees(90));
+        rotatedAny = true;
+      }
+    });
+
+    if (!rotatedAny) {
+      console.log('ℹ️ Skipped rotation — all pages already landscape.');
+      return pdfBytes; // Return original if no rotation needed
     }
     
     // Save the rotated PDF

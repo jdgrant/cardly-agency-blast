@@ -929,6 +929,7 @@ const JobDetail = () => {
   const handleGenerateProductionCombinedPDF = async () => {
     if (!order?.id) return;
     setGeneratingProduction(true);
+    toast({ title: 'Building Combined Production PDF', description: 'Generating front + inside at 7" × 10.25"…' });
     try {
       // Generate combined PDF using the same parameters as individual buttons
       console.log('Generating combined production PDF for order:', order.id);
