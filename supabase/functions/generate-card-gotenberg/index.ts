@@ -529,7 +529,7 @@ serve(async (req) => {
     }
 
     // Use a different folder for preview-only runs
-    const folder = (format === 'production' && includeFront && includeInside && previewOnly) ? 'cards/previews' : 'cards';
+    const folder = (format === 'production' && includeFront && includeInside && (previewOnly || false)) ? 'cards/previews' : 'cards';
     const pdfPath = `${folder}/${orderId}_gotenberg_${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
       .from('holiday-cards')
