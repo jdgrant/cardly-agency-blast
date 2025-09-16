@@ -187,8 +187,12 @@ serve(async (req) => {
     const includeInside = (only !== 'front');
     const isProductionPDF = format === 'production' && includeFront && includeInside;
 
-    let previewDataUrl = '';
+    // Determine final rotation: default to true for combined production PDFs unless explicitly disabled
+    const finalShouldRotate = (format === 'production' && includeFront && includeInside && typeof rotate !== 'boolean')
+      ? true
+      : (pageOrientation === 'portrait' ? true : (typeof rotate === 'boolean' ? rotate : false));
 
+    let previewDataUrl = '';
     try {
       if (template.preview_url) {
         // First, try to download directly from Supabase storage if this is a public storage URL
@@ -513,12 +517,11 @@ serve(async (req) => {
     const pdfArrayBuffer = await gotenbergResp.arrayBuffer();
     let pdfBytes = new Uint8Array(pdfArrayBuffer);
 
-    // Rotate PDF 90 degrees clockwise if requested (default for production)
-    if (shouldRotate) {
+    // Rotate PDF 90 degrees clockwise if requested (default for production combined)
+    if (finalShouldRotate) {
       console.log('🔄 Applying 90° clockwise rotation to PDF...');
       pdfBytes = await rotatePDFClockwise90(pdfBytes);
     }
-
     // Use a different folder for preview-only runs
     const folder = (format === 'production' && includeFront && includeInside && (previewOnly || false)) ? 'cards/previews' : 'cards';
     const pdfPath = `${folder}/${orderId}_gotenberg_${Date.now()}.pdf`;
@@ -600,10 +603,10 @@ serve(async (req) => {
       publicUrl: publicData?.publicUrl || null,
       debug: debugInfo,
       message: (includeFront && includeInside)
-        ? `Gotenberg PDF generated successfully (2 pages: front + inside)${shouldRotate ? ' - rotated 90° clockwise' : ''}`
+        ? `Gotenberg PDF generated successfully (2 pages: front + inside)${finalShouldRotate ? ' - rotated 90° clockwise' : ''}`
         : includeFront
-          ? `Gotenberg PDF generated successfully (front only)${shouldRotate ? ' - rotated 90° clockwise' : ''}`
-          : `Gotenberg PDF generated successfully (inside only)${shouldRotate ? ' - rotated 90° clockwise' : ''}`
+          ? `Gotenberg PDF generated successfully (front only)${finalShouldRotate ? ' - rotated 90° clockwise' : ''}`
+          : `Gotenberg PDF generated successfully (inside only)${finalShouldRotate ? ' - rotated 90° clockwise' : ''}`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
