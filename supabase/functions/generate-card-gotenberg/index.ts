@@ -460,7 +460,17 @@ serve(async (req) => {
         // Make signature smaller for combined PDF
         insideHTML = insideHTML.replace('.sig { width: 480px;', '.sig { width: 320px;');
         
-        // Combine both HTML pages into a single document
+        // Extract head and body from each HTML to preserve their styles/scripts
+        const extractSections = (html: string) => {
+          const headMatch = html.match(/<head[^>]*>([\s\S]*?)<\\/head>/i);
+          const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\\/body>/i);
+          return { head: headMatch?.[1] || '', body: bodyMatch?.[1] || html };
+        };
+        
+        const frontSections = extractSections(frontHTML);
+        const insideSections = extractSections(insideHTML);
+        
+        // Combine both HTML pages into a single document, preserving page CSS
         const combinedHTML = `
 <!DOCTYPE html>
 <html>
@@ -480,11 +490,13 @@ serve(async (req) => {
       padding: 0; 
     }
   </style>
+  ${frontSections.head}
+  ${insideSections.head}
 </head>
 <body>
-  ${frontHTML.replace('<!DOCTYPE html>', '').replace(/<html[^>]*>/, '').replace('<head>', '').replace('</head>', '').replace('<body>', '').replace('</body>', '').replace('</html>', '')}
+  ${frontSections.body}
   <div class="page-break"></div>
-  ${insideHTML.replace('<!DOCTYPE html>', '').replace(/<html[^>]*>/, '').replace('<head>', '').replace('</head>', '').replace('<body>', '').replace('</body>', '').replace('</html>', '')}
+  ${insideSections.body}
 </body>
 </html>
         `;
