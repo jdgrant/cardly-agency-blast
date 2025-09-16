@@ -5,6 +5,32 @@ import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { getSignatureUrl, getLogoUrl } from "../_shared/signature-utils.ts";
 import { generateUnifiedCardHTML } from "../_shared/unified-layouts.ts";
 import { downloadAndEncodeImageForGotenberg } from "../_shared/image-utils.ts";
+import { PDFDocument, degrees } from "https://esm.sh/pdf-lib@^1.17.1";
+
+async function rotatePDFClockwise90(pdfBytes: Uint8Array): Promise<Uint8Array> {
+  try {
+    console.log('🔄 Rotating PDF 90 degrees clockwise...');
+    
+    // Load the PDF
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const pages = pdfDoc.getPages();
+    
+    // Rotate each page 90 degrees clockwise
+    for (const page of pages) {
+      page.setRotation(degrees(90));
+    }
+    
+    // Save the rotated PDF
+    const rotatedPdfBytes = await pdfDoc.save();
+    console.log('✅ PDF rotation completed successfully');
+    
+    return new Uint8Array(rotatedPdfBytes);
+  } catch (error) {
+    console.error('❌ PDF rotation failed:', error);
+    // Return original PDF if rotation fails
+    return pdfBytes;
+  }
+}
 
 function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7', brandingLogoDataUrl = '') {
   // CRITICAL: Never use template.preview_url as fallback in production - it creates broken PDFs
@@ -36,6 +62,7 @@ interface GenerateRequest {
   format?: 'preview' | 'production'; // new format option
   origin?: string; // e.g., https://your-app.lovableproject.com
   fullUrl?: string; // direct URL to render
+  rotate?: boolean; // Add rotation option - defaults to true for production
 }
 
 serve(async (req) => {
@@ -44,13 +71,16 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId, only, mode = 'url', format = 'preview', origin, fullUrl } = await req.json() as GenerateRequest;
+    const { orderId, only, mode = 'url', format = 'preview', origin, fullUrl, rotate } = await req.json() as GenerateRequest;
     if (!orderId) {
       return new Response(JSON.stringify({ error: 'Order ID is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Default rotation to true for production PDFs
+    const shouldRotate = rotate !== undefined ? rotate : (format === 'production');
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -310,7 +340,6 @@ serve(async (req) => {
         },
       });
     } else {
-      // Build HTML and convert (front cards always use HTML, inside can use URL for consistency)
       const form = new FormData();
       
       if (includeFront) {
@@ -471,7 +500,13 @@ serve(async (req) => {
     }
 
     const pdfArrayBuffer = await gotenbergResp.arrayBuffer();
-    const pdfBytes = new Uint8Array(pdfArrayBuffer);
+    let pdfBytes = new Uint8Array(pdfArrayBuffer);
+
+    // Rotate PDF 90 degrees clockwise if requested (default for production)
+    if (shouldRotate) {
+      console.log('🔄 Applying 90° clockwise rotation to PDF...');
+      pdfBytes = await rotatePDFClockwise90(pdfBytes);
+    }
 
     const pdfPath = `cards/${orderId}_gotenberg_${Date.now()}.pdf`;
     const { error: uploadError } = await supabase.storage
@@ -552,10 +587,10 @@ serve(async (req) => {
       publicUrl: publicData?.publicUrl || null,
       debug: debugInfo,
       message: (includeFront && includeInside)
-        ? 'Gotenberg PDF generated successfully (2 pages: front + inside)'
+        ? `Gotenberg PDF generated successfully (2 pages: front + inside)${shouldRotate ? ' - rotated 90° clockwise' : ''}`
         : includeFront
-          ? 'Gotenberg PDF generated successfully (front only)'
-          : 'Gotenberg PDF generated successfully (inside only)'
+          ? `Gotenberg PDF generated successfully (front only)${shouldRotate ? ' - rotated 90° clockwise' : ''}`
+          : `Gotenberg PDF generated successfully (inside only)${shouldRotate ? ' - rotated 90° clockwise' : ''}`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

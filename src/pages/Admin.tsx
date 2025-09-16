@@ -467,7 +467,7 @@ const Admin = () => {
       toast({ title: "Building Production PDF", description: `Generating 7"x10.25" production card for ${orderId.slice(0,8)}…` });
 
       const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
-        body: { orderId, format: 'production' }
+        body: { orderId, format: 'production', rotate: true }
       });
 
       if (error) throw error;
@@ -493,6 +493,41 @@ const Admin = () => {
       setGenerating(prev => ({ ...prev, [key]: false }));
     }
   };
+  
+  const generateProductionPDFNoRotation = async (orderId: string) => {
+    const key = `${orderId}-prod-no-rotate`;
+    setGenerating(prev => ({ ...prev, [key]: true }));
+    try {
+      toast({ title: "Building Production PDF (No Rotation)", description: `Generating 7"x10.25" production card without rotation for ${orderId.slice(0,8)}…` });
+
+      const { data, error } = await supabase.functions.invoke('generate-card-gotenberg', {
+        body: { orderId, format: 'production', rotate: false }
+      });
+
+      if (error) throw error;
+
+      if (data?.locked) {
+        // Production PDF is locked and existing version served
+        setDownloadUrls(prev => ({ ...prev, [key]: data.downloadUrl }));
+        toast({ 
+          title: "🔒 Production PDF Locked", 
+          description: "Order is in production. Serving existing PDF to prevent changes.", 
+          variant: "default"
+        });
+      } else if (data?.downloadUrl) {
+        setDownloadUrls(prev => ({ ...prev, [key]: data.downloadUrl }));
+        toast({ title: "Production PDF Ready (No Rotation)", description: "7\"x10.25\" format ready for testing. Click Download to open." });
+      } else {
+        throw new Error('No downloadUrl returned');
+      }
+    } catch (err) {
+      console.error('generateProductionPDFNoRotation error', err);
+      toast({ title: "Production PDF failed", description: "Could not generate the production PDF.", variant: 'destructive' });
+    } finally {
+      setGenerating(prev => ({ ...prev, [key]: false }));
+    }
+  };
+
   const generateOrderFrontPDF = async (orderId: string) => {
     setGenerating(prev => ({ ...prev, [orderId + '-front']: true }));
     try {
