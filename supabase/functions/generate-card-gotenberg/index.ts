@@ -538,7 +538,7 @@ serve(async (req) => {
       .getPublicUrl(pdfPath);
 
     // Persist URL on the order when generating the combined production PDF
-    if (format === 'production' && includeFront && includeInside) {
+    if (format === 'production' && includeFront && includeInside && !previewOnly) {
       // Check if order already has a production PDF and is sent to press - if so, prevent regeneration
       const { data: existingOrder } = await supabase
         .from('orders')
