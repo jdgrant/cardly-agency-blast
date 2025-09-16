@@ -35,6 +35,24 @@ async function rotatePDFClockwise90(pdfBytes: Uint8Array): Promise<Uint8Array> {
   }
 }
 
+// Convert a data URL (e.g., "data:image/png;base64,AAAA...") to bytes and mime
+function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; mime: string; ext: string } {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+  if (!match) throw new Error('Invalid data URL');
+  const mime = match[1];
+  const b64 = match[2];
+  // atob is available in Deno runtime
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  let ext = 'png';
+  if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpg';
+  else if (mime.includes('webp')) ext = 'webp';
+  else if (mime.includes('svg')) ext = 'svg';
+  else if (mime.includes('png')) ext = 'png';
+  return { bytes, mime, ext };
+}
+
 function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7', brandingLogoDataUrl = '') {
   // CRITICAL: Never use template.preview_url as fallback in production - it creates broken PDFs
   // Only use previewDataUrl which is the base64 encoded version
@@ -470,6 +488,20 @@ serve(async (req) => {
         const frontSections = extractSections(frontHTML);
         const insideSections = extractSections(insideHTML);
         
+        // Before combining, replace the front image data URL with a real asset file for reliability
+        let frontBody = frontSections.body;
+        try {
+          if (previewDataUrl && previewDataUrl.startsWith('data:')) {
+            const { bytes, mime, ext } = dataUrlToBytes(previewDataUrl);
+            const assetName = `front-image.${ext}`;
+            // Replace only the first data URL occurrence (the front image)
+            frontBody = frontBody.replace(/src="data:[^"]+"/, `src="${assetName}"`);
+            form.append('files', new File([bytes], assetName, { type: mime }));
+          }
+        } catch (e) {
+          console.warn('Failed to attach front image asset; falling back to data URL in HTML', (e as Error).message);
+        }
+        
         // Combine both HTML pages into a single document, preserving page CSS
         const combinedHTML = `
 <!DOCTYPE html>
@@ -494,7 +526,7 @@ serve(async (req) => {
   ${insideSections.head}
 </head>
 <body>
-  ${frontSections.body}
+  ${frontBody}
   <div class="page-break"></div>
   ${insideSections.body}
 </body>
