@@ -37,19 +37,22 @@ async function rotatePDFClockwise90(pdfBytes: Uint8Array): Promise<Uint8Array> {
 
 // Convert a data URL (e.g., "data:image/png;base64,AAAA...") to bytes and mime
 function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; mime: string; ext: string } {
-  const match = dataUrl.match(/^data:([^;]+);base64,(.*)$/);
+  // Be permissive: allow extra params like charset, name, etc. before ;base64
+  const match = dataUrl.match(/^data:([^,]+);base64([,]|,)([\s\S]*)$/) || dataUrl.match(/^data:([^,]+);base64,([\s\S]*)$/);
   if (!match) throw new Error('Invalid data URL');
-  const mime = match[1];
-  const b64 = match[2];
+  const fullMime = match[1];
+  const b64 = match[match.length - 1];
+  const mime = fullMime.split(';')[0].trim();
   // atob is available in Deno runtime
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
   let ext = 'png';
-  if (mime.includes('jpeg') || mime.includes('jpg')) ext = 'jpg';
-  else if (mime.includes('webp')) ext = 'webp';
-  else if (mime.includes('svg')) ext = 'svg';
-  else if (mime.includes('png')) ext = 'png';
+  const lower = mime.toLowerCase();
+  if (lower.includes('jpeg') || lower.includes('jpg')) ext = 'jpg';
+  else if (lower.includes('webp')) ext = 'webp';
+  else if (lower.includes('svg')) ext = 'svg';
+  else if (lower.includes('png')) ext = 'png';
   return { bytes, mime, ext };
 }
 
@@ -491,12 +494,18 @@ serve(async (req) => {
         // Before combining, replace the front image data URL with a real asset file for reliability
         let frontBody = frontSections.body;
         try {
-          if (previewDataUrl && previewDataUrl.startsWith('data:')) {
-            const { bytes, mime, ext } = dataUrlToBytes(previewDataUrl);
+          // Prefer extracting the data URL directly from the generated HTML
+          const dataUrlMatch = frontBody.match(/src=["'](data:[^"']+)["']/i);
+          const candidateDataUrl = dataUrlMatch ? dataUrlMatch[1] : (previewDataUrl && previewDataUrl.startsWith('data:') ? previewDataUrl : '');
+          if (candidateDataUrl) {
+            const { bytes, mime, ext } = dataUrlToBytes(candidateDataUrl);
             const assetName = `front-image.${ext}`;
             // Replace only the first data URL occurrence (the front image)
-            frontBody = frontBody.replace(/src="data:[^"]+"/, `src="${assetName}"`);
+            frontBody = frontBody.replace(/src=["']data:[^"']+["']/, `src="${assetName}"`);
             form.append('files', new File([bytes], assetName, { type: mime }));
+            console.log('✅ Attached front image as asset:', assetName, 'bytes:', bytes.length);
+          } else {
+            console.log('ℹ️ No data URL found in front HTML; leaving original src');
           }
         } catch (e) {
           console.warn('Failed to attach front image asset; falling back to data URL in HTML', (e as Error).message);
