@@ -40,10 +40,14 @@ interface Order {
   contact_firstname?: string;
   contact_lastname?: string;
   created_at: string;
+  invoice_paid?: boolean;
+  mailing_window: string;
+  readable_order_id?: string;
 }
 
 const BatchManager = () => {
   const [batches, setBatches] = useState<Batch[]>([]);
+  const [paidOrders, setPaidOrders] = useState<Order[]>([]);
   const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -98,7 +102,19 @@ const BatchManager = () => {
         order.status === 'approved'
       );
 
+      // Filter for all paid orders and sort by drop_date
+      const paidOrders = (ordersData || [])
+        .filter((order: Order) => order.invoice_paid === true)
+        .sort((a: Order, b: Order) => {
+          // Sort by drop_date, with null dates at the end
+          if (!a.drop_date && !b.drop_date) return 0;
+          if (!a.drop_date) return 1;
+          if (!b.drop_date) return -1;
+          return new Date(a.drop_date).getTime() - new Date(b.drop_date).getTime();
+        });
+
       setAvailableOrders(approvedOrders);
+      setPaidOrders(paidOrders);
     } catch (error) {
       console.error('BatchManager fetch data error:', error);
       toast({
@@ -243,6 +259,16 @@ const BatchManager = () => {
     return new Date(date).toLocaleDateString();
   };
 
+  const formatMailingWindow = (window: string) => {
+    const windows: Record<string, string> = {
+      'dec-1-5': 'December 1-5',
+      'dec-6-10': 'December 6-10',
+      'dec-11-15': 'December 11-15',
+      'dec-16-20': 'December 16-20'
+    };
+    return windows[window] || window;
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'pending': return 'secondary';
@@ -382,12 +408,92 @@ const BatchManager = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Batches Table */}
+      {/* Paid Orders Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Package className="w-5 h-5" />
-            <span>Batches</span>
+            <span>Paid Orders by Drop Date</span>
+            <Badge variant="secondary">{paidOrders.length} orders</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Order ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Cards</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Mailing Window</TableHead>
+                  <TableHead>Drop Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paidOrders.map((order) => (
+                  <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50">
+                    <TableCell className="font-mono text-xs">
+                      {order.readable_order_id || order.id.slice(0, 8) + '...'}
+                    </TableCell>
+                    <TableCell>{getCustomerName(order)}</TableCell>
+                    <TableCell>{order.card_quantity}</TableCell>
+                    <TableCell className="font-semibold">
+                      ${Number(order.final_price).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      {formatMailingWindow(order.mailing_window)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span>{order.drop_date ? formatDropDate(order.drop_date) : 'TBD'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={
+                          order.status === 'pending' ? 'secondary' :
+                          order.status === 'approved' ? 'default' :
+                          order.status === 'sent_to_press' ? 'outline' :
+                          order.status === 'sent' ? 'default' :
+                          'secondary'
+                        }
+                      >
+                        {order.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(order.created_at).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            
+            {paidOrders.length === 0 && !loading && (
+              <div className="text-center py-8 text-muted-foreground">
+                No paid orders found.
+              </div>
+            )}
+            
+            {loading && (
+              <div className="text-center py-8 text-muted-foreground">
+                Loading orders...
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Batches Management Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Package className="w-5 h-5" />
+            <span>Batch Management</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
