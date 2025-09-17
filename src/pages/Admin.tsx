@@ -905,7 +905,8 @@ const Admin = () => {
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
   const approvedOrders = orders.filter(o => o.status === 'approved').length;
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.final_price), 0);
-  const signaturesForReview = orders.filter(o => o.signature_needs_review === true).length;
+  const signaturesForReview = orders.filter(o => o.signature_needs_review === true && o.status !== 'sent_to_press').length;
+  const sentToPressOrders = orders.filter(o => o.status === 'sent_to_press').length;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -1020,14 +1021,14 @@ const Admin = () => {
         </div>
 
         {/* Signatures for Review Section */}
-        {orders.filter(o => o.signature_needs_review === true).length > 0 && (
+        {orders.filter(o => o.signature_needs_review === true && o.status !== 'sent_to_press').length > 0 && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ImageIcon className="w-5 h-5 text-purple-600" />
                 <span>Signatures for Review</span>
                 <Badge variant="secondary" className="ml-2">
-                  {orders.filter(o => o.signature_needs_review === true).length}
+                  {orders.filter(o => o.signature_needs_review === true && o.status !== 'sent_to_press').length}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -1049,7 +1050,7 @@ const Admin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {orders.filter(o => o.signature_needs_review === true).map((order) => (
+                     {orders.filter(o => o.signature_needs_review === true && o.status !== 'sent_to_press').map((order) => (
                        <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
                         <TableCell className="font-mono text-xs">
                           {order.id.slice(0, 8)}...
@@ -1138,7 +1139,7 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {orders.map((order) => (
+                   {orders.filter(o => o.status !== 'sent_to_press').map((order) => (
                      <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
                       <TableCell className="font-mono text-xs">
                         {order.id.slice(0, 8)}...
@@ -1430,6 +1431,79 @@ const Admin = () => {
             <div className="space-y-6">
               <BatchManager />
             </div>
+          )}
+
+          {/* Sent to Press Orders Section */}
+          {sentToPressOrders > 0 && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Package2 className="w-5 h-5 text-green-600" />
+                  <span>Orders Sent to Press</span>
+                  <Badge variant="secondary" className="ml-2">
+                    {sentToPressOrders}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Order ID</TableHead>
+                        <TableHead>Customer Name</TableHead>
+                        <TableHead>Cards</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Mailing Window</TableHead>
+                        <TableHead>PCM Order ID</TableHead>
+                        <TableHead>PCM Batch ID</TableHead>
+                        <TableHead>Drop Date</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                       {orders.filter(o => o.status === 'sent_to_press').map((order) => (
+                         <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
+                          <TableCell className="font-mono text-xs">
+                            {order.id.slice(0, 8)}...
+                          </TableCell>
+                          <TableCell>{getCustomerName(order)}</TableCell>
+                          <TableCell>{order.card_quantity}</TableCell>
+                          <TableCell className="font-semibold">
+                            ${Number(order.final_price).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {formatMailingWindow(order.mailing_window)}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            {(order as any).pcm_order_id || 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {(order as any).pcm_batch_id || 'N/A'}
+                          </TableCell>
+                          <TableCell className="text-xs">
+                            {(order as any).drop_date ? new Date((order as any).drop_date).toLocaleDateString() : 'N/A'}
+                          </TableCell>
+                           <TableCell className="text-xs">
+                             {new Date(order.created_at).toLocaleDateString()}
+                           </TableCell>
+                           <TableCell onClick={(e) => e.stopPropagation()}>
+                             <Button
+                               size="sm"
+                               variant="outline"
+                               onClick={() => handleViewOrder(order)}
+                             >
+                               View Details
+                             </Button>
+                           </TableCell>
+                         </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
          {/* Preview Modal */}
