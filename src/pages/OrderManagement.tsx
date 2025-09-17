@@ -1018,22 +1018,22 @@ const OrderManagement = () => {
                       </CardContent>
                     </Card>
                     
-                    <div className="space-y-3">
-                       <div className="flex justify-between items-center">
-                         <span>Subtotal:</span>
-                         <span>${Number(order.regular_price).toFixed(2)}</span>
+                     <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span>Subtotal:</span>
+                          <span>${Number(order.final_price).toFixed(2)}</span>
+                        </div>
+                        {(order.promo_code || validatedPromoCode) && (
+                          <div className="flex justify-between items-center text-green-600">
+                            <span>Discount {order.promo_code ? `(${order.promo_code})` : validatedPromoCode ? `(${validatedPromoCode.code} - ${validatedPromoCode.discount_percentage}% off)` : ''}:</span>
+                            <span>-${validatedPromoCode ? getDiscountAmount().toFixed(2) : (Number(order.regular_price) - Number(order.final_price)).toFixed(2)}</span>
+                          </div>
+                        )}
+                       <Separator />
+                       <div className="flex justify-between items-center font-bold text-lg">
+                         <span>Total:</span>
+                         <span>${validatedPromoCode ? calculateDiscountedTotal().toFixed(2) : Number(order.final_price).toFixed(2)}</span>
                        </div>
-                       {(order.promo_code || validatedPromoCode) && (
-                         <div className="flex justify-between items-center text-green-600">
-                           <span>Discount {order.promo_code ? `(${order.promo_code})` : validatedPromoCode ? `(${validatedPromoCode.code} - ${validatedPromoCode.discount_percentage}% off)` : ''}:</span>
-                           <span>-${(Number(order.regular_price) - Number(order.final_price)).toFixed(2)}</span>
-                         </div>
-                       )}
-                      <Separator />
-                      <div className="flex justify-between items-center font-bold text-lg">
-                        <span>Total:</span>
-                        <span>${Number(order.final_price).toFixed(2)}</span>
-                      </div>
                     </div>
 
                     <Button 
