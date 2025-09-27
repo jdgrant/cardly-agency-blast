@@ -178,9 +178,7 @@ const Admin = () => {
 
       // Fetch promocodes using admin function
       const { data: promocodesData, error: promocodesError } = await supabase
-        .from('promocodes')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_admin_promocodes', { session_id_param: sessionId });
 
       if (promocodesError) throw promocodesError;
 
@@ -801,14 +799,19 @@ const Admin = () => {
 
   const createPromoCode = async (formData: { code: string; discount_percentage: number; expires_at?: string; max_uses?: number }) => {
     try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
       const { error } = await supabase
-        .from('promocodes')
-        .insert([{
-          code: formData.code.toUpperCase(),
-          discount_percentage: formData.discount_percentage,
-          expires_at: formData.expires_at || null,
-          max_uses: formData.max_uses || null,
-        }]);
+        .rpc('create_admin_promocode', {
+          session_id_param: sessionId,
+          code_param: formData.code,
+          discount_percentage_param: formData.discount_percentage,
+          expires_at_param: formData.expires_at || null,
+          max_uses_param: formData.max_uses || null,
+        });
 
       if (error) throw error;
 
@@ -828,6 +831,11 @@ const Admin = () => {
 
   const togglePromoCodeActive = async (promoCodeId: string, isActive: boolean) => {
     try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
       const { error } = await supabase
         .from('promocodes')
         .update({ is_active: isActive, updated_at: new Date().toISOString() })
@@ -845,10 +853,10 @@ const Admin = () => {
         title: "Promo Code Updated",
         description: `Promo code ${isActive ? 'activated' : 'deactivated'} successfully`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update promo code status",
+        description: error.message || "Failed to update promo code status",
         variant: "destructive"
       });
     }
@@ -856,6 +864,11 @@ const Admin = () => {
 
   const deletePromoCode = async (promoCodeId: string, code: string) => {
     try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
       const { error } = await supabase
         .from('promocodes')
         .delete()
@@ -869,10 +882,10 @@ const Admin = () => {
         title: "Promo Code Deleted",
         description: `Code ${code} deleted successfully`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete promo code",
+        description: error.message || "Failed to delete promo code",
         variant: "destructive"
       });
     }

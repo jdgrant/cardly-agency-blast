@@ -403,6 +403,16 @@ export type Database = {
         Args: { order_id_param: string; session_id_param: string }
         Returns: undefined
       }
+      create_admin_promocode: {
+        Args: {
+          code_param: string
+          discount_percentage_param: number
+          expires_at_param?: string
+          max_uses_param?: number
+          session_id_param: string
+        }
+        Returns: string
+      }
       create_batch: {
         Args: {
           batch_drop_date: string
@@ -639,6 +649,20 @@ export type Database = {
           status: string | null
           template_id: string
           tier_name: string
+          updated_at: string
+        }[]
+      }
+      get_admin_promocodes: {
+        Args: { session_id_param: string }
+        Returns: {
+          code: string
+          created_at: string
+          current_uses: number
+          discount_percentage: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
           updated_at: string
         }[]
       }
