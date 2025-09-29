@@ -168,7 +168,7 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     // Map postage option to PCM MailClass
-    const mailClass = order.postage_option === 'first-class' ? 'First' : 'Standard';
+    const mailClass = order.postage_option === 'first-class' ? 'FirstClass' : 'Standard';
 
     // Try different greeting card order approaches
     const greetingCardEndpoints = [

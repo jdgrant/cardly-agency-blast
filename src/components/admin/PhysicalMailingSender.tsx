@@ -314,7 +314,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
       };
 
       // Map postage option to PCM MailClass
-      const mailClass = order.postage_option === 'first-class' ? 'First' : 'Standard';
+      const mailClass = order.postage_option === 'first-class' ? 'FirstClass' : 'Standard';
 
       const xmlRecipients = recipients.map(r => `      <Recipient>
         <FirstName>${r.firstName}</FirstName>
