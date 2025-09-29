@@ -148,6 +148,10 @@ const JobDetail = () => {
   const [isEditingDropDate, setIsEditingDropDate] = useState(false);
   const [editingDropDate, setEditingDropDate] = useState('');
 
+  // Postage option editing state
+  const [isEditingPostageOption, setIsEditingPostageOption] = useState(false);
+  const [editingPostageOption, setEditingPostageOption] = useState('');
+
   useEffect(() => {
     if (orderId) {
       fetchOrderDetails();
@@ -611,6 +615,58 @@ const JobDetail = () => {
       toast({
         title: "Update Failed",
         description: "Failed to update drop date",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startEditingPostageOption = () => {
+    if (order?.postage_option) {
+      setEditingPostageOption(order.postage_option);
+    }
+    setIsEditingPostageOption(true);
+  };
+
+  const cancelEditingPostageOption = () => {
+    setIsEditingPostageOption(false);
+    setEditingPostageOption('');
+  };
+
+  const savePostageOption = async () => {
+    if (!order || !editingPostageOption) return;
+
+    try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        toast({
+          title: "Authentication Required",
+          description: "Please login as admin to update postage option.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ postage_option: editingPostageOption })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrder(prev => prev ? { ...prev, postage_option: editingPostageOption } : null);
+      setIsEditingPostageOption(false);
+      setEditingPostageOption('');
+
+      toast({
+        title: "Postage Option Updated",
+        description: "Postage option has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating postage option:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update postage option",
         variant: "destructive"
       });
     }
@@ -1310,7 +1366,35 @@ const JobDetail = () => {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Postage Option</p>
-                    <p className="font-medium capitalize">{order.postage_option}</p>
+                    {isEditingPostageOption ? (
+                      <div className="flex items-center gap-2">
+                        <Select
+                          value={editingPostageOption}
+                          onValueChange={setEditingPostageOption}
+                        >
+                          <SelectTrigger className="w-32 h-7 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="standard">Standard</SelectItem>
+                            <SelectItem value="first-class">First Class</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button size="sm" onClick={savePostageOption} className="h-7 px-2">
+                          <Save className="w-3 h-3" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={cancelEditingPostageOption} className="h-7 px-2">
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium capitalize">{order.postage_option}</p>
+                        <Button size="sm" variant="ghost" onClick={startEditingPostageOption} className="h-6 px-1">
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
