@@ -507,29 +507,8 @@ serve(async (req) => {
         const insideSections = extractSections(insideHTML);
         
         let frontBody = frontSections.body;
-        // Replace only the front image (class="front-img") with an attached asset to ensure reliability
-        try {
-          if (previewDataUrl && previewDataUrl.startsWith('data:')) {
-            const { bytes, mime, ext } = dataUrlToBytes(previewDataUrl);
-            const assetName = `front-image.${ext}`;
-            // Replace the src inside the front image tag specifically
-            const replaced = frontBody.replace(/(<img[^>]*class=["'][^"']*front-img[^"']*["'][^>]*src=["'])([^"']+)(["'])/i, `$1${assetName}$3`);
-            if (replaced !== frontBody) {
-              frontBody = replaced;
-              const buffer = new ArrayBuffer(bytes.length);
-              const view = new Uint8Array(buffer);
-              view.set(bytes);
-              form.append('files', new Blob([buffer], { type: mime }), assetName);
-              console.log('✅ Attached front image asset for combined PDF:', assetName, 'bytes:', bytes.length);
-            } else {
-              console.warn('⚠️ Could not find front-img tag to replace; falling back to inline data URL');
-            }
-          } else {
-            console.warn('⚠️ previewDataUrl missing or not a data URL; keeping inline');
-          }
-        } catch (e) {
-          console.warn('Failed to attach front image asset; falling back to data URL in HTML', (e as Error).message);
-        }
+        // Keep inline data URL for front image - asset approach was causing issues
+        console.log('ℹ️ Using inline data URL for front image in combined PDF');
         
         // Combine both HTML pages into a single document, preserving page CSS
         const combinedHTML = `
