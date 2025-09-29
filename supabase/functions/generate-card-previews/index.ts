@@ -242,8 +242,8 @@ serve(async (req) => {
           }
         } else {
           console.log('No origin header available for local path, trying hardcoded approach');
-          // Fallback: try the current domain directly 
-          const fallbackUrl = `https://e84fd20e-7cca-4259-84ad-12452c25e301.sandbox.lovable.dev${src}`;
+          // Fallback: try the current project domain directly (no sandbox)
+          const fallbackUrl = `https://e84fd20e-7cca-4259-84ad-12452c25e301.lovableproject.com${src}`;
           console.log('Trying fallback URL:', fallbackUrl);
           
           try {
