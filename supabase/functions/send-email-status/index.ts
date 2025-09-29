@@ -13,7 +13,7 @@ const corsHeaders = {
 };
 
 // Helper function to upload base64 image to storage and return public URL
-async function uploadBase64ToStorage(base64Data: string, orderId: string, type: 'front' | 'inside'): Promise<string | null> {
+async function uploadBase64ToStorage(base64Data: string, orderId: string, type: 'front' | 'inside'): Promise<string | undefined> {
   try {
     // Remove data:image/png;base64, prefix if present
     const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
@@ -34,7 +34,7 @@ async function uploadBase64ToStorage(base64Data: string, orderId: string, type: 
     
     if (error) {
       console.error(`Failed to upload ${type} preview for order ${orderId}:`, error);
-      return null;
+      return undefined;
     }
     
     // Get public URL
@@ -46,7 +46,7 @@ async function uploadBase64ToStorage(base64Data: string, orderId: string, type: 
     
   } catch (error) {
     console.error(`Error uploading ${type} preview for order ${orderId}:`, error);
-    return null;
+    return undefined;
   }
 }
 

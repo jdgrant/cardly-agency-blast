@@ -84,7 +84,7 @@ serve(async (req) => {
         }
         return `data:image/png;base64,${base64}`;
       } catch (e) {
-        console.log('Failed to inline asset', path, e?.message);
+        console.log('Failed to inline asset', path, e instanceof Error ? e.message : 'Unknown error');
         return '';
       }
     };
@@ -198,7 +198,7 @@ serve(async (req) => {
           signatureDataUrl = await encodeToDataUrl(signaturePath);
         }
       } catch (e) {
-        console.log('Error processing signature:', e?.message);
+        console.log('Error processing signature:', e instanceof Error ? e.message : 'Unknown error');
       }
     }
 
