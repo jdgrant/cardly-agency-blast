@@ -125,10 +125,10 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in generate-card-pdfs function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message || 'Failed to generate PDF cards' 
+      error: error?.message || 'Failed to generate PDF cards' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -184,8 +184,8 @@ async function convertURLToPDF(url: string, type: string, format: string = 'prev
     const pdfBuffer = await response.arrayBuffer();
     return new Uint8Array(pdfBuffer);
     
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error converting ${type} URL to PDF:`, error);
-    throw new Error(`PDF conversion failed for ${type}: ${error.message}`);
+    throw new Error(`PDF conversion failed for ${type}: ${error?.message}`);
   }
 }

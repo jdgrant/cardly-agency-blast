@@ -38,10 +38,10 @@ async function rotatePDFClockwise90(pdfBytes: Uint8Array): Promise<Uint8Array> {
 // Convert a data URL (e.g., "data:image/png;base64,AAAA...") to bytes and mime
 function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; mime: string; ext: string } {
   // Be permissive: allow extra params like charset, name, etc. before ;base64
-  const match = dataUrl.match(/^data:([^,]+);base64([,]|,)([\s\S]*)$/) || dataUrl.match(/^data:([^,]+);base64,([\s\S]*)$/);
+  const match = dataUrl.match(/^data:([^,]+);base64,([\s\S]*)$/);
   if (!match) throw new Error('Invalid data URL');
   const fullMime = match[1];
-  const b64 = match[match.length - 1];
+  const b64 = match[2];
   const mime = fullMime.split(';')[0].trim();
   // atob is available in Deno runtime
   const binary = atob(b64.replace(/\s+/g, ''));
@@ -56,7 +56,7 @@ function dataUrlToBytes(dataUrl: string): { bytes: Uint8Array; mime: string; ext
   return { bytes, mime, ext };
 }
 
-function buildFrontHTML(template: any, previewDataUrl: string, format = 'preview', paperWidth = '5.125', paperHeight = '7', brandingLogoDataUrl = '') {
+function buildFrontHTML(template: any, previewDataUrl: string, format: 'preview' | 'production' = 'preview', paperWidth = '5.125', paperHeight = '7', brandingLogoDataUrl = '') {
   // CRITICAL: Never use template.preview_url as fallback in production - it creates broken PDFs
   // Only use previewDataUrl which is the base64 encoded version
   const imgSrc = previewDataUrl || '';
@@ -293,7 +293,7 @@ serve(async (req) => {
     headers['Authorization'] = `Bearer ${GOTENBERG_API_KEY}`;
     headers['X-Api-Key'] = GOTENBERG_API_KEY;
 
-    let gotenbergResp: Response;
+    let gotenbergResp: Response | undefined;
 
     // Set dimensions based on format and orientation
     const isProd = format === 'production';
@@ -502,7 +502,10 @@ serve(async (req) => {
             const assetName = `front-image.${ext}`;
             // Replace only the first data URL occurrence (the front image)
             frontBody = frontBody.replace(/src=["']data:[^"']+["']/, `src="${assetName}"`);
-            form.append('files', new File([bytes], assetName, { type: mime }));
+            const buffer = new ArrayBuffer(bytes.length);
+            const view = new Uint8Array(buffer);
+            view.set(bytes);
+            form.append('files', new Blob([buffer], { type: mime }), assetName);
             console.log('✅ Attached front image as asset:', assetName, 'bytes:', bytes.length);
           } else {
             console.log('ℹ️ No data URL found in front HTML; leaving original src');
@@ -558,6 +561,10 @@ serve(async (req) => {
       }
     }
 
+    if (!gotenbergResp) {
+      throw new Error('Gotenberg request was not executed properly');
+    }
+
     console.log('Gotenberg response status:', gotenbergResp.status);
     if (!gotenbergResp.ok) {
       const errText = await gotenbergResp.text();
@@ -571,7 +578,7 @@ serve(async (req) => {
     // Rotate PDF 90 degrees clockwise if requested (default for production combined)
     if (finalShouldRotate) {
       console.log('🔄 Applying 90° clockwise rotation to PDF...');
-      pdfBytes = await rotatePDFClockwise90(pdfBytes);
+      pdfBytes = new Uint8Array(await rotatePDFClockwise90(pdfBytes));
     }
     // Use a different folder for preview-only runs
     const folder = (format === 'production' && includeFront && includeInside && (previewOnly || false)) ? 'cards/previews' : 'cards';
@@ -629,7 +636,7 @@ serve(async (req) => {
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('generate-card-gotenberg error:', error);
     
     // Provide more detailed error information
@@ -643,7 +650,7 @@ serve(async (req) => {
     console.error('Detailed error info:', JSON.stringify(errorDetails, null, 2));
     
     return new Response(JSON.stringify({ 
-      error: error.message || 'Unknown error',
+      error: error?.message || 'Unknown error',
       details: errorDetails,
       success: false
     }), {
