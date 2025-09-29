@@ -110,6 +110,14 @@ const OrderManagement = () => {
     }
   }, [hashedOrderId]);
 
+  // Auto-populate and validate promo code if it exists in the order
+  useEffect(() => {
+    if (order?.promo_code && !validatedPromoCode && !promoCodeInput) {
+      setPromoCodeInput(order.promo_code);
+      validatePromoCode(order.promo_code);
+    }
+  }, [order?.promo_code, validatedPromoCode, promoCodeInput]);
+
   useEffect(() => {
     // Check for payment status in URL params
     const paymentStatus = searchParams.get('payment');

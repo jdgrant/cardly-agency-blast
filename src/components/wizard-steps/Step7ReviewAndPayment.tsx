@@ -29,12 +29,20 @@ const shippingWindows = [
 const Step7ReviewAndSubmit = () => {
   const { state, updateState, prevStep, resetWizard } = useWizard();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [promoCodeInput, setPromoCodeInput] = useState(state.promoCode || '');
   const [validatedPromoCode, setValidatedPromoCode] = useState<any>(null);
   const [promoCodeError, setPromoCodeError] = useState('');
   const [validatingPromoCode, setValidatingPromoCode] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Auto-validate promo code if it exists from URL or session
+  React.useEffect(() => {
+    if (state.promoCode && !validatedPromoCode) {
+      setPromoCodeInput(state.promoCode);
+      validatePromoCode(state.promoCode);
+    }
+  }, [state.promoCode]);
 
   const selectedTemplate = templates.find(t => t.id === state.selectedTemplate);
   const selectedShippingWindow = shippingWindows.find(w => w.value === state.mailingWindow);
@@ -85,6 +93,7 @@ const Step7ReviewAndSubmit = () => {
   };
 
   const applyPromoCode = () => {
+    updateState({ promoCode: promoCodeInput });
     validatePromoCode(promoCodeInput);
   };
 
@@ -92,6 +101,7 @@ const Step7ReviewAndSubmit = () => {
     setPromoCodeInput('');
     setValidatedPromoCode(null);
     setPromoCodeError('');
+    updateState({ promoCode: '' });
   };
 
   const handleSubmitOrder = async () => {

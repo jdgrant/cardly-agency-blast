@@ -165,11 +165,22 @@ const WizardContext = createContext<WizardContextType | undefined>(undefined);
 export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<WizardState>(initialState);
 
-  // Load saved session on mount
+  // Load saved session on mount and parse URL parameters
   useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPromoCode = urlParams.get('promo') || urlParams.get('promocode');
+    
     const savedSession = loadSessionFromStorage();
     if (savedSession) {
-      setState(savedSession);
+      // If there's a URL promo code, prioritize it over saved session
+      if (urlPromoCode) {
+        setState({ ...savedSession, promoCode: urlPromoCode });
+      } else {
+        setState(savedSession);
+      }
+    } else if (urlPromoCode) {
+      // No saved session but URL has promo code
+      setState({ ...initialState, promoCode: urlPromoCode });
     }
   }, []);
 
