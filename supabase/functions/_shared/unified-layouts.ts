@@ -167,14 +167,14 @@ function generateFrontHTML(layout: LayoutConfig, content: CardContent): string {
     </head>
     <body>
       <div class="production-layout">
-        <div class="front-half">
-          ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="Card front"/>` : '<div class="no-image-placeholder">Image not available</div>'}
-        </div>
         <div class="blank-half">
           <div class="branding">
             <div class="branding-text">Sent with</div>
             ${content.brandingLogoDataUrl ? `<img class="branding-logo" src="${content.brandingLogoDataUrl}" alt="SendYourCards.io Logo" />` : '<div class="branding-fallback">SendYourCards.io</div>'}
           </div>
+        </div>
+        <div class="front-half">
+          ${imgSrc ? `<img class="front-img" src="${imgSrc}" alt="Card front"/>` : '<div class="no-image-placeholder">Image not available</div>'}
         </div>
       </div>
     </body>
