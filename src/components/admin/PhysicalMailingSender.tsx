@@ -236,15 +236,16 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
 
 
       // Fetch order details
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', orderId)
-        .maybeSingle();
+      const { data: orderData, error: orderError } = await supabase.rpc('get_order_by_id', {
+        order_id: orderId,
+        session_id_param: adminSessionId
+      });
 
       if (orderError) {
         throw new Error(`Database error: ${orderError.message}`);
       }
+
+      const order = Array.isArray(orderData) ? orderData[0] : orderData;
       
       if (!order) {
         throw new Error(`Order not found with ID: ${orderId}`);
