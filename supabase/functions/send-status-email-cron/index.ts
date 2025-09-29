@@ -136,34 +136,32 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Check if previews exist, generate if missing
+        // Always regenerate previews for each email
         let currentOrder = order;
-        if (!order.front_preview_base64 || !order.inside_preview_base64) {
-          console.log(`Generating missing previews for order ${order.id}`);
-          
-          try {
-            const { data: previewResult, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
-              body: { orderId: order.id }
-            });
+        console.log(`Always generating fresh previews for order ${order.id}`);
+        
+        try {
+          const { data: previewResult, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
+            body: { orderId: order.id, regenerate: true }
+          });
 
-            if (previewError) {
-              console.error(`Failed to generate previews for order ${order.id}:`, previewError);
-            } else {
-              console.log(`Successfully generated previews for order ${order.id}`);
-              // Fetch updated order with new previews
-              const { data: updatedOrder, error: fetchError } = await supabase
-                .from('orders')
-                .select('*')
-                .eq('id', order.id)
-                .single();
-                
-              if (!fetchError && updatedOrder) {
-                currentOrder = updatedOrder;
-              }
+          if (previewError) {
+            console.error(`Failed to generate previews for order ${order.id}:`, previewError);
+          } else {
+            console.log(`Successfully generated fresh previews for order ${order.id}`);
+            // Fetch updated order with new previews
+            const { data: updatedOrder, error: fetchError } = await supabase
+              .from('orders')
+              .select('*')
+              .eq('id', order.id)
+              .single();
+              
+            if (!fetchError && updatedOrder) {
+              currentOrder = updatedOrder;
             }
-          } catch (previewGenError) {
-            console.error(`Error generating previews for order ${order.id}:`, previewGenError);
           }
+        } catch (previewGenError) {
+          console.error(`Error generating previews for order ${order.id}:`, previewGenError);
         }
 
         // Convert base64 images to hosted URLs for email compatibility

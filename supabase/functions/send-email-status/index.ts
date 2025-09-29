@@ -94,37 +94,35 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Contact email is required');
     }
 
-    // Check if we need to generate previews
+    // Always regenerate previews for each email
     let currentFrontPreviewUrl = frontPreviewUrl;
     let currentInsidePreviewUrl = insidePreviewUrl;
 
-    if (!frontPreviewUrl || !insidePreviewUrl) {
-      console.log(`Generating missing previews for order ${orderId}`);
-      
-      try {
-        const { data: previewResult, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
-          body: { orderId }
-        });
+    console.log(`Always generating fresh previews for order ${orderId}`);
+    
+    try {
+      const { data: previewResult, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
+        body: { orderId, regenerate: true }
+      });
 
-        if (previewError) {
-          console.error(`Failed to generate previews for order ${orderId}:`, previewError);
-        } else {
-          console.log(`Successfully generated previews for order ${orderId}`);
-          // Fetch updated order with new previews
-          const { data: updatedOrder, error: fetchError } = await supabase
-            .from('orders')
-            .select('front_preview_base64, inside_preview_base64')
-            .eq('id', orderId)
-            .single();
-            
-          if (!fetchError && updatedOrder) {
-            currentFrontPreviewUrl = updatedOrder.front_preview_base64;
-            currentInsidePreviewUrl = updatedOrder.inside_preview_base64;
-          }
+      if (previewError) {
+        console.error(`Failed to generate previews for order ${orderId}:`, previewError);
+      } else {
+        console.log(`Successfully generated fresh previews for order ${orderId}`);
+        // Fetch updated order with new previews
+        const { data: updatedOrder, error: fetchError } = await supabase
+          .from('orders')
+          .select('front_preview_base64, inside_preview_base64')
+          .eq('id', orderId)
+          .single();
+          
+        if (!fetchError && updatedOrder) {
+          currentFrontPreviewUrl = updatedOrder.front_preview_base64;
+          currentInsidePreviewUrl = updatedOrder.inside_preview_base64;
         }
-      } catch (previewGenError) {
-        console.error(`Error generating previews for order ${orderId}:`, previewGenError);
       }
+    } catch (previewGenError) {
+      console.error(`Error generating previews for order ${orderId}:`, previewGenError);
     }
 
     console.log("Card preview URLs:", {
