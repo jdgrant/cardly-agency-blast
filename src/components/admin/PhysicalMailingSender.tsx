@@ -240,10 +240,14 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         .from('orders')
         .select('*')
         .eq('id', orderId)
-        .single();
+        .maybeSingle();
 
-      if (orderError || !order) {
-        throw new Error(`Order not found: ${orderError?.message}`);
+      if (orderError) {
+        throw new Error(`Database error: ${orderError.message}`);
+      }
+      
+      if (!order) {
+        throw new Error(`Order not found with ID: ${orderId}`);
       }
 
       // Format client data for the API
