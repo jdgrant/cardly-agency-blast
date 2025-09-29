@@ -620,58 +620,6 @@ const JobDetail = () => {
     }
   };
 
-  const startEditingPostageOption = () => {
-    if (order?.postage_option) {
-      setEditingPostageOption(order.postage_option);
-    }
-    setIsEditingPostageOption(true);
-  };
-
-  const cancelEditingPostageOption = () => {
-    setIsEditingPostageOption(false);
-    setEditingPostageOption('');
-  };
-
-  const savePostageOption = async () => {
-    if (!order || !editingPostageOption) return;
-
-    try {
-      const adminSessionId = sessionStorage.getItem('adminSessionId');
-      if (!adminSessionId) {
-        toast({
-          title: "Authentication Required",
-          description: "Please login as admin to update postage option.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      const { error } = await supabase
-        .from('orders')
-        .update({ postage_option: editingPostageOption })
-        .eq('id', order.id);
-
-      if (error) throw error;
-
-      // Update local state
-      setOrder(prev => prev ? { ...prev, postage_option: editingPostageOption } : null);
-      setIsEditingPostageOption(false);
-      setEditingPostageOption('');
-
-      toast({
-        title: "Postage Option Updated",
-        description: "Postage option has been updated successfully.",
-      });
-    } catch (error) {
-      console.error('Error updating postage option:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update postage option",
-        variant: "destructive"
-      });
-    }
-  };
-
   const clearSignatures = async () => {
     try {
       const adminSessionId = sessionStorage.getItem('adminSessionId');
@@ -1207,6 +1155,60 @@ const JobDetail = () => {
       setIsEmailSending(false);
     }
   };
+
+  // Postage option editing functions
+  const startEditingPostageOption = () => {
+    if (order?.postage_option) {
+      setEditingPostageOption(order.postage_option);
+    }
+    setIsEditingPostageOption(true);
+  };
+
+  const cancelEditingPostageOption = () => {
+    setIsEditingPostageOption(false);
+    setEditingPostageOption('');
+  };
+
+  const savePostageOption = async () => {
+    if (!order || !editingPostageOption) return;
+
+    try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        toast({
+          title: "Authentication Required",
+          description: "Please login as admin to update postage option.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ postage_option: editingPostageOption })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrder(prev => prev ? { ...prev, postage_option: editingPostageOption } : null);
+      setIsEditingPostageOption(false);
+      setEditingPostageOption('');
+
+      toast({
+        title: "Postage Option Updated",
+        description: "Postage option has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error updating postage option:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update postage option",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
