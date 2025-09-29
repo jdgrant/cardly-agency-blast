@@ -139,31 +139,6 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
     }
   };
 
-  const markReviewComplete = async () => {
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ signature_needs_review: false })
-        .eq('id', order.id);
-
-      if (error) throw error;
-
-      onOrderUpdate();
-
-      toast({
-        title: "Review Complete",
-        description: "Signature review marked as complete",
-      });
-    } catch (error) {
-      console.error('Error updating review status:', error);
-      toast({
-        title: "Update Failed",
-        description: "Failed to update review status",
-        variant: "destructive"
-      });
-    }
-  };
-
   if (!order.signature_url && !order.cropped_signature_url) {
     return (
       <Card>
@@ -236,17 +211,6 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
                 <Upload className="w-4 h-4 mr-2" />
                 {order.cropped_signature_url ? 'Replace Cropped Signature' : 'Upload Cropped Signature'}
               </Button>
-              
-              {order.signature_needs_review && (
-                <Button
-                  variant="default"
-                  onClick={markReviewComplete}
-                  className="w-full"
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Mark Review Complete
-                </Button>
-              )}
               
               {order.cropped_signature_url && (
                 <div className="text-sm text-green-600 bg-green-50 p-2 rounded">
