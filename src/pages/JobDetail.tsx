@@ -1184,9 +1184,11 @@ const JobDetail = () => {
       }
 
       const { error } = await supabase
-        .from('orders')
-        .update({ postage_option: editingPostageOption })
-        .eq('id', order.id);
+        .rpc('update_admin_postage_option', {
+          session_id_param: adminSessionId,
+          order_id_param: order.id,
+          new_postage_option: editingPostageOption
+        });
 
       if (error) throw error;
 

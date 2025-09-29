@@ -905,6 +905,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_admin_postage_option: {
+        Args: {
+          new_postage_option: string
+          order_id_param: string
+          session_id_param: string
+        }
+        Returns: undefined
+      }
       update_admin_return_address: {
         Args: {
           order_id_param: string
