@@ -313,6 +313,9 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         isSandbox: !isProduction
       };
 
+      // Map postage option to PCM MailClass
+      const mailClass = order.postage_option === 'first-class' ? 'First' : 'Standard';
+
       const xmlRecipients = recipients.map(r => `      <Recipient>
         <FirstName>${r.firstName}</FirstName>
         <LastName>${r.lastName}</LastName>
@@ -331,7 +334,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
 `    <IsSandbox>${authPayload.isSandbox}</IsSandbox>\n` +
 `  </Authentication>\n` +
 `  <GreetingCardOrder>\n` +
-`    <MailClass>Standard</MailClass>\n` +
+`    <MailClass>${mailClass}</MailClass>\n` +
 `    <MailDate>${mailDate}</MailDate>\n` +
 `    <GreetingCardURL>${order.production_combined_pdf_public_url || ''}</GreetingCardURL>\n` +
 `    <BatchName>${uniqueBatchId}</BatchName>\n` +

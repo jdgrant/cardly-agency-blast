@@ -167,6 +167,9 @@ const handler = async (req: Request): Promise<Response> => {
       zipCode: order.return_address_zip || ''
     };
 
+    // Map postage option to PCM MailClass
+    const mailClass = order.postage_option === 'first-class' ? 'First' : 'Standard';
+
     // Try different greeting card order approaches
     const greetingCardEndpoints = [
       {
@@ -174,7 +177,7 @@ const handler = async (req: Request): Promise<Response> => {
         payload: {
           recipients: recipients,
           recordCount: recipientAddresses.length,
-          mailClass: "Standard",
+          mailClass: mailClass,
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
@@ -191,7 +194,7 @@ const handler = async (req: Request): Promise<Response> => {
         payload: {
           recipients: recipients,
           recordCount: recipientAddresses.length,
-          mailClass: "Standard", 
+          mailClass: mailClass, 
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
@@ -208,7 +211,7 @@ const handler = async (req: Request): Promise<Response> => {
         payload: {
           recipients: recipients,
           recordCount: recipientAddresses.length,
-          mailClass: "Standard",
+          mailClass: mailClass,
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
