@@ -1016,45 +1016,53 @@ const OrderManagement = () => {
                           </div>
                         )}
                       </CardContent>
-                    </Card>
-                    
-                     <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                          <span>Subtotal:</span>
-                          <span>${Number(order.final_price).toFixed(2)}</span>
+                     </Card>
+                     
+                     {/* Only show pricing if client list is uploaded */}
+                     {order.csv_file_url && (
+                       <div className="space-y-3">
+                         <div className="flex justify-between items-center">
+                           <span>Subtotal:</span>
+                           <span>${Number(order.final_price).toFixed(2)}</span>
+                         </div>
+                         {(order.promo_code || validatedPromoCode) && (
+                           <div className="flex justify-between items-center text-green-600">
+                             <span>Discount {order.promo_code ? `(${order.promo_code})` : validatedPromoCode ? `(${validatedPromoCode.code} - ${validatedPromoCode.discount_percentage}% off)` : ''}:</span>
+                             <span>-${validatedPromoCode ? getDiscountAmount().toFixed(2) : (Number(order.regular_price) - Number(order.final_price)).toFixed(2)}</span>
+                           </div>
+                         )}
+                        <Separator />
+                        <div className="flex justify-between items-center font-bold text-lg">
+                          <span>Total:</span>
+                          <span>${validatedPromoCode ? calculateDiscountedTotal().toFixed(2) : Number(order.final_price).toFixed(2)}</span>
                         </div>
-                        {(order.promo_code || validatedPromoCode) && (
-                          <div className="flex justify-between items-center text-green-600">
-                            <span>Discount {order.promo_code ? `(${order.promo_code})` : validatedPromoCode ? `(${validatedPromoCode.code} - ${validatedPromoCode.discount_percentage}% off)` : ''}:</span>
-                            <span>-${validatedPromoCode ? getDiscountAmount().toFixed(2) : (Number(order.regular_price) - Number(order.final_price)).toFixed(2)}</span>
-                          </div>
-                        )}
-                       <Separator />
-                       <div className="flex justify-between items-center font-bold text-lg">
-                         <span>Total:</span>
-                         <span>${validatedPromoCode ? calculateDiscountedTotal().toFixed(2) : Number(order.final_price).toFixed(2)}</span>
                        </div>
-                    </div>
+                     )}
 
-                    <Button 
-                      onClick={handlePayment}
-                      disabled={processingPayment}
-                      className="w-full"
-                      size="lg"
-                    >
-                      {processingPayment ? (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          <span>Processing...</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-2">
-                          <CreditCard className="w-5 h-5" />
-                          <span>Pay Now - ${calculateDiscountedTotal().toFixed(2)}</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </div>
-                      )}
-                    </Button>
+                     <Button 
+                       onClick={handlePayment}
+                       disabled={processingPayment}
+                       className="w-full"
+                       size="lg"
+                     >
+                       {processingPayment ? (
+                         <div className="flex items-center space-x-2">
+                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                           <span>Processing...</span>
+                         </div>
+                       ) : (
+                         <div className="flex items-center space-x-2">
+                           <CreditCard className="w-5 h-5" />
+                           <span>
+                             {order.csv_file_url 
+                               ? `Pay Now - $${calculateDiscountedTotal().toFixed(2)}`
+                               : 'Complete Upload to See Total'
+                             }
+                           </span>
+                           <ArrowRight className="w-4 h-4" />
+                         </div>
+                       )}
+                     </Button>
                   </div>
                 )}
               </CardContent>
