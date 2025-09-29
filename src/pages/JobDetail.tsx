@@ -1117,22 +1117,65 @@ const JobDetail = () => {
 
     setIsEmailSending(true);
     try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please login as admin to send emails.',
+          variant: 'destructive'
+        });
+        setIsEmailSending(false);
+        return;
+      }
+
+      // First, check if we need to generate previews
+      let currentOrder = order;
+      if (!order.front_preview_base64 || !order.inside_preview_base64) {
+        console.log('Generating missing previews before sending email...');
+        
+        const { data: previewResult, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
+          body: { orderId: order.id }
+        });
+
+        if (previewError) {
+          console.error('Failed to generate previews:', previewError);
+          toast({
+            title: 'Preview Generation Failed',
+            description: 'Could not generate card previews for email.',
+            variant: 'destructive'
+          });
+        } else {
+          console.log('Successfully generated previews');
+          // Fetch updated order data
+          const { data: updatedOrderData, error: fetchError } = await supabase
+            .rpc('get_order_by_id', { 
+              order_id: order.id,
+              session_id_param: adminSessionId 
+            });
+            
+          if (!fetchError && updatedOrderData?.[0]) {
+            currentOrder = updatedOrderData[0];
+            console.log('Updated order with new previews');
+          }
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke('send-email-status', {
         body: {
-          orderId: order.id,
-          orderStatus: order.status,
-          contactEmail: order.contact_email,
-          contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
-          readableOrderId: order.readable_order_id || order.id.slice(0, 8),
-          logoUploaded: !!order.logo_url,
-          signatureSubmitted: !!order.signature_url || !!order.cropped_signature_url,
-          mailingListUploaded: !!order.csv_file_url,
-          signaturePurchased: order.signature_purchased,
-          invoicePaid: order.invoice_paid,
-          frontPreviewUrl: order.front_preview_base64 ? 
-            (order.front_preview_base64.startsWith('data:') ? order.front_preview_base64 : `data:image/png;base64,${order.front_preview_base64}`) : undefined,
-          insidePreviewUrl: order.inside_preview_base64 ? 
-            (order.inside_preview_base64.startsWith('data:') ? order.inside_preview_base64 : `data:image/png;base64,${order.inside_preview_base64}`) : undefined
+          orderId: currentOrder.id,
+          orderStatus: currentOrder.status,
+          contactEmail: currentOrder.contact_email,
+          contactName: `${currentOrder.contact_firstname || ''} ${currentOrder.contact_lastname || ''}`.trim() || 'Customer',
+          readableOrderId: currentOrder.readable_order_id || currentOrder.id.slice(0, 8),
+          logoUploaded: !!currentOrder.logo_url,
+          signatureSubmitted: !!currentOrder.signature_url || !!currentOrder.cropped_signature_url,
+          mailingListUploaded: !!currentOrder.csv_file_url,
+          signaturePurchased: currentOrder.signature_purchased,
+          invoicePaid: currentOrder.invoice_paid,
+          frontPreviewUrl: currentOrder.front_preview_base64 ? 
+            (currentOrder.front_preview_base64.startsWith('data:') ? currentOrder.front_preview_base64 : `data:image/png;base64,${currentOrder.front_preview_base64}`) : undefined,
+          insidePreviewUrl: currentOrder.inside_preview_base64 ? 
+            (currentOrder.inside_preview_base64.startsWith('data:') ? currentOrder.inside_preview_base64 : `data:image/png;base64,${currentOrder.inside_preview_base64}`) : undefined
         }
       });
 
@@ -1142,7 +1185,7 @@ const JobDetail = () => {
 
       toast({
         title: 'Email Sent',
-        description: `Status email sent to ${order.contact_email}`
+        description: `Status email sent to ${currentOrder.contact_email}`
       });
     } catch (error: any) {
       console.error('Email send failed:', error);
