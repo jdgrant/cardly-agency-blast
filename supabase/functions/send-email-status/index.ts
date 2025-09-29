@@ -148,6 +148,36 @@ const handler = async (req: Request): Promise<Response> => {
       processedInsidePreviewUrl = currentInsidePreviewUrl;
     }
 
+    // Fallback: if front preview is still missing, try to use template.preview_url directly
+    if (!processedFrontPreviewUrl) {
+      try {
+        const { data: orderRow } = await supabase
+          .from('orders')
+          .select('template_id')
+          .eq('id', orderId)
+          .single();
+        if (orderRow?.template_id) {
+          const { data: templateRow } = await supabase
+            .from('templates')
+            .select('preview_url')
+            .eq('id', orderRow.template_id)
+            .single();
+          const src: string | undefined = templateRow?.preview_url;
+          if (src) {
+            if (/^https?:\/\//i.test(src)) {
+              processedFrontPreviewUrl = src;
+            } else if (src.startsWith('/lovable-uploads/')) {
+              // Attempt to build absolute URL to public asset
+              const fallbackBase = 'https://e84fd20e-7cca-4259-84ad-12452c25e301.lovableproject.com';
+              processedFrontPreviewUrl = `${fallbackBase}${src}`;
+            }
+          }
+        }
+      } catch (e) {
+        console.log('Template preview fallback failed:', (e as any)?.message);
+      }
+    }
+
     // Generate order management URL
     const orderManagementUrl = generateOrderManagementUrl(orderId);
 
@@ -169,7 +199,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Generate HTML using shared template
     const emailHtml = generateStatusEmailHtml(emailData, orderManagementUrl);
-
     console.log("Preparing to send email to:", contactEmail);
     
     // Send email using shared client
