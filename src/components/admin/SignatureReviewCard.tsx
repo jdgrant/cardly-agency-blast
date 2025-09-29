@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,25 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const autoClear = async () => {
+      try {
+        if (order.cropped_signature_url && order.signature_needs_review) {
+          const { error } = await supabase
+            .from('orders')
+            .update({ signature_needs_review: false })
+            .eq('id', order.id);
+          if (!error) {
+            onOrderUpdate();
+          }
+        }
+      } catch (e) {
+        console.warn('Auto-clear signature review flag failed', e);
+      }
+    };
+    autoClear();
+  }, [order.cropped_signature_url, order.signature_needs_review, order.id]);
 
   const downloadSignature = async () => {
     const signatureUrlToUse = order.signature_url || order.cropped_signature_url;
@@ -116,6 +135,19 @@ const SignatureReviewCard: React.FC<SignatureReviewCardProps> = ({ order, onOrde
           title: "Success",
           description: "Signature uploaded and previews regenerated successfully",
         });
+      }
+
+      // Auto-clear review flag now that a cropped signature exists
+      try {
+        const { error: reviewErr } = await supabase
+          .from('orders')
+          .update({ signature_needs_review: false })
+          .eq('id', order.id);
+        if (reviewErr) {
+          console.warn('Could not clear signature_needs_review automatically:', reviewErr);
+        }
+      } catch (e) {
+        console.warn('Auto-clear review flag failed:', e);
       }
 
       setShowUploadDialog(false);
