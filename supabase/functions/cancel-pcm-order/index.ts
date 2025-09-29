@@ -10,6 +10,7 @@ interface CancelOrderRequest {
   orderId: string;
   pcmOrderId: string;
   adminSessionId: string;
+  isProduction: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -26,12 +27,16 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { orderId, pcmOrderId, adminSessionId }: CancelOrderRequest = await req.json();
-    console.log('Cancelling PCM order:', pcmOrderId, 'for order:', orderId);
+    const { orderId, pcmOrderId, adminSessionId, isProduction }: CancelOrderRequest = await req.json();
+    console.log('Cancelling PCM order:', pcmOrderId, 'for order:', orderId, 'in', isProduction ? 'PRODUCTION' : 'SANDBOX', 'mode');
 
-    // Get PCM API credentials
-    const pcmApiKey = Deno.env.get('PCM_API_KEY');
-    const pcmApiSecret = Deno.env.get('PCM_API_SECRET');
+    // Get PCM API credentials based on environment
+    const pcmApiKey = isProduction 
+      ? Deno.env.get('PCM_API_KEY')
+      : Deno.env.get('PCM_SANDBOX_API_KEY');
+    const pcmApiSecret = isProduction 
+      ? Deno.env.get('PCM_API_SECRET')  
+      : Deno.env.get('PCM_SANDBOX_API_SECRET');
 
     if (!pcmApiKey || !pcmApiSecret) {
       throw new Error('PCM API credentials not configured');
@@ -41,7 +46,8 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('=== PCM AUTHENTICATION ===');
     const authPayload = {
       apiKey: pcmApiKey,
-      apiSecret: pcmApiSecret
+      apiSecret: pcmApiSecret,
+      isSandbox: !isProduction
     };
 
     console.log('Request Packet:', JSON.stringify(authPayload, null, 2));

@@ -178,7 +178,8 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         body: {
           orderId,
           pcmOrderId,
-          adminSessionId
+          adminSessionId,
+          isProduction
         }
       });
 
