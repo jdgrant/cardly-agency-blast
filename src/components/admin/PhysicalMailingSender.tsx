@@ -231,9 +231,9 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
 
       if (clientsError) throw clientsError;
 
-      if (!clientsData || clientsData.length === 0) {
-        throw new Error('No client records found for this order');
-      }
+      // Allow preview even if there are no clients
+      const safeClients = clientsData || [];
+
 
       // Fetch order details
       const { data: order, error: orderError } = await supabase
@@ -247,7 +247,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
       }
 
       // Format client data for the API
-      const recipientAddresses = clientsData.map((client: any) => ({
+      const recipientAddresses = safeClients.map((client: any) => ({
         name: `${client.first_name} ${client.last_name}`.trim(),
         address1: client.address,
         city: client.city,
@@ -300,57 +300,53 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         zipCode: order.return_address_zip || ''
       };
 
-      // Generate the JSON payloads that would be sent to PCM
+      // Generate the XML that would be sent to PCM (with placeholder auth)
       const authPayload = {
         apiKey: isProduction ? 'PRODUCTION_API_KEY' : 'SANDBOX_API_KEY',
         apiSecret: isProduction ? 'PRODUCTION_API_SECRET' : 'SANDBOX_API_SECRET',
         isSandbox: !isProduction
       };
 
-      const greetingCardPayload = {
-        recipients: recipients,
-        recordCount: recipientAddresses.length,
-        mailClass: "Standard",
-        mailDate: mailDate,
-        greetingCard: order.production_combined_pdf_public_url,
-        returnAddress: returnAddress,
-        batchName: uniqueBatchId,
-        addOns: [
-          {
-            "addon": "Livestamping"
-          }
-        ]
-      };
+      const xmlRecipients = recipients.map(r => `      <Recipient>
+        <FirstName>${r.firstName}</FirstName>
+        <LastName>${r.lastName}</LastName>
+        <Address1>${r.address}</Address1>
+        ${r.address2 ? `<Address2>${r.address2}</Address2>` : ''}
+        <City>${r.city}</City>
+        <State>${r.state}</State>
+        <ZipCode>${r.zipCode}</ZipCode>
+      </Recipient>`).join('\n');
 
-      // Create preview data showing all endpoints that would be called
-      const previewData = {
-        environment: isProduction ? 'PRODUCTION' : 'SANDBOX',
-        totalRecipients: recipients.length,
-        authenticationRequest: {
-          url: 'https://v3.pcmintegrations.com/auth/login',
-          method: 'POST',
-          payload: authPayload
-        },
-        greetingCardEndpoints: [
-          {
-            url: 'https://v3.pcmintegrations.com/order/greeting-card',
-            method: 'POST',
-            payload: greetingCardPayload
-          },
-          {
-            url: 'https://v3.pcmintegrations.com/order/greeting-card/with-recipients',
-            method: 'POST',
-            payload: greetingCardPayload
-          },
-          {
-            url: 'https://v3.pcmintegrations.com/order/greeting-card/with-list-count',
-            method: 'POST',
-            payload: { ...greetingCardPayload, listCountID: 0 }
-          }
-        ]
-      };
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+`<PcmOrder environment="${isProduction ? 'PRODUCTION' : 'SANDBOX'}">\n` +
+`  <Authentication>\n` +
+`    <ApiKey>${authPayload.apiKey}</ApiKey>\n` +
+`    <ApiSecret>${authPayload.apiSecret}</ApiSecret>\n` +
+`    <IsSandbox>${authPayload.isSandbox}</IsSandbox>\n` +
+`  </Authentication>\n` +
+`  <GreetingCardOrder>\n` +
+`    <MailClass>Standard</MailClass>\n` +
+`    <MailDate>${mailDate}</MailDate>\n` +
+`    <GreetingCardURL>${order.production_combined_pdf_public_url || ''}</GreetingCardURL>\n` +
+`    <BatchName>${uniqueBatchId}</BatchName>\n` +
+`    <ReturnAddress>\n` +
+`      <Name>${returnAddress.name}</Name>\n` +
+`      <Address1>${returnAddress.address}</Address1>\n` +
+`      ${returnAddress.address2 ? `<Address2>${returnAddress.address2}</Address2>` : ''}\n` +
+`      <City>${returnAddress.city}</City>\n` +
+`      <State>${returnAddress.state}</State>\n` +
+`      <ZipCode>${returnAddress.zipCode}</ZipCode>\n` +
+`    </ReturnAddress>\n` +
+`    <AddOns>\n` +
+`      <AddOn>Livestamping</AddOn>\n` +
+`    </AddOns>\n` +
+`    <Recipients count="${recipients.length}">\n` +
+`${xmlRecipients}\n` +
+`    </Recipients>\n` +
+`  </GreetingCardOrder>\n` +
+`</PcmOrder>`;
 
-      setXmlPreview(JSON.stringify(previewData, null, 2));
+      setXmlPreview(xml);
       
       toast({
         title: "Preview Generated",
@@ -413,7 +409,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
               variant="outline"
               className="w-full"
             >
-              {isLoadingPreview ? "Generating Preview..." : "Preview PCM API Data"}
+              {isLoadingPreview ? "Generating Preview..." : "Preview PCM XML"}
             </Button>
           </div>
         )}
@@ -469,7 +465,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         {/* XML Preview Display */}
         {xmlPreview && (
           <div className="space-y-2">
-            <Label className="text-sm font-medium">PCM API Preview Data</Label>
+            <Label className="text-sm font-medium">PCM XML Preview</Label>
             <Textarea
               value={xmlPreview}
               readOnly
