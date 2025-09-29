@@ -35,7 +35,8 @@ import {
   X,
   FileText,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  CheckCircle
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PromoCodeForm } from '@/components/admin/PromoCodeForm';
@@ -922,6 +923,11 @@ const Admin = () => {
   const totalRevenue = orders.reduce((sum, order) => sum + Number(order.final_price), 0);
   const signaturesForReview = orders.filter(o => o.signature_needs_review === true && o.status !== 'sent_to_press').length;
   const sentToPressOrders = orders.filter(o => o.status === 'sent_to_press').length;
+  const readyForPress = orders.filter(o => 
+    o.invoice_paid === true && 
+    o.signature_needs_review !== true && 
+    o.status !== 'sent_to_press'
+  ).length;
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -985,7 +991,7 @@ const Admin = () => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -1018,6 +1024,18 @@ const Admin = () => {
                   <p className="text-2xl font-bold text-purple-600">{signaturesForReview}</p>
                 </div>
                 <ImageIcon className="w-8 h-8 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Ready for Press</p>
+                  <p className="text-2xl font-bold text-emerald-600">{readyForPress}</p>
+                </div>
+                <CheckCircle className="w-8 h-8 text-emerald-600" />
               </div>
             </CardContent>
           </Card>
@@ -1106,6 +1124,100 @@ const Admin = () => {
                             checked={!!order.cropped_signature_url}
                             disabled={true}
                           />
+                        </TableCell>
+                         <TableCell className="text-xs">
+                           {new Date(order.created_at).toLocaleDateString()}
+                         </TableCell>
+                         <TableCell onClick={(e) => e.stopPropagation()}>
+                           <Button
+                             size="sm"
+                             variant="outline"
+                             onClick={() => handleViewOrder(order)}
+                           >
+                             View Details
+                           </Button>
+                         </TableCell>
+                       </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Ready for Press Section */}
+        {orders.filter(o => 
+          o.invoice_paid === true && 
+          o.signature_needs_review !== true && 
+          o.status !== 'sent_to_press'
+        ).length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+                <span>Ready for Press</span>
+                <Badge variant="secondary" className="ml-2">
+                  {orders.filter(o => 
+                    o.invoice_paid === true && 
+                    o.signature_needs_review !== true && 
+                    o.status !== 'sent_to_press'
+                  ).length}
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order ID</TableHead>
+                      <TableHead>Customer Name</TableHead>
+                      <TableHead>Cards</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Invoice Paid</TableHead>
+                      <TableHead>Mailing Window</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                     {orders.filter(o => 
+                       o.invoice_paid === true && 
+                       o.signature_needs_review !== true && 
+                       o.status !== 'sent_to_press'
+                     ).map((order) => (
+                       <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
+                         <TableCell className="font-mono text-xs">
+                           {order.readable_order_id || `${order.id.slice(0, 8)}...`}
+                         </TableCell>
+                        <TableCell>{getCustomerName(order)}</TableCell>
+                        <TableCell>{order.card_quantity}</TableCell>
+                        <TableCell className="font-semibold">
+                          ${Number(order.final_price).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                            <Badge 
+                              variant={
+                                order.status === 'pending' ? 'secondary' :
+                                order.status === 'approved' ? 'default' :
+                                order.status === 'send_to_print' ? 'outline' :
+                                order.status === 'sent' ? 'default' :
+                                order.status === 'blocked' ? 'destructive' :
+                                'outline'
+                              }
+                            >
+                              {order.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <CheckCircle className="w-4 h-4 text-emerald-600" />
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {order.mailing_window}
+                          </Badge>
                         </TableCell>
                          <TableCell className="text-xs">
                            {new Date(order.created_at).toLocaleDateString()}
