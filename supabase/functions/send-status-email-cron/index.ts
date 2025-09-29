@@ -136,16 +136,46 @@ const handler = async (req: Request): Promise<Response> => {
           continue;
         }
 
+        // Check if previews exist, generate if missing
+        let currentOrder = order;
+        if (!order.front_preview_base64 || !order.inside_preview_base64) {
+          console.log(`Generating missing previews for order ${order.id}`);
+          
+          try {
+            const { data: previewResult, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
+              body: { orderId: order.id }
+            });
+
+            if (previewError) {
+              console.error(`Failed to generate previews for order ${order.id}:`, previewError);
+            } else {
+              console.log(`Successfully generated previews for order ${order.id}`);
+              // Fetch updated order with new previews
+              const { data: updatedOrder, error: fetchError } = await supabase
+                .from('orders')
+                .select('*')
+                .eq('id', order.id)
+                .single();
+                
+              if (!fetchError && updatedOrder) {
+                currentOrder = updatedOrder;
+              }
+            }
+          } catch (previewGenError) {
+            console.error(`Error generating previews for order ${order.id}:`, previewGenError);
+          }
+        }
+
         // Convert base64 images to hosted URLs for email compatibility
         let frontPreviewUrl: string | undefined;
         let insidePreviewUrl: string | undefined;
         
-        if (order.front_preview_base64) {
-          frontPreviewUrl = await uploadBase64ToStorage(order.front_preview_base64, order.id, 'front');
+        if (currentOrder.front_preview_base64) {
+          frontPreviewUrl = await uploadBase64ToStorage(currentOrder.front_preview_base64, currentOrder.id, 'front');
         }
         
-        if (order.inside_preview_base64) {
-          insidePreviewUrl = await uploadBase64ToStorage(order.inside_preview_base64, order.id, 'inside');
+        if (currentOrder.inside_preview_base64) {
+          insidePreviewUrl = await uploadBase64ToStorage(currentOrder.inside_preview_base64, currentOrder.id, 'inside');
         }
 
         // Use the same send-email-status function to ensure identical emails
