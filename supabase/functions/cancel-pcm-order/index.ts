@@ -130,7 +130,41 @@ const handler = async (req: Request): Promise<Response> => {
       );
     } else {
       console.error('PCM cancellation failed:', cancelResponse.status, cancelData);
-      throw new Error(`PCM order cancellation failed: ${cancelData?.message || 'Unknown error'}`);
+
+      // Extract detailed error message from PCM
+      const detailedError = (cancelData?.error?.data?.[0]?.message) 
+        || (cancelData?.error?.message)
+        || (cancelData?.message)
+        || responseText
+        || 'Unknown error';
+
+      // Treat "not found" as idempotent success - clear local DB state anyway
+      if (cancelResponse.status === 404 && typeof detailedError === 'string' && detailedError.toLowerCase().includes('not found')) {
+        console.log('PCM order not found; treating as already cancelled. Clearing local PCM info.');
+        const { error: dbError } = await supabaseClient.rpc('cancel_pcm_order', {
+          order_id_param: orderId,
+          session_id_param: adminSessionId
+        });
+
+        if (dbError) {
+          console.error('Database update error after 404 not found:', dbError);
+          throw new Error(`Failed to update database after 404: ${dbError.message}`);
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'PCM order not found on provider; treated as cancelled and local state cleared',
+            pcmResponse: cancelData
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        );
+      }
+
+      throw new Error(`PCM order cancellation failed: ${detailedError}`);
     }
 
   } catch (error) {
