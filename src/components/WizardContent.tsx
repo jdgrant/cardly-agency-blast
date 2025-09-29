@@ -12,15 +12,17 @@ import Step1ChooseTemplate from './wizard-steps/Step1ChooseTemplate';
 import Step2SelectMessage from './wizard-steps/Step2SelectMessage';
 import Step3CardPreview from './wizard-steps/Step3CardPreview';
 import Step4SignatureUpsell from './wizard-steps/Step4SignatureUpsell';
-import Step5MailingWindow from './wizard-steps/Step3MailingWindow';
-import Step6UploadClients from './wizard-steps/Step6UploadClients';
-import Step7ReviewAndPayment from './wizard-steps/Step7ReviewAndPayment';
+import Step5SelectPackage from './wizard-steps/Step5SelectPackage';
+import Step6MailingWindow from './wizard-steps/Step3MailingWindow';
+import Step7UploadClients from './wizard-steps/Step6UploadClients';
+import Step8ReviewAndPayment from './wizard-steps/Step7ReviewAndPayment';
 
 const stepTitles = [
   'Choose Template',
   'Select Message',
   'Card Preview',
   'Add Signature',
+  'Select Package',
   'Mailing Window',
   'Upload Client List',
   'Review & Payment'
@@ -40,11 +42,13 @@ const WizardContent = () => {
       case 4:
         return <Step4SignatureUpsell />;
       case 5:
-        return <Step5MailingWindow />;
+        return <Step5SelectPackage />;
       case 6:
-        return <Step6UploadClients />;
+        return <Step6MailingWindow />;
       case 7:
-        return <Step7ReviewAndPayment />;
+        return <Step7UploadClients />;
+      case 8:
+        return <Step8ReviewAndPayment />;
       default:
         return <Step1ChooseTemplate />;
     }
@@ -64,7 +68,7 @@ const WizardContent = () => {
             />
           </Link>
           <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-            Step {state.step} of 7: {stepTitles[state.step - 1]}
+            Step {state.step} of 8: {stepTitles[state.step - 1]}
           </Badge>
         </div>
       </header>
@@ -85,7 +89,7 @@ const WizardContent = () => {
           {state.step > 2 && (
             <Button
               onClick={nextStep}
-              disabled={state.step === 7}
+              disabled={state.step === 8}
               className="flex items-center space-x-2 text-white"
               style={{ backgroundColor: '#069668' }}
             >
