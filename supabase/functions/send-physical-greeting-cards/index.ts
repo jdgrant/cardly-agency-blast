@@ -167,8 +167,9 @@ const handler = async (req: Request): Promise<Response> => {
       zipCode: order.return_address_zip || ''
     };
 
-    // Map postage option to PCM MailClass
-    const mailClass = order.postage_option === 'first-class' ? 'FirstClass' : 'Standard';
+    // Map postage option to PCM MailClass (normalize variants)
+    const normalizedPostage = String(order.postage_option || '').toLowerCase().replace(/[\s_-]/g, '');
+    const mailClass = normalizedPostage.startsWith('first') ? 'FirstClass' : 'Standard';
 
     // Try different greeting card order approaches
     const greetingCardEndpoints = [

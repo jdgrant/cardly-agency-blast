@@ -313,8 +313,10 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         isSandbox: !isProduction
       };
 
-      // Map postage option to PCM MailClass
-      const mailClass = order.postage_option === 'first-class' ? 'FirstClass' : 'Standard';
+      // Map postage option to PCM MailClass (normalize variants)
+      const normalizedPostage = String(order.postage_option || '').toLowerCase().replace(/[\s_-]/g, '');
+      const mailClass = normalizedPostage.startsWith('first') ? 'FirstClass' : 'Standard';
+      console.log('PCM MailClass (preview):', mailClass, 'raw postage_option:', order.postage_option);
 
       const xmlRecipients = recipients.map(r => `      <Recipient>
         <FirstName>${r.firstName}</FirstName>
