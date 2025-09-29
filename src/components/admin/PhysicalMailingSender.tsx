@@ -29,6 +29,8 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
   const [apiResponse, setApiResponse] = useState<string>("");
   const [pcmOrderId, setPcmOrderId] = useState<string>("");
   const [pcmBatchId, setPcmBatchId] = useState<string>("");
+  const [xmlPreview, setXmlPreview] = useState<string>("");
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isProduction, setIsProduction] = useState(() => {
     // Load from localStorage or default to sandbox (false)
     return localStorage.getItem('pcm-mode') === 'production';
@@ -210,6 +212,163 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
     }
   };
 
+  const handlePreviewXML = async () => {
+    setIsLoadingPreview(true);
+    setXmlPreview("");
+    
+    try {
+      // Get admin session ID from sessionStorage
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        throw new Error('Admin session not found. Please login as admin.');
+      }
+
+      // Fetch real client records for this order
+      const { data: clientsData, error: clientsError } = await supabase.rpc('get_clients_for_order', {
+        order_id_param: orderId,
+        session_id_param: adminSessionId
+      });
+
+      if (clientsError) throw clientsError;
+
+      if (!clientsData || clientsData.length === 0) {
+        throw new Error('No client records found for this order');
+      }
+
+      // Fetch order details
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !order) {
+        throw new Error(`Order not found: ${orderError?.message}`);
+      }
+
+      // Format client data for the API
+      const recipientAddresses = clientsData.map((client: any) => ({
+        name: `${client.first_name} ${client.last_name}`.trim(),
+        address1: client.address,
+        city: client.city,
+        state: client.state,
+        zip: client.zip
+      }));
+
+      // Format recipients for PCM API
+      const recipients = recipientAddresses.map(addr => {
+        const nameParts = addr.name.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || 'Customer';
+        
+        return {
+          firstName: firstName,
+          lastName: lastName,
+          address: addr.address1,
+          address2: '',
+          city: addr.city,
+          state: addr.state,
+          zipCode: addr.zip
+        };
+      });
+
+      // Determine mail date
+      let mailDate = '';
+      if (order.drop_date) {
+        mailDate = order.drop_date;
+      } else {
+        const year = new Date().getFullYear();
+        const mailingWindowMap: Record<string, string> = {
+          'dec-1-5': `${year}-11-29`,
+          'dec-6-10': `${year}-12-04`,
+          'dec-11-15': `${year}-12-09`,
+          'dec-16-20': `${year}-12-14`
+        };
+        mailDate = mailingWindowMap[order.mailing_window] || '';
+      }
+
+      // Create unique batch identifier
+      const uniqueBatchId = `${order.readable_order_id}-${mailDate}-${Date.now()}`;
+
+      // Prepare return address
+      const returnAddress = {
+        name: order.return_address_name || 'Default Sender',
+        address: order.return_address_line1 || '',
+        address2: order.return_address_line2 || '',
+        city: order.return_address_city || '',
+        state: order.return_address_state || '',
+        zipCode: order.return_address_zip || ''
+      };
+
+      // Generate the JSON payloads that would be sent to PCM
+      const authPayload = {
+        apiKey: isProduction ? 'PRODUCTION_API_KEY' : 'SANDBOX_API_KEY',
+        apiSecret: isProduction ? 'PRODUCTION_API_SECRET' : 'SANDBOX_API_SECRET',
+        isSandbox: !isProduction
+      };
+
+      const greetingCardPayload = {
+        recipients: recipients,
+        recordCount: recipientAddresses.length,
+        mailClass: "Standard",
+        mailDate: mailDate,
+        greetingCard: order.production_combined_pdf_public_url,
+        returnAddress: returnAddress,
+        batchName: uniqueBatchId,
+        addOns: [
+          {
+            "addon": "Livestamping"
+          }
+        ]
+      };
+
+      // Create preview data showing all endpoints that would be called
+      const previewData = {
+        environment: isProduction ? 'PRODUCTION' : 'SANDBOX',
+        totalRecipients: recipients.length,
+        authenticationRequest: {
+          url: 'https://v3.pcmintegrations.com/auth/login',
+          method: 'POST',
+          payload: authPayload
+        },
+        greetingCardEndpoints: [
+          {
+            url: 'https://v3.pcmintegrations.com/order/greeting-card',
+            method: 'POST',
+            payload: greetingCardPayload
+          },
+          {
+            url: 'https://v3.pcmintegrations.com/order/greeting-card/with-recipients',
+            method: 'POST',
+            payload: greetingCardPayload
+          },
+          {
+            url: 'https://v3.pcmintegrations.com/order/greeting-card/with-list-count',
+            method: 'POST',
+            payload: { ...greetingCardPayload, listCountID: 0 }
+          }
+        ]
+      };
+
+      setXmlPreview(JSON.stringify(previewData, null, 2));
+      
+      toast({
+        title: "Preview Generated",
+        description: `Generated PCM API preview for ${recipients.length} recipients`,
+      });
+    } catch (error) {
+      console.error('Error generating preview:', error);
+      setXmlPreview(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast({
+        title: "Error",
+        description: "Failed to generate API preview",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingPreview(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -240,13 +399,23 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         </div>
         {/* Only show send button if no PCM order ID exists */}
         {!pcmOrderId && (
-          <Button 
-            onClick={handleSendPhysical}
-            disabled={isLoading}
-            className="w-full"
-          >
-            {isLoading ? "Sending..." : "Send Physical Greeting Cards"}
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              onClick={handleSendPhysical}
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? "Sending..." : "Send Physical Greeting Cards"}
+            </Button>
+            <Button 
+              onClick={handlePreviewXML}
+              disabled={isLoadingPreview}
+              variant="outline"
+              className="w-full"
+            >
+              {isLoadingPreview ? "Generating Preview..." : "Preview PCM API Data"}
+            </Button>
+          </div>
         )}
         
         {/* PCM Order Information */}
@@ -294,6 +463,32 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
                 <p className="font-mono text-sm">{pcmBatchId || 'N/A'}</p>
               </div>
             </div>
+          </div>
+        )}
+        
+        {/* XML Preview Display */}
+        {xmlPreview && (
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">PCM API Preview Data</Label>
+            <Textarea
+              value={xmlPreview}
+              readOnly
+              className="font-mono text-xs min-h-[300px]"
+              placeholder="API preview data will appear here..."
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                navigator.clipboard.writeText(xmlPreview);
+                toast({
+                  title: "Copied",
+                  description: "PCM API data copied to clipboard",
+                });
+              }}
+            >
+              Copy to Clipboard
+            </Button>
           </div>
         )}
         
