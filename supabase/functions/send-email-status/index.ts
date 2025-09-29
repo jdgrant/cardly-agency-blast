@@ -94,25 +94,58 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Contact email is required');
     }
 
+    // Check if we need to generate previews
+    let currentFrontPreviewUrl = frontPreviewUrl;
+    let currentInsidePreviewUrl = insidePreviewUrl;
+
+    if (!frontPreviewUrl || !insidePreviewUrl) {
+      console.log(`Generating missing previews for order ${orderId}`);
+      
+      try {
+        const { data: previewResult, error: previewError } = await supabase.functions.invoke('generate-card-previews', {
+          body: { orderId }
+        });
+
+        if (previewError) {
+          console.error(`Failed to generate previews for order ${orderId}:`, previewError);
+        } else {
+          console.log(`Successfully generated previews for order ${orderId}`);
+          // Fetch updated order with new previews
+          const { data: updatedOrder, error: fetchError } = await supabase
+            .from('orders')
+            .select('front_preview_base64, inside_preview_base64')
+            .eq('id', orderId)
+            .single();
+            
+          if (!fetchError && updatedOrder) {
+            currentFrontPreviewUrl = updatedOrder.front_preview_base64;
+            currentInsidePreviewUrl = updatedOrder.inside_preview_base64;
+          }
+        }
+      } catch (previewGenError) {
+        console.error(`Error generating previews for order ${orderId}:`, previewGenError);
+      }
+    }
+
     console.log("Card preview URLs:", {
-      frontPreviewUrl: frontPreviewUrl ? "present" : "missing",
-      insidePreviewUrl: insidePreviewUrl ? "present" : "missing"
+      frontPreviewUrl: currentFrontPreviewUrl ? "present" : "missing",
+      insidePreviewUrl: currentInsidePreviewUrl ? "present" : "missing"
     });
 
     // Convert base64 images to hosted URLs for email compatibility
     let processedFrontPreviewUrl: string | undefined;
     let processedInsidePreviewUrl: string | undefined;
     
-    if (frontPreviewUrl && frontPreviewUrl.startsWith('data:image/')) {
-      processedFrontPreviewUrl = await uploadBase64ToStorage(frontPreviewUrl, orderId, 'front');
+    if (currentFrontPreviewUrl && currentFrontPreviewUrl.startsWith('data:image/')) {
+      processedFrontPreviewUrl = await uploadBase64ToStorage(currentFrontPreviewUrl, orderId, 'front');
     } else {
-      processedFrontPreviewUrl = frontPreviewUrl;
+      processedFrontPreviewUrl = currentFrontPreviewUrl;
     }
     
-    if (insidePreviewUrl && insidePreviewUrl.startsWith('data:image/')) {
-      processedInsidePreviewUrl = await uploadBase64ToStorage(insidePreviewUrl, orderId, 'inside');
+    if (currentInsidePreviewUrl && currentInsidePreviewUrl.startsWith('data:image/')) {
+      processedInsidePreviewUrl = await uploadBase64ToStorage(currentInsidePreviewUrl, orderId, 'inside');
     } else {
-      processedInsidePreviewUrl = insidePreviewUrl;
+      processedInsidePreviewUrl = currentInsidePreviewUrl;
     }
 
     // Generate order management URL
