@@ -242,7 +242,13 @@ serve(async (req) => {
 
           if (!/^https?:\/\//i.test(fullUrl)) {
             if (fullUrl.startsWith('/lovable-uploads/')) {
-              if (base) fullUrl = `${base}${fullUrl}`;
+              // Try both the request origin and hardcoded fallback for lovable-uploads
+              if (base) {
+                fullUrl = `${base}${fullUrl}`;
+              } else {
+                // Fallback to the project domain for uploaded assets  
+                fullUrl = `https://e84fd20e-7cca-4259-84ad-12452c25e301.lovableproject.com${fullUrl}`;
+              }
             } else if (fullUrl.startsWith('/')) {
               const supa = 'https://wsibvneidsmtsazfbmgc.supabase.co';
               fullUrl = `${supa}${fullUrl}`;
@@ -252,11 +258,20 @@ serve(async (req) => {
           }
 
           console.log('🖼️ Fetching preview over HTTP from:', fullUrl);
+          console.log('Template preview_url:', template.preview_url, 'Base origin:', base);
+          
           let resp = await fetch(fullUrl);
           if (!resp.ok && base && !/^https?:\/\//i.test(template.preview_url)) {
             const retryUrl = `${base}${template.preview_url}`;
             console.log('🔄 Retrying preview fetch from:', retryUrl);
             resp = await fetch(retryUrl);
+          }
+          
+          // Additional fallback for lovable-uploads paths
+          if (!resp.ok && template.preview_url.startsWith('/lovable-uploads/')) {
+            const fallbackUrl = `https://e84fd20e-7cca-4259-84ad-12452c25e301.lovableproject.com${template.preview_url}`;
+            console.log('🔄 Fallback preview fetch from:', fallbackUrl);
+            resp = await fetch(fallbackUrl);
           }
 
           if (resp.ok) {
@@ -266,7 +281,7 @@ serve(async (req) => {
             previewDataUrl = `data:${ct};base64,${base64}`;
             console.log('✅ Preview image fetched and encoded successfully - size:', base64.length);
           } else {
-            const errorMsg = `❌ Preview fetch failed with status: ${resp.status}`;
+            const errorMsg = `❌ Preview fetch failed with status: ${resp.status} for URL: ${fullUrl}`;
             console.log(errorMsg);
             if (isProductionPDF) {
               throw new Error(`${errorMsg} - Cannot create production PDF with broken images`);
