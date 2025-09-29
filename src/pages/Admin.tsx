@@ -43,6 +43,7 @@ import BatchManager from '@/components/admin/BatchManager';
 
 interface Order {
   id: string;
+  readable_order_id?: string;
   template_id: string;
   tier_name: string;
   card_quantity: number;
@@ -102,6 +103,7 @@ const Admin = () => {
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
   const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({});
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   // Persist admin access for the current browser session
@@ -1065,9 +1067,9 @@ const Admin = () => {
                   <TableBody>
                      {orders.filter(o => o.signature_needs_review === true && o.status !== 'sent_to_press').map((order) => (
                        <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
-                        <TableCell className="font-mono text-xs">
-                          {order.id.slice(0, 8)}...
-                        </TableCell>
+                         <TableCell className="font-mono text-xs">
+                           {order.readable_order_id || `${order.id.slice(0, 8)}...`}
+                         </TableCell>
                         <TableCell>{getCustomerName(order)}</TableCell>
                         <TableCell>{order.card_quantity}</TableCell>
                         <TableCell className="font-semibold">
@@ -1129,8 +1131,25 @@ const Admin = () => {
         {activeTab === 'orders' && (
           /* Orders Table */
           <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle>Orders</CardTitle>
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder="Search by order number, customer name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -1151,12 +1170,29 @@ const Admin = () => {
                     <TableHead>Created</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                   {orders.filter(o => o.status !== 'sent_to_press').map((order) => (
+                 <TableBody>
+                    {orders.filter(o => {
+                      // Filter out sent_to_press orders
+                      if (o.status === 'sent_to_press') return false;
+                      
+                      // If no search query, show all
+                      if (!searchQuery.trim()) return true;
+                      
+                      const query = searchQuery.toLowerCase().trim();
+                      
+                      // Search in readable_order_id, customer name, and order ID
+                      const readableOrderId = o.readable_order_id || '';
+                      const customerName = getCustomerName(o).toLowerCase();
+                      const orderId = o.id.toLowerCase();
+                      
+                      return readableOrderId.toLowerCase().includes(query) ||
+                             customerName.includes(query) ||
+                             orderId.includes(query);
+                    }).map((order) => (
                      <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
-                      <TableCell className="font-mono text-xs">
-                        {order.id.slice(0, 8)}...
-                      </TableCell>
+                       <TableCell className="font-mono text-xs">
+                         {order.readable_order_id || `${order.id.slice(0, 8)}...`}
+                       </TableCell>
                       <TableCell>{getCustomerName(order)}</TableCell>
                       <TableCell>{order.card_quantity}</TableCell>
                       <TableCell className="font-semibold">
