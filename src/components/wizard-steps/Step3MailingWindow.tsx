@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, Zap } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Clock, Zap, Mail } from 'lucide-react';
 
 const mailingWindows = [
   { 
@@ -64,6 +66,10 @@ const Step3MailingWindow = () => {
 
   const handleMailingWindowChange = (value: string) => {
     updateState({ mailingWindow: value });
+  };
+
+  const handleFirstClassToggle = (checked: boolean) => {
+    updateState({ postageOption: checked ? 'first-class' : 'standard' });
   };
 
   return (
@@ -130,6 +136,42 @@ const Step3MailingWindow = () => {
         ))}
       </RadioGroup>
 
+      {/* First Class Mailing Upsell */}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardContent className="p-4">
+          <div className="flex items-start space-x-3">
+            <Checkbox
+              id="first-class-upgrade"
+              checked={state.postageOption === 'first-class'}
+              onCheckedChange={handleFirstClassToggle}
+              className="mt-1"
+            />
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-2">
+                <Mail className="w-5 h-5 text-blue-600" />
+                <label 
+                  htmlFor="first-class-upgrade" 
+                  className="text-lg font-semibold text-blue-900 cursor-pointer"
+                >
+                  First Class Mailing Upgrade
+                </label>
+                <Badge className="bg-blue-600 text-white">+$0.30/card</Badge>
+              </div>
+              <p className="text-blue-800 text-sm mb-3">
+                Upgrade to First Class mail for faster delivery (1-3 business days vs 3-5 business days). 
+                Perfect for time-sensitive campaigns or premium client outreach.
+              </p>
+              {state.clientList.length > 0 && (
+                <div className="text-sm font-medium text-blue-900">
+                  Additional cost: ${(0.30 * state.clientList.length).toFixed(2)} 
+                  <span className="text-blue-700 font-normal"> for {state.clientList.length} cards</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
         <h4 className="font-semibold text-amber-900 mb-2">Important shipping information:</h4>
         <ul className="text-sm text-amber-800 space-y-1">
@@ -140,6 +182,9 @@ const Step3MailingWindow = () => {
           <li>• Selection deadline is 1 week before final approval date</li>
           <li>• You'll receive tracking information once cards are shipped</li>
           <li>• Rush fees apply to December 11-15 and December 16-20 windows</li>
+          {state.postageOption === 'first-class' && (
+            <li>• First Class mail service provides faster delivery (1-3 business days)</li>
+          )}
         </ul>
       </div>
 
