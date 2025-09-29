@@ -1078,6 +1078,7 @@ const Admin = () => {
                       <TableHead>Sig Purchase</TableHead>
                       <TableHead>Sig Submit</TableHead>
                       <TableHead>Cropped Sig</TableHead>
+                      <TableHead>Approve Sig</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -1119,12 +1120,21 @@ const Admin = () => {
                              disabled={true}
                            />
                          </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Checkbox 
-                            checked={!!order.cropped_signature_url}
-                            disabled={true}
-                          />
-                        </TableCell>
+                         <TableCell onClick={(e) => e.stopPropagation()}>
+                           <Checkbox 
+                             checked={!!order.cropped_signature_url}
+                             disabled={true}
+                           />
+                         </TableCell>
+                         <TableCell onClick={(e) => e.stopPropagation()}>
+                           <Button
+                             size="sm"
+                             variant={order.signature_needs_review ? "default" : "outline"}
+                             onClick={() => updateOrderStatusField(order.id, 'signature_needs_review', !order.signature_needs_review)}
+                           >
+                             {order.signature_needs_review ? 'Approve' : 'Approved'}
+                           </Button>
+                         </TableCell>
                          <TableCell className="text-xs">
                            {new Date(order.created_at).toLocaleDateString()}
                          </TableCell>
