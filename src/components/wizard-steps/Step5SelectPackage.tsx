@@ -21,7 +21,7 @@ const Step5SelectPackage = () => {
     updateState({ selectedTier: tier });
   };
 
-  const signatureAdditionalCost = state.signatureSelected ? 50 : 0;
+  const signatureAdditionalCost = state.signatureSelected ? 25 : 0;
   const firstClassUpgradePerPiece = state.postageOption === 'first-class' ? 0.30 : 0;
   
   // Get rush fee for selected mailing window
@@ -98,9 +98,9 @@ const Step5SelectPackage = () => {
                    {firstClassUpgradePerPiece > 0 && (
                      <div className="text-blue-600 font-medium">+ ${firstClassUpgradePerPiece.toFixed(2)} first class per card</div>
                    )}
-                   {signatureAdditionalCost > 0 && (
-                     <div className="text-emerald-600 font-medium">+ $50.00 signature service</div>
-                   )}
+                     {signatureAdditionalCost > 0 && (
+                       <div className="text-emerald-600 font-medium">+ $25.00 signature service</div>
+                     )}
                  </div>
               </CardHeader>
               <CardContent className="pt-0">

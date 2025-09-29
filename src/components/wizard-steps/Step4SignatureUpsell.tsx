@@ -60,7 +60,7 @@ const Step4SignatureUpsell = () => {
               </Label>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-emerald-600">+$50</div>
+              <div className="text-2xl font-bold text-emerald-600">+$25</div>
               <div className="text-sm text-gray-600">one-time fee</div>
             </div>
           </div>

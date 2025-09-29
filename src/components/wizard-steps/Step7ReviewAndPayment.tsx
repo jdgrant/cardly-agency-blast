@@ -45,7 +45,7 @@ const Step7ReviewAndSubmit = () => {
   const rushFeeTotal = rushFeePerCard * clientCount;
   
   const subtotal = clientCount * 1.91;
-  const signatureCost = state.signaturePurchased ? 50 : 0; // Add signature cost
+  const signatureCost = state.signaturePurchased ? 25 : 0; // Add signature cost
   const discount = validatedPromoCode ? (subtotal * (validatedPromoCode.discount_percentage / 100)) : 0;
   const total = subtotal + rushFeeTotal + signatureCost - discount;
 
