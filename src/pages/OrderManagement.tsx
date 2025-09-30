@@ -720,10 +720,12 @@ const OrderManagement = () => {
                       <p className="font-medium text-emerald-600">{order.promo_code}</p>
                     </div>
                   )}
-                  <div>
-                    <p className="text-gray-600">Total Price</p>
-                    <p className="text-lg font-bold text-emerald-600">${Number(order.final_price).toFixed(2)}</p>
-                  </div>
+                  {order.csv_file_url && (
+                    <div>
+                      <p className="text-gray-600">Total Price</p>
+                      <p className="text-lg font-bold text-emerald-600">${Number(order.final_price).toFixed(2)}</p>
+                    </div>
+                  )}
                 </div>
                 
                 {template && (
