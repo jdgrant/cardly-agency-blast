@@ -241,9 +241,9 @@ serve(async (req) => {
             console.log('Failed to fetch preview image, status:', resp.status);
           }
         } else {
-          console.log('No origin header available for local path, trying hardcoded approach');
-          // Fallback: try the current project domain directly (no sandbox)
-          const fallbackUrl = `https://e84fd20e-7cca-4259-84ad-12452c25e301.lovableproject.com${src}`;
+          console.log('No origin header available for local path, trying production domain');
+          // Fallback: use production domain for cron jobs and server-to-server calls
+          const fallbackUrl = `https://sendyourcards.io${src}`;
           console.log('Trying fallback URL:', fallbackUrl);
           
           try {
