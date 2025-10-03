@@ -29,7 +29,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
   const [apiResponse, setApiResponse] = useState<string>("");
   const [pcmOrderId, setPcmOrderId] = useState<string>("");
   const [pcmBatchId, setPcmBatchId] = useState<string>("");
-  const [xmlPreview, setXmlPreview] = useState<string>("");
+  const [jsonPreview, setJsonPreview] = useState<string>("");
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isProduction, setIsProduction] = useState(() => {
     // Load from localStorage or default to sandbox (false)
@@ -213,9 +213,9 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
     }
   };
 
-  const handlePreviewXML = async () => {
+  const handlePreviewJSON = async () => {
     setIsLoadingPreview(true);
-    setXmlPreview("");
+    setJsonPreview("");
     
     try {
       // Get admin session ID from sessionStorage
@@ -261,7 +261,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         zip: client.zip
       }));
 
-      // Format recipients for PCM API
+      // Format recipients for PCM API (exact format used in edge function)
       const recipients = recipientAddresses.map(addr => {
         const nameParts = addr.name.trim().split(' ');
         const firstName = nameParts[0] || '';
@@ -278,7 +278,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         };
       });
 
-      // Determine mail date
+      // Determine mail date (exact logic from edge function)
       let mailDate = '';
       if (order.drop_date) {
         mailDate = order.drop_date;
@@ -293,10 +293,10 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         mailDate = mailingWindowMap[order.mailing_window] || '';
       }
 
-      // Create unique batch identifier
+      // Create unique batch identifier (exact logic from edge function)
       const uniqueBatchId = `${order.readable_order_id}-${mailDate}-${Date.now()}`;
 
-      // Prepare return address
+      // Prepare return address (exact format from edge function)
       const returnAddress = {
         name: order.return_address_name || 'Default Sender',
         address: order.return_address_line1 || '',
@@ -306,69 +306,41 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         zipCode: order.return_address_zip || ''
       };
 
-      // Generate the XML that would be sent to PCM (with placeholder auth)
-      const authPayload = {
-        apiKey: isProduction ? 'PRODUCTION_API_KEY' : 'SANDBOX_API_KEY',
-        apiSecret: isProduction ? 'PRODUCTION_API_SECRET' : 'SANDBOX_API_SECRET',
-        isSandbox: !isProduction
-      };
-
-      // Map postage option to PCM MailClass (normalize variants)
+      // Map postage option to PCM MailClass (exact logic from edge function)
       const normalizedPostage = String(order.postage_option || '').toLowerCase().replace(/[\s_-]/g, '');
       const mailClass = normalizedPostage.startsWith('first') ? 'FirstClass' : 'Standard';
       console.log('PCM MailClass (preview):', mailClass, 'raw postage_option:', order.postage_option);
 
-      const xmlRecipients = recipients.map(r => `      <Recipient>
-        <FirstName>${r.firstName}</FirstName>
-        <LastName>${r.lastName}</LastName>
-        <Address1>${r.address}</Address1>
-        ${r.address2 ? `<Address2>${r.address2}</Address2>` : ''}
-        <City>${r.city}</City>
-        <State>${r.state}</State>
-        <ZipCode>${r.zipCode}</ZipCode>
-      </Recipient>`).join('\n');
+      // Generate the exact JSON payload that will be sent to PCM (matching edge function endpoint 0)
+      const pcmPayload = {
+        recipients: recipients,
+        recordCount: recipientAddresses.length,
+        mailClass: mailClass,
+        mailDate: mailDate,
+        greetingCard: order.production_combined_pdf_public_url || '',
+        returnAddress: returnAddress,
+        batchName: uniqueBatchId,
+        addOns: [
+          {
+            "addon": "Livestamping"
+          }
+        ]
+      };
 
-      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +
-`<PcmOrder environment="${isProduction ? 'PRODUCTION' : 'SANDBOX'}">\n` +
-`  <Authentication>\n` +
-`    <ApiKey>${authPayload.apiKey}</ApiKey>\n` +
-`    <ApiSecret>${authPayload.apiSecret}</ApiSecret>\n` +
-`    <IsSandbox>${authPayload.isSandbox}</IsSandbox>\n` +
-`  </Authentication>\n` +
-`  <GreetingCardOrder>\n` +
-`    <MailClass>${mailClass}</MailClass>\n` +
-`    <MailDate>${mailDate}</MailDate>\n` +
-`    <GreetingCardURL>${order.production_combined_pdf_public_url || ''}</GreetingCardURL>\n` +
-`    <BatchName>${uniqueBatchId}</BatchName>\n` +
-`    <ReturnAddress>\n` +
-`      <Name>${returnAddress.name}</Name>\n` +
-`      <Address1>${returnAddress.address}</Address1>\n` +
-`      ${returnAddress.address2 ? `<Address2>${returnAddress.address2}</Address2>` : ''}\n` +
-`      <City>${returnAddress.city}</City>\n` +
-`      <State>${returnAddress.state}</State>\n` +
-`      <ZipCode>${returnAddress.zipCode}</ZipCode>\n` +
-`    </ReturnAddress>\n` +
-`    <AddOns>\n` +
-`      <AddOn>Livestamping</AddOn>\n` +
-`    </AddOns>\n` +
-`    <Recipients count="${recipients.length}">\n` +
-`${xmlRecipients}\n` +
-`    </Recipients>\n` +
-`  </GreetingCardOrder>\n` +
-`</PcmOrder>`;
-
-      setXmlPreview(xml);
+      // Format as readable JSON
+      const jsonString = JSON.stringify(pcmPayload, null, 2);
+      setJsonPreview(jsonString);
       
       toast({
         title: "Preview Generated",
-        description: `Generated PCM API preview for ${recipients.length} recipients`,
+        description: `Generated PCM JSON preview for ${recipients.length} recipients`,
       });
     } catch (error) {
       console.error('Error generating preview:', error);
-      setXmlPreview(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setJsonPreview(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       toast({
         title: "Error",
-        description: "Failed to generate API preview",
+        description: "Failed to generate JSON preview",
         variant: "destructive",
       });
     } finally {
@@ -415,12 +387,12 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
               {isLoading ? "Sending..." : "Send Physical Greeting Cards"}
             </Button>
             <Button 
-              onClick={handlePreviewXML}
+              onClick={handlePreviewJSON}
               disabled={isLoadingPreview}
               variant="outline"
               className="w-full"
             >
-              {isLoadingPreview ? "Generating Preview..." : "Preview PCM XML"}
+              {isLoadingPreview ? "Generating Preview..." : "Preview PCM JSON"}
             </Button>
           </div>
         )}
@@ -473,28 +445,28 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
           </div>
         )}
         
-        {/* XML Preview Display */}
-        {xmlPreview && (
+        {/* JSON Preview Display */}
+        {jsonPreview && (
           <div className="space-y-2">
-            <Label className="text-sm font-medium">PCM XML Preview</Label>
+            <Label className="text-sm font-medium">PCM JSON Preview</Label>
             <Textarea
-              value={xmlPreview}
+              value={jsonPreview}
               readOnly
               className="font-mono text-xs min-h-[300px]"
-              placeholder="API preview data will appear here..."
+              placeholder="JSON preview will appear here..."
             />
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                navigator.clipboard.writeText(xmlPreview);
+                navigator.clipboard.writeText(jsonPreview);
                 toast({
                   title: "Copied",
-                  description: "PCM API data copied to clipboard",
+                  description: "PCM JSON copied to clipboard",
                 });
               }}
             >
-              Copy to Clipboard
+              Copy JSON to Clipboard
             </Button>
           </div>
         )}
