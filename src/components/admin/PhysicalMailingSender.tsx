@@ -24,6 +24,7 @@ interface PhysicalMailingSenderProps {
 }
 
 export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
+  // State management
   const [isLoading, setIsLoading] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [apiResponse, setApiResponse] = useState<string>("");
