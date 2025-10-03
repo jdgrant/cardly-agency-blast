@@ -55,7 +55,7 @@ const Index = () => {
       >
         <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-white/20 to-transparent"></div>
         <div 
-          className="absolute right-0 top-0 w-1/2 h-full bg-cover bg-center opacity-90"
+          className="hidden md:block absolute right-0 top-0 w-1/2 h-full bg-cover bg-center opacity-90"
           style={{
             backgroundImage: `url('/lovable-uploads/411695d4-da32-406d-94a9-8e16f38b918c.png')`,
             backgroundSize: 'contain',
