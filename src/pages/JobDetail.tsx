@@ -464,10 +464,13 @@ const JobDetail = () => {
       });
     } catch (error) {
       console.error('Error updating order status:', error);
+      const errMsg = (error as any)?.message || (typeof error === 'string' ? error : 'Unknown error');
       toast({
-        title: "Update Failed",
-        description: "Failed to update order status",
-        variant: "destructive"
+        title: errMsg?.includes('Invalid admin session') ? 'Session Expired' : 'Update Failed',
+        description: errMsg?.includes('Invalid admin session') 
+          ? 'Your admin session is invalid or expired. Please login again from the Admin page.' 
+          : `Failed to update order status${errMsg ? `: ${errMsg}` : ''}`,
+        variant: 'destructive'
       });
     }
   };
