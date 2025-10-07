@@ -920,7 +920,7 @@ const Admin = () => {
 
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
   const approvedOrders = orders.filter(o => o.status === 'approved').length;
-  const totalRevenue = orders.reduce((sum, order) => sum + Number(order.final_price), 0);
+  const totalRevenue = orders.filter(o => o.status !== 'canceled').reduce((sum, order) => sum + Number(order.final_price), 0);
   const signaturesForReview = orders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press').length;
   const sentToPressOrders = orders.filter(o => o.status === 'sent_to_press').length;
   const readyForPress = orders.filter(o => 
