@@ -96,7 +96,7 @@ const OrderStatus = () => {
       case 'shipped': return 'text-green-600';
       case 'delivered': return 'text-green-800';
       case 'blocked': return 'text-red-600';
-      case 'canceled': return 'text-red-600';
+      case 'cancelled': return 'text-red-600';
       default: return 'text-gray-600';
     }
   };
@@ -111,7 +111,7 @@ const OrderStatus = () => {
       case 'shipped': return 'Your cards have been shipped and are on their way.';
       case 'delivered': return 'Your cards have been delivered successfully.';
       case 'blocked': return 'This order has been blocked and requires attention.';
-      case 'canceled': return 'This order has been canceled.';
+      case 'cancelled': return 'This order has been cancelled.';
       default: return 'Status information not available.';
     }
   };
