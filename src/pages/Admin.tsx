@@ -105,6 +105,7 @@ const Admin = () => {
   const [downloadUrls, setDownloadUrls] = useState<Record<string, string>>({});
   const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [showCancelled, setShowCancelled] = useState(false);
   const navigate = useNavigate();
 
   // Persist admin access for the current browser session
@@ -1245,7 +1246,7 @@ const Admin = () => {
           <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle>Orders</CardTitle>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-4">
               <Input
                 placeholder="Search by order number, customer name..."
                 value={searchQuery}
@@ -1261,6 +1262,19 @@ const Admin = () => {
                   <X className="w-4 h-4" />
                 </Button>
               )}
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="show-cancelled"
+                  checked={showCancelled}
+                  onCheckedChange={(checked) => setShowCancelled(!!checked)}
+                />
+                <label 
+                  htmlFor="show-cancelled" 
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Show Cancelled
+                </label>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -1287,7 +1301,10 @@ const Admin = () => {
                       // Filter out sent_to_press orders
                       if (o.status === 'sent_to_press') return false;
                       
-                      // If no search query, show all
+                      // Filter out cancelled orders unless checkbox is checked
+                      if (o.status === 'cancelled' && !showCancelled) return false;
+                      
+                      // If no search query, show all (based on cancelled filter)
                       if (!searchQuery.trim()) return true;
                       
                       const query = searchQuery.toLowerCase().trim();
@@ -1318,6 +1335,7 @@ const Admin = () => {
                               order.status === 'send_to_print' ? 'outline' :
                               order.status === 'sent' ? 'default' :
                               order.status === 'blocked' ? 'destructive' :
+                              order.status === 'cancelled' ? 'destructive' :
                               'outline'
                             }
                           >
