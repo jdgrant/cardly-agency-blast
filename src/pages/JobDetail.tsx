@@ -426,10 +426,17 @@ const JobDetail = () => {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (!sessionId) {
+        throw new Error('No admin session found');
+      }
+
       const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus })
-        .eq('id', orderId);
+        .rpc('update_admin_order_status', {
+          session_id_param: sessionId,
+          order_id_param: orderId,
+          new_status_param: newStatus
+        });
 
       if (error) throw error;
 
