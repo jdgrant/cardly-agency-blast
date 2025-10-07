@@ -1328,6 +1328,7 @@ const JobDetail = () => {
                   <SelectItem value="send_to_print">Send to Print</SelectItem>
                   <SelectItem value="sent_to_press">Sent to Press</SelectItem>
                   <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="canceled">Canceled</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1339,6 +1340,7 @@ const JobDetail = () => {
                 order.status === 'sent_to_press' ? 'default' :
                 order.status === 'sent' ? 'default' :
                 order.status === 'blocked' ? 'destructive' :
+                order.status === 'canceled' ? 'destructive' :
                 'outline'
               }
               className="text-sm px-3 py-1"
