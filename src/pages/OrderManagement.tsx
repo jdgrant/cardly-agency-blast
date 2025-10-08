@@ -88,6 +88,7 @@ const OrderManagement = () => {
   const [validatedPromoCode, setValidatedPromoCode] = useState<any>(null);
   const [promoCodeError, setPromoCodeError] = useState('');
   const [validatingPromoCode, setValidatingPromoCode] = useState(false);
+  const [resendingReceipt, setResendingReceipt] = useState(false);
 
   // Hash/unhash order ID (simple implementation - in production use proper hashing)
   const hashOrderId = (orderId: string) => {
@@ -141,8 +142,10 @@ const OrderManagement = () => {
     }
   }, [searchParams, order?.id]);
 
-  const sendReceiptEmail = async () => {
+  const sendReceiptEmail = async (showToast: boolean = false) => {
     if (!order) return;
+
+    if (showToast) setResendingReceipt(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('send-receipt-email', {
@@ -161,11 +164,33 @@ const OrderManagement = () => {
 
       if (error) {
         console.error('Failed to send receipt email:', error);
+        if (showToast) {
+          toast({
+            title: "Email Failed",
+            description: "Failed to send receipt email. Please try again.",
+            variant: "destructive"
+          });
+        }
       } else {
         console.log('Receipt email sent successfully');
+        if (showToast) {
+          toast({
+            title: "Receipt Sent!",
+            description: `Receipt email has been sent to ${order.contact_email}`,
+          });
+        }
       }
     } catch (error) {
       console.error('Error sending receipt email:', error);
+      if (showToast) {
+        toast({
+          title: "Email Failed",
+          description: "Failed to send receipt email. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } finally {
+      if (showToast) setResendingReceipt(false);
     }
   };
 
@@ -980,9 +1005,27 @@ const OrderManagement = () => {
                   <div className="text-center py-6">
                     <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-green-700 mb-2">Payment Complete</h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 mb-4">
                       Thank you! Your order has been paid and is being processed.
                     </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => sendReceiptEmail(true)}
+                      disabled={resendingReceipt}
+                    >
+                      {resendingReceipt ? (
+                        <>
+                          <Clock className="w-4 h-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Resend Receipt
+                        </>
+                      )}
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
