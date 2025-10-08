@@ -24,8 +24,10 @@ export const SupportTicketForm = ({ sessionId, onSuccess, onCancel }: SupportTic
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted - starting ticket creation');
 
     if (!name.trim() || !email.trim() || !summary.trim()) {
+      console.log('Validation failed - missing required fields');
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -35,6 +37,12 @@ export const SupportTicketForm = ({ sessionId, onSuccess, onCancel }: SupportTic
     }
 
     setIsSubmitting(true);
+    console.log('Calling create-support-ticket function with:', {
+      sessionId,
+      customerName: name.trim(),
+      customerEmail: email.trim(),
+      hasPhone: !!phone.trim()
+    });
 
     try {
       const { data, error } = await supabase.functions.invoke('create-support-ticket', {
@@ -47,8 +55,19 @@ export const SupportTicketForm = ({ sessionId, onSuccess, onCancel }: SupportTic
         }
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
 
+      if (error) {
+        console.error('Function returned error:', error);
+        throw error;
+      }
+
+      if (!data || !data.ticket) {
+        console.error('Invalid response structure:', data);
+        throw new Error('Invalid response from server');
+      }
+
+      console.log('Ticket created successfully:', data.ticket);
       setTicketNumber(data.ticket.ticketNumber);
       
       toast({
@@ -61,11 +80,19 @@ export const SupportTicketForm = ({ sessionId, onSuccess, onCancel }: SupportTic
         onSuccess();
       }, 3000);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ticket creation error:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        status: error?.status,
+        details: error?.details
+      });
+      
+      const errorMessage = error?.message || error?.details || 'Failed to create support ticket';
+      
       toast({
-        title: "Error",
-        description: "Failed to create support ticket. Please try again or email support@sendyourcards.io directly.",
+        title: "Error Creating Ticket",
+        description: `${errorMessage}. Please email support@sendyourcards.io directly.`,
         variant: "destructive"
       });
       setIsSubmitting(false);
