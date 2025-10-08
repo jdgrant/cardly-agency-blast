@@ -58,6 +58,30 @@ serve(async (req) => {
 
     if (historyError) throw historyError;
 
+    // Try to extract order ID from message
+    const orderIdMatch = message.match(/\d{8}-[a-z0-9]{5}/i);
+    let orderContext = '';
+    
+    if (orderIdMatch) {
+      const readableOrderId = orderIdMatch[0];
+      const { data: orderData, error: orderError } = await supabase
+        .rpc('get_order_for_customer_management', { short_id: readableOrderId.split('-')[1] });
+      
+      if (!orderError && orderData && orderData.length > 0) {
+        const order = orderData[0];
+        orderContext = `\n\nORDER DATA FOR ${readableOrderId}:
+- Status: ${order.status}
+- Card Quantity: ${order.card_quantity}
+- Template: ${order.template_id}
+- Mailing Window: ${order.mailing_window}
+- Created: ${new Date(order.created_at).toLocaleDateString()}
+- Invoice Paid: ${order.invoice_paid ? 'Yes' : 'No'}
+- Has Signature: ${order.signature_url ? 'Yes' : 'No'}
+${order.drop_date ? `- Drop Date: ${new Date(order.drop_date).toLocaleDateString()}` : ''}
+${order.pcm_order_id ? `- Sent to Production: Yes` : '- Sent to Production: No'}`;
+      }
+    }
+
     // Format messages for AI
     const conversationHistory = messages.map(msg => ({
       role: msg.role,
@@ -76,14 +100,21 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a helpful customer support assistant for a greeting card service. 
-Help users with:
-- Order tracking and status
-- Customization options (templates, messages, logos, signatures)
-- Pricing and packages
-- Mailing windows and delivery times
-- Technical issues
-Be friendly, concise, and helpful. If you don't know something, admit it and suggest contacting support directly.`
+            content: `You are a helpful customer support assistant for a greeting card service.${orderContext}
+
+CRITICAL INSTRUCTIONS:
+- ONLY provide information about orders when you have ACTUAL ORDER DATA provided above
+- NEVER make up or estimate order statuses, delivery dates, or shipping information
+- If an order ID is mentioned but no data is provided, say "I don't have access to that order information. Please contact support@sendyourcards.io"
+- Status meanings: "pending" = payment pending, "approved" = paid and being prepared, "sent_to_press" = at printer, "shipped" = delivered
+- If you cannot answer a question with certainty, say "I'm not sure about that. Let me create a support ticket for you."
+
+You can help with:
+- Order tracking when data is available
+- General questions about customization, pricing, mailing windows
+- Creating support tickets for human assistance
+
+Be friendly, honest, and helpful. Never guess or hallucinate information.`
           },
           ...conversationHistory
         ],
