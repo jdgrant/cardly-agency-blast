@@ -8,6 +8,16 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
+import { 
   CheckCircle, 
   Clock, 
   Upload, 
@@ -21,7 +31,9 @@ import {
   CheckCircle2,
   Tag,
   X,
-  Check
+  Check,
+  XCircle,
+  RotateCcw
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -89,6 +101,9 @@ const OrderManagement = () => {
   const [promoCodeError, setPromoCodeError] = useState('');
   const [validatingPromoCode, setValidatingPromoCode] = useState(false);
   const [resendingReceipt, setResendingReceipt] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showUndoCancelDialog, setShowUndoCancelDialog] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
 
   // Hash/unhash order ID (simple implementation - in production use proper hashing)
   const hashOrderId = (orderId: string) => {
@@ -546,6 +561,74 @@ const OrderManagement = () => {
 
   const applyPromoCode = () => {
     validatePromoCode(promoCodeInput);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!order?.id || !hashedOrderId) return;
+    
+    setCancellingOrder(true);
+    try {
+      const shortId = order.id.replace(/-/g, '').substring(0, 8);
+      
+      const { error } = await supabase
+        .rpc('update_order_status_customer', {
+          short_id: shortId,
+          new_status: 'cancelled'
+        });
+
+      if (error) throw error;
+
+      await fetchOrderByHashedId();
+      
+      toast({
+        title: "Order Cancelled",
+        description: "Your order has been cancelled successfully.",
+      });
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast({
+        title: "Cancellation Failed",
+        description: "Unable to cancel order. Please contact support.",
+        variant: "destructive"
+      });
+    } finally {
+      setCancellingOrder(false);
+      setShowCancelDialog(false);
+    }
+  };
+
+  const handleUndoCancel = async () => {
+    if (!order?.id || !hashedOrderId) return;
+    
+    setCancellingOrder(true);
+    try {
+      const shortId = order.id.replace(/-/g, '').substring(0, 8);
+      
+      const { error } = await supabase
+        .rpc('update_order_status_customer', {
+          short_id: shortId,
+          new_status: 'pending'
+        });
+
+      if (error) throw error;
+
+      await fetchOrderByHashedId();
+      
+      toast({
+        title: "Order Restored",
+        description: "Your order has been restored successfully.",
+      });
+    } catch (error) {
+      console.error('Error restoring order:', error);
+      toast({
+        title: "Restore Failed",
+        description: "Unable to restore order. Please contact support.",
+        variant: "destructive"
+      });
+    } finally {
+      setCancellingOrder(false);
+      setShowUndoCancelDialog(false);
+    }
   };
 
   const removePromoCode = () => {
@@ -1186,7 +1269,100 @@ const OrderManagement = () => {
             )}
           </div>
         </div>
+
+        {/* Cancel/Undo Cancel Section */}
+        {order.status !== 'sent_to_press' && (
+          <div className="max-w-4xl mx-auto mt-6">
+            <Card className={order.status === 'cancelled' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}>
+              <CardContent className="pt-6">
+                {order.status === 'cancelled' ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <RotateCcw className="w-5 h-5 text-green-600" />
+                      <div>
+                        <h4 className="font-medium text-green-900">Order Cancelled</h4>
+                        <p className="text-sm text-green-700">Changed your mind? You can restore this order.</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowUndoCancelDialog(true)}
+                      className="border-green-600 text-green-600 hover:bg-green-100"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Undo Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <XCircle className="w-5 h-5 text-red-600" />
+                      <div>
+                        <h4 className="font-medium text-red-900">Need to Cancel?</h4>
+                        <p className="text-sm text-red-700">Cancel this order if you no longer need it.</p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCancelDialog(true)}
+                      className="border-red-600 text-red-600 hover:bg-red-100"
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Cancel Order
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
+
+      {/* Cancel Order Confirmation Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to cancel this order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will cancel your order. You can undo this action later if you change your mind.
+              Your uploaded files will be preserved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancellingOrder}>No, Keep Order</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelOrder}
+              disabled={cancellingOrder}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {cancellingOrder ? 'Cancelling...' : 'Yes, Cancel Order'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Undo Cancel Confirmation Dialog */}
+      <AlertDialog open={showUndoCancelDialog} onOpenChange={setShowUndoCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restore this order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will restore your cancelled order and set it back to pending status.
+              You can continue with your order as normal.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancellingOrder}>No, Keep Cancelled</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleUndoCancel}
+              disabled={cancellingOrder}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {cancellingOrder ? 'Restoring...' : 'Yes, Restore Order'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Signature Upload Dialog */}
       <Dialog open={showSignatureUpload} onOpenChange={setShowSignatureUpload}>
