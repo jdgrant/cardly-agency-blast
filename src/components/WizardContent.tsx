@@ -6,6 +6,7 @@ import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SupportChatWidget } from './SupportChatWidget';
 
 // Import all step components
 import Step1ChooseTemplate from './wizard-steps/Step1ChooseTemplate';
@@ -102,6 +103,9 @@ const WizardContent = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Support Chat Widget */}
+      <SupportChatWidget />
     </div>
   );
 };

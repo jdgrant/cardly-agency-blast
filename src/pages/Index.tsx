@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { Check, Upload, Calendar, File, ImageIcon, CheckCircle, ArrowRight, Star, Users, Shield, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CartIcon } from "@/components/CartIcon";
+import { SupportChatWidget } from "@/components/SupportChatWidget";
 
 const Index = () => {
   const { toast } = useToast();
@@ -299,6 +300,9 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Support Chat Widget */}
+      <SupportChatWidget />
     </div>
   );
 };
