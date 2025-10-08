@@ -1211,8 +1211,13 @@ const JobDetail = () => {
   };
 
   const sendReceiptEmail = async () => {
-    if (!order) return;
+    console.log('sendReceiptEmail called');
+    if (!order) {
+      console.log('No order found');
+      return;
+    }
 
+    console.log('Sending receipt email to:', order.contact_email);
     setResendingReceipt(true);
 
     try {
