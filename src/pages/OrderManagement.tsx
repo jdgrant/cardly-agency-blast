@@ -571,7 +571,7 @@ const OrderManagement = () => {
       const shortId = order.id.replace(/-/g, '').substring(0, 8);
       
       const { error } = await supabase
-        .rpc('update_order_status_customer', {
+        .rpc('update_order_status_customer' as any, {
           short_id: shortId,
           new_status: 'cancelled'
         });
@@ -605,7 +605,7 @@ const OrderManagement = () => {
       const shortId = order.id.replace(/-/g, '').substring(0, 8);
       
       const { error } = await supabase
-        .rpc('update_order_status_customer', {
+        .rpc('update_order_status_customer' as any, {
           short_id: shortId,
           new_status: 'pending'
         });
