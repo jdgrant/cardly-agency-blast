@@ -129,6 +129,8 @@ const OrderManagement = () => {
       // Update order status to paid
       if (order?.id) {
         updateOrderPaymentStatus(order.id, true);
+        // Send receipt email
+        sendReceiptEmail();
       }
     } else if (paymentStatus === 'cancelled') {
       toast({
@@ -138,6 +140,34 @@ const OrderManagement = () => {
       });
     }
   }, [searchParams, order?.id]);
+
+  const sendReceiptEmail = async () => {
+    if (!order) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-receipt-email', {
+        body: {
+          orderId: order.id,
+          contactEmail: order.contact_email,
+          contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
+          readableOrderId: order.readable_order_id,
+          finalPrice: order.final_price,
+          cardQuantity: order.card_quantity,
+          mailingWindow: order.mailing_window,
+          frontPreviewUrl: order.front_preview_base64 ? `data:image/png;base64,${order.front_preview_base64}` : undefined,
+          insidePreviewUrl: order.inside_preview_base64 ? `data:image/png;base64,${order.inside_preview_base64}` : undefined,
+        }
+      });
+
+      if (error) {
+        console.error('Failed to send receipt email:', error);
+      } else {
+        console.log('Receipt email sent successfully');
+      }
+    } catch (error) {
+      console.error('Error sending receipt email:', error);
+    }
+  };
 
   const updateOrderPaymentStatus = async (orderId: string, isPaid: boolean) => {
     try {

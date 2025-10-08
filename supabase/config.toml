@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.test-mailgun]
 verify_jwt = false
+
+[functions.send-receipt-email]
+verify_jwt = false
