@@ -128,38 +128,23 @@ export function generateReceiptEmailHtml(data: ReceiptEmailData, orderManagement
 
 // Helper function to format status for display
 function formatStatus(status: string): string {
-  const statusMap: Record<string, string> = {
-    'pending': 'Pending Payment',
-    'approved': 'Approved & Processing',
-    'sent_to_press': 'At Printer',
-    'shipped': 'Shipped',
-    'cancelled': 'Cancelled'
-  };
-  return statusMap[status] || status.toUpperCase();
+  // Just capitalize the first letter and replace dashes/underscores with spaces
+  return status
+    .split(/[-_]/)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 // Helper function to get status color
 function getStatusColor(status: string): string {
   const colorMap: Record<string, string> = {
-    'pending': '#ffc107',
+    'pending': '#6c757d',
     'approved': '#17a2b8',
     'sent_to_press': '#6f42c1',
     'shipped': '#28a745',
     'cancelled': '#dc3545'
   };
   return colorMap[status] || '#6c757d';
-}
-
-// Helper function to get status message
-function getStatusMessage(status: string): string {
-  const messageMap: Record<string, string> = {
-    'pending': 'Awaiting payment confirmation',
-    'approved': 'Your order is being prepared for production',
-    'sent_to_press': 'Your cards are currently being printed',
-    'shipped': 'Your cards have been mailed!',
-    'cancelled': 'This order has been cancelled'
-  };
-  return messageMap[status] || 'Processing your order';
 }
 
 export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUrl: string, unsubscribeUrl?: string): string {
@@ -238,7 +223,6 @@ export function generateStatusEmailHtml(data: StatusEmailData, orderManagementUr
           <div style="margin-top: 20px; padding: 15px; background: ${getStatusColor(orderStatus)}; border-radius: 8px; text-align: center;">
             <div style="font-size: 12px; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Order Status</div>
             <div style="font-size: 24px; font-weight: bold; color: #fff;">${formatStatus(orderStatus)}</div>
-            <div style="font-size: 14px; color: #fff; margin-top: 5px;">${getStatusMessage(orderStatus)}</div>
           </div>
         </div>
 
