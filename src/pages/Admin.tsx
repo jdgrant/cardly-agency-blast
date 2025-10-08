@@ -919,12 +919,13 @@ const Admin = () => {
     );
   }
 
-  const pendingOrders = orders.filter(o => o.status === 'pending').length;
-  const approvedOrders = orders.filter(o => o.status === 'approved').length;
-  const totalRevenue = orders.filter(o => o.status !== 'cancelled').reduce((sum, order) => sum + Number(order.final_price), 0);
-  const signaturesForReview = orders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press').length;
-  const sentToPressOrders = orders.filter(o => o.status === 'sent_to_press').length;
-  const readyForPress = orders.filter(o => 
+  const activeOrders = orders.filter(o => o.status !== 'cancelled');
+  const pendingOrders = activeOrders.filter(o => o.status === 'pending').length;
+  const approvedOrders = activeOrders.filter(o => o.status === 'approved').length;
+  const totalRevenue = activeOrders.reduce((sum, order) => sum + Number(order.final_price), 0);
+  const signaturesForReview = activeOrders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press').length;
+  const sentToPressOrders = activeOrders.filter(o => o.status === 'sent_to_press').length;
+  const readyForPress = activeOrders.filter(o => 
     o.invoice_paid === true && 
     o.status !== 'sent_to_press' &&
     (!!o.cropped_signature_url || o.signature_needs_review === false)
@@ -998,7 +999,7 @@ const Admin = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold">{orders.length}</p>
+                  <p className="text-2xl font-bold">{activeOrders.length}</p>
                 </div>
                 <Package2 className="w-8 h-8 text-blue-600" />
               </div>
