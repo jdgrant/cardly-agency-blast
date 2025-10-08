@@ -68,7 +68,9 @@ const handler = async (req: Request): Promise<Response> => {
       .from('orders')
       .select('*')
       .not('contact_email', 'is', null)
-      .neq('invoice_paid', true); // Skip orders with paid invoices for cron emails
+      .neq('invoice_paid', true) // Skip orders with paid invoices for cron emails
+      .neq('status', 'cancelled') // Skip cancelled orders
+      .neq('status', 'sent_to_press'); // Skip orders already sent to production
 
     // Apply filters if provided
     if (requestData.ordersToEmail && requestData.ordersToEmail.length > 0) {
