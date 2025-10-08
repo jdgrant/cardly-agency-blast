@@ -3,10 +3,54 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.50.2";
 import { sendEmailViaMailgun, generateOrderManagementUrl } from "../_shared/mailgun-client.ts";
 import { generateReceiptEmailHtml, ReceiptEmailData } from "../_shared/email-templates.ts";
 
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Upload base64 image to Supabase Storage and return public URL
+async function uploadBase64ToStorage(base64Data: string, orderId: string, type: 'front' | 'inside'): Promise<string | undefined> {
+  if (!base64Data) return undefined;
+  
+  try {
+    // Extract base64 content
+    const base64Content = base64Data.includes('base64,') 
+      ? base64Data.split('base64,')[1] 
+      : base64Data;
+    
+    // Convert base64 to binary
+    const binaryData = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
+    
+    // Upload to storage
+    const fileName = `email-previews/${orderId}-${type}-${Date.now()}.png`;
+    const { data, error } = await supabase.storage
+      .from('holiday-cards')
+      .upload(fileName, binaryData, {
+        contentType: 'image/png',
+        upsert: true
+      });
+    
+    if (error) {
+      console.error(`Error uploading ${type} preview:`, error);
+      return undefined;
+    }
+    
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from('holiday-cards')
+      .getPublicUrl(fileName);
+    
+    console.log(`${type} preview uploaded:`, publicUrl);
+    return publicUrl;
+  } catch (error) {
+    console.error(`Error processing ${type} preview:`, error);
+    return undefined;
+  }
+}
 
 interface ReceiptEmailRequest {
   orderId: string;
@@ -48,6 +92,18 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Contact email is required");
     }
 
+    // Upload preview images to storage if provided as base64
+    let storageFrontUrl = frontPreviewUrl;
+    let storageInsideUrl = insidePreviewUrl;
+    
+    if (frontPreviewUrl && frontPreviewUrl.startsWith('data:')) {
+      storageFrontUrl = await uploadBase64ToStorage(frontPreviewUrl, orderId, 'front');
+    }
+    
+    if (insidePreviewUrl && insidePreviewUrl.startsWith('data:')) {
+      storageInsideUrl = await uploadBase64ToStorage(insidePreviewUrl, orderId, 'inside');
+    }
+
     // Format mailing window for display
     const formatMailingWindow = (window: string) => {
       const windows: Record<string, string> = {
@@ -59,7 +115,7 @@ const handler = async (req: Request): Promise<Response> => {
       return windows[window] || window;
     };
 
-    // Prepare email data
+    // Prepare email data with storage URLs
     const emailData: ReceiptEmailData = {
       orderId,
       contactEmail,
@@ -68,8 +124,8 @@ const handler = async (req: Request): Promise<Response> => {
       finalPrice,
       cardQuantity,
       mailingWindow: formatMailingWindow(mailingWindow),
-      frontPreviewUrl,
-      insidePreviewUrl
+      frontPreviewUrl: storageFrontUrl,
+      insidePreviewUrl: storageInsideUrl
     };
 
     // Generate order management URL

@@ -1790,38 +1790,39 @@ const JobDetail = () => {
                    {/* Invoice Paid */}
                    <div className="flex flex-col space-y-2">
                      <label className="text-sm font-medium text-gray-700">Invoice Paid</label>
-                     <div className="flex items-center justify-between">
-                       <div className="flex items-center space-x-2">
-                         <Checkbox 
-                           checked={order.invoice_paid || false}
-                           onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
-                         />
-                         <span className="text-sm text-gray-600">
-                           {order.invoice_paid ? 'Paid' : 'Unpaid'}
-                         </span>
-                       </div>
-                       {order.invoice_paid && (
+                     <div className="flex items-center space-x-2">
+                       <Checkbox 
+                         checked={order.invoice_paid || false}
+                         onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
+                       />
+                       <span className="text-sm text-gray-600">
+                         {order.invoice_paid ? 'Paid' : 'Unpaid'}
+                       </span>
+                     </div>
+                   </div>
+                   
+                   {/* Resend Receipt Card - Only shown when invoice is paid */}
+                   {order.invoice_paid && (
+                     <Card className="p-4 bg-blue-50 border-blue-200">
+                       <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-2">
+                           <Mail className="w-5 h-5 text-blue-600" />
+                           <div>
+                             <h4 className="text-sm font-medium text-gray-900">Payment Receipt</h4>
+                             <p className="text-xs text-gray-600">Send to {order.contact_email}</p>
+                           </div>
+                         </div>
                          <Button
-                           variant="outline"
+                           variant="default"
                            size="sm"
                            onClick={sendReceiptEmail}
                            disabled={resendingReceipt}
                          >
-                           {resendingReceipt ? (
-                             <>
-                               <Mail className="w-4 h-4 mr-2 animate-spin" />
-                               Sending...
-                             </>
-                           ) : (
-                             <>
-                               <Mail className="w-4 h-4 mr-2" />
-                               Resend Receipt
-                             </>
-                           )}
+                           {resendingReceipt ? 'Sending...' : 'Send Receipt'}
                          </Button>
-                       )}
-                     </div>
-                   </div>
+                       </div>
+                     </Card>
+                   )}
 
                     {/* Sent to Press Status */}
                     <div className="flex flex-col space-y-2">
