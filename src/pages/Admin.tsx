@@ -1056,14 +1056,14 @@ const Admin = () => {
         </div>
 
         {/* Signatures for Review Section */}
-        {orders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press').length > 0 && (
+        {orders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press' && o.status !== 'cancelled').length > 0 && (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <ImageIcon className="w-5 h-5 text-purple-600" />
                 <span>Signatures for Review</span>
                 <Badge variant="secondary" className="ml-2">
-                  {orders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press').length}
+                  {orders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press' && o.status !== 'cancelled').length}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -1085,7 +1085,7 @@ const Admin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                     {orders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press').map((order) => (
+                     {orders.filter(o => o.signature_needs_review === true && !o.cropped_signature_url && o.status !== 'sent_to_press' && o.status !== 'cancelled').map((order) => (
                        <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleViewOrder(order)}>
                          <TableCell className="font-mono text-xs">
                            {order.readable_order_id || `${order.id.slice(0, 8)}...`}
