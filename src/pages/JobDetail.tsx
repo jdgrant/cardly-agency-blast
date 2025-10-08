@@ -132,6 +132,7 @@ const JobDetail = () => {
   const [advancedSectionOpen, setAdvancedSectionOpen] = useState(false);
   const [showClientListUpload, setShowClientListUpload] = useState(false);
   const [pdfDownloadUrls, setPdfDownloadUrls] = useState<{front?: string, back?: string, gotenberg?: string, production?: string, productionFront?: string, productionInside?: string}>({});
+  const [resendingReceipt, setResendingReceipt] = useState(false);
   
   // Return address editing state
   const [isEditingReturnAddress, setIsEditingReturnAddress] = useState(false);
@@ -1209,6 +1210,48 @@ const JobDetail = () => {
     }
   };
 
+  const sendReceiptEmail = async () => {
+    if (!order) return;
+
+    setResendingReceipt(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-receipt-email', {
+        body: {
+          orderId: order.id,
+          contactEmail: order.contact_email,
+          contactName: `${order.contact_firstname || ''} ${order.contact_lastname || ''}`.trim() || 'Customer',
+          readableOrderId: order.readable_order_id || order.id.slice(0, 8),
+          finalPrice: order.final_price,
+          cardQuantity: order.card_quantity,
+          mailingWindow: order.mailing_window,
+          frontPreviewUrl: order.front_preview_base64 ? 
+            (order.front_preview_base64.startsWith('data:') ? order.front_preview_base64 : `data:image/png;base64,${order.front_preview_base64}`) : undefined,
+          insidePreviewUrl: order.inside_preview_base64 ? 
+            (order.inside_preview_base64.startsWith('data:') ? order.inside_preview_base64 : `data:image/png;base64,${order.inside_preview_base64}`) : undefined,
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: 'Receipt Sent!',
+        description: `Payment receipt sent to ${order.contact_email}`
+      });
+    } catch (error: any) {
+      console.error('Receipt send failed:', error);
+      toast({
+        title: 'Receipt Send Failed',
+        description: error?.message || 'Could not send receipt email.',
+        variant: 'destructive'
+      });
+    } finally {
+      setResendingReceipt(false);
+    }
+  };
+
   // Postage option editing functions
   const startEditingPostageOption = () => {
     if (order?.postage_option) {
@@ -1747,14 +1790,36 @@ const JobDetail = () => {
                    {/* Invoice Paid */}
                    <div className="flex flex-col space-y-2">
                      <label className="text-sm font-medium text-gray-700">Invoice Paid</label>
-                     <div className="flex items-center space-x-2">
-                       <Checkbox 
-                         checked={order.invoice_paid || false}
-                         onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
-                       />
-                       <span className="text-sm text-gray-600">
-                         {order.invoice_paid ? 'Paid' : 'Unpaid'}
-                       </span>
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center space-x-2">
+                         <Checkbox 
+                           checked={order.invoice_paid || false}
+                           onCheckedChange={(checked) => updateOrderStatusField(order.id, 'invoice_paid', !!checked)}
+                         />
+                         <span className="text-sm text-gray-600">
+                           {order.invoice_paid ? 'Paid' : 'Unpaid'}
+                         </span>
+                       </div>
+                       {order.invoice_paid && (
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={sendReceiptEmail}
+                           disabled={resendingReceipt}
+                         >
+                           {resendingReceipt ? (
+                             <>
+                               <Mail className="w-4 h-4 mr-2 animate-spin" />
+                               Sending...
+                             </>
+                           ) : (
+                             <>
+                               <Mail className="w-4 h-4 mr-2" />
+                               Resend Receipt
+                             </>
+                           )}
+                         </Button>
+                       )}
                      </div>
                    </div>
 
