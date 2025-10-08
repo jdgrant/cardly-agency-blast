@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { MessageCircle, X, Send, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -127,7 +127,7 @@ export const SupportChatWidget = ({ userEmail, orderId }: SupportChatWidgetProps
           </div>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+          <div className="flex-1 p-4 overflow-y-auto" ref={scrollRef}>
             {messages.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -167,7 +167,7 @@ export const SupportChatWidget = ({ userEmail, orderId }: SupportChatWidgetProps
                 )}
               </div>
             )}
-          </ScrollArea>
+          </div>
 
           {/* Input */}
           <div className="p-4 border-t space-y-2">
