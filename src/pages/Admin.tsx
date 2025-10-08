@@ -36,12 +36,14 @@ import {
   FileText,
   Upload,
   Image as ImageIcon,
-  CheckCircle
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PromoCodeForm } from '@/components/admin/PromoCodeForm';
 import BatchManager from '@/components/admin/BatchManager';
 import { ChatLogs } from '@/components/admin/ChatLogs';
+import { SupportTickets } from '@/components/admin/SupportTickets';
 
 interface Order {
   id: string;
@@ -98,7 +100,7 @@ const Admin = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [promocodes, setPromocodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'orders' | 'templates' | 'promocodes' | 'batches' | 'chats'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'templates' | 'promocodes' | 'batches' | 'chats' | 'tickets'>('orders');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [originalNames, setOriginalNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -980,6 +982,14 @@ const Admin = () => {
                 <Users className="w-4 h-4" />
                 <span>Chat Logs</span>
               </Button>
+              <Button 
+                variant={activeTab === 'tickets' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('tickets')}
+                className="flex items-center space-x-2"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                <span>Tickets</span>
+              </Button>
             </div>
           </div>
           <div className="flex space-x-2">
@@ -1626,6 +1636,12 @@ const Admin = () => {
           {activeTab === 'chats' && (
             <div className="space-y-6">
               <ChatLogs sessionId={sessionStorage.getItem('adminSessionId') || ''} />
+            </div>
+          )}
+
+          {activeTab === 'tickets' && (
+            <div className="space-y-6">
+              <SupportTickets sessionId={sessionStorage.getItem('adminSessionId') || ''} />
             </div>
           )}
 

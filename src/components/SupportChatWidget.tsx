@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { MessageCircle, X, Send, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { cn } from "@/lib/utils";
+import { SupportTicketForm } from "./SupportTicketForm";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -24,6 +26,7 @@ export const SupportChatWidget = ({ userEmail, orderId }: SupportChatWidgetProps
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [showTicketForm, setShowTicketForm] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -167,7 +170,7 @@ export const SupportChatWidget = ({ userEmail, orderId }: SupportChatWidgetProps
           </ScrollArea>
 
           {/* Input */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t space-y-2">
             <div className="flex gap-2">
               <Input
                 value={input}
@@ -185,9 +188,35 @@ export const SupportChatWidget = ({ userEmail, orderId }: SupportChatWidgetProps
                 <Send className="h-4 w-4" />
               </Button>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => setShowTicketForm(true)}
+            >
+              <AlertCircle className="h-3 w-3 mr-1" />
+              Need Human Help? Create a Support Ticket
+            </Button>
           </div>
         </div>
       )}
+
+      {/* Support Ticket Form Dialog */}
+      <Dialog open={showTicketForm} onOpenChange={setShowTicketForm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Support Ticket</DialogTitle>
+          </DialogHeader>
+          <SupportTicketForm
+            sessionId={sessionId}
+            onSuccess={() => {
+              setShowTicketForm(false);
+              setIsOpen(false);
+            }}
+            onCancel={() => setShowTicketForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

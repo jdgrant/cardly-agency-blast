@@ -407,6 +407,62 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          chat_session_id: string | null
+          conversation_context: string | null
+          created_at: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          id: string
+          issue_summary: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          ticket_number: string
+          updated_at: string
+        }
+        Insert: {
+          chat_session_id?: string | null
+          conversation_context?: string | null
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          id?: string
+          issue_summary: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          ticket_number: string
+          updated_at?: string
+        }
+        Update: {
+          chat_session_id?: string | null
+          conversation_context?: string | null
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          id?: string
+          issue_summary?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          ticket_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_chat_session"
+            columns: ["chat_session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       templates: {
         Row: {
           created_at: string
@@ -656,6 +712,10 @@ export type Database = {
       }
       generate_readable_order_id: {
         Args: { uuid_val: string }
+        Returns: string
+      }
+      generate_ticket_number: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       get_admin_clients_for_orders: {
