@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { SupportChatWidget } from '@/components/SupportChatWidget';
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -1399,6 +1400,12 @@ const OrderManagement = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Support Chat Widget */}
+      <SupportChatWidget 
+        userEmail={order?.contact_email || undefined}
+        orderId={order?.id}
+      />
     </div>
   );
 };

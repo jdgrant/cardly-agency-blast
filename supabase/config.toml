@@ -1,5 +1,8 @@
 project_id = "wsibvneidsmtsazfbmgc"
 
+[functions.support-chat]
+verify_jwt = false
+
 [functions.convert-pdf-to-image]
 verify_jwt = false
 

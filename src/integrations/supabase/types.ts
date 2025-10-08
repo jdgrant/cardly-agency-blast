@@ -98,6 +98,70 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          role: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          role: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          role?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_session"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string | null
+          status: string
+          user_email: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          status?: string
+          user_email?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string | null
+          status?: string
+          user_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_order"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_records: {
         Row: {
           address: string
