@@ -537,6 +537,7 @@ serve(async (req) => {
         console.log('ℹ️ Using inline data URL for front image in combined PDF');
         
         // Combine both HTML pages into a single document, preserving page CSS
+        // PCM DirectMail requires: Page 1 = Front (top), Page 2 = Back/Inside (bottom)
         const combinedHTML = `
 <!DOCTYPE html>
 <html>
