@@ -219,7 +219,7 @@ serve(async (req) => {
     const isProductionPDF = format === 'production' && includeFront && includeInside;
 
     // Determine final rotation: default to true for combined production PDFs unless explicitly disabled
-    const finalShouldRotate = (typeof rotate === 'boolean') ? rotate : false;
+    const finalShouldRotate = (typeof rotate === 'boolean') ? rotate : isProductionPDF;
 
     let previewDataUrl = '';
     try {
@@ -536,9 +536,18 @@ serve(async (req) => {
         let frontBody = frontSections.body;
         // Keep inline data URL for front image - asset approach was causing issues
         console.log('ℹ️ Using inline data URL for front image in combined PDF');
+
+        // Extract only the needed halves for a single-page landscape layout
+        const grabSection = (body: string, className: string) => {
+          const re = new RegExp(`<div[^>]*class=["'][^"']*${className}[^"']*["'][^>]*>[\\s\\S]*?<\\/div>`, 'i');
+          const m = body.match(re);
+          return m?.[0] || body;
+        };
+        const frontHalf = grabSection(frontSections.body, 'front-half');
+        const insideHalf = grabSection(insideSections.body, 'inside-half');
         
-        // Combine both HTML pages into a single document, preserving page CSS
-        // PCM DirectMail requires: Page 1 = Front (top), Page 2 = Back/Inside (bottom)
+        // Build a single-page landscape layout: Left = Back/Inside, Right = Front (pre-rotation)
+        // After 270° clockwise rotation: Top = Front, Bottom = Back/Inside
         const combinedHTML = `
 <!DOCTYPE html>
 <html>
@@ -550,21 +559,22 @@ serve(async (req) => {
       size: ${paperWidth}in ${paperHeight}in; 
       margin: 0;
     }
-    .page-break { 
-      page-break-after: always; 
-    }
-    body { 
-      margin: 0; 
-      padding: 0; 
-    }
+    html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+    .row { display: flex; flex-direction: row; width: 100%; height: 100%; }
+    .half { width: 50%; height: 100%; position: relative; overflow: hidden; }
   </style>
   ${frontSections.head}
   ${insideSections.head}
 </head>
 <body>
-  ${frontBody}
-  <div class="page-break"></div>
-  ${insideSections.body}
+  <div class="row">
+    <section class="half left">
+      ${insideHalf}
+    </section>
+    <section class="half right">
+      ${frontHalf}
+    </section>
+  </div>
 </body>
 </html>
         `;
