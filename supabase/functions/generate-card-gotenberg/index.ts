@@ -562,6 +562,7 @@ serve(async (req) => {
     html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
     .row { display: flex; flex-direction: row; width: 100%; height: 100%; }
     .half { width: 50%; height: 100%; position: relative; overflow: hidden; }
+    .page-break { page-break-after: always; }
   </style>
   ${frontSections.head}
   ${insideSections.head}
@@ -575,6 +576,8 @@ serve(async (req) => {
       ${frontHalf}
     </section>
   </div>
+  <div class="page-break"></div>
+  ${insideSections.body}
 </body>
 </html>
         `;
