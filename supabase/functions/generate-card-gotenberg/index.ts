@@ -335,6 +335,7 @@ serve(async (req) => {
     headers['X-Api-Key'] = GOTENBERG_API_KEY;
 
     let gotenbergResp: Response | undefined;
+    let usedStackedLayout = false;
 
     // Set dimensions based on format and orientation
     const isProd = format === 'production';
@@ -536,8 +537,9 @@ serve(async (req) => {
         // Keep inline data URL for front image - asset approach was causing issues
         console.log('ℹ️ Using inline data URL for front image in combined PDF');
         
-        // Combine both HTML pages into a single document, preserving page CSS
-        // PCM DirectMail requires: Page 1 = Front (top), Page 2 = Back/Inside (bottom)
+        // Build a single-page stacked layout: top = front, bottom = back/inside
+        const combinedPaperHeight = String(parseFloat(paperHeight) * 2);
+        usedStackedLayout = true;
         const combinedHTML = `
 <!DOCTYPE html>
 <html>
@@ -546,31 +548,32 @@ serve(async (req) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @page { 
-      size: ${paperWidth}in ${paperHeight}in; 
+      size: ${paperWidth}in ${combinedPaperHeight}in; 
       margin: 0;
     }
-    .page-break { 
-      page-break-after: always; 
-    }
-    body { 
-      margin: 0; 
-      padding: 0; 
-    }
+    html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${combinedPaperHeight}in; }
+    .stack { display: flex; flex-direction: column; width: 100%; height: 100%; }
+    .half { width: 100%; height: 50%; position: relative; overflow: hidden; }
   </style>
   ${frontSections.head}
   ${insideSections.head}
 </head>
 <body>
-  ${frontBody}
-  <div class="page-break"></div>
-  ${insideSections.body}
+  <div class="stack">
+    <section class="half top">
+      ${frontBody}
+    </section>
+    <section class="half bottom">
+      ${insideSections.body}
+    </section>
+  </div>
 </body>
 </html>
         `;
         
         form.append('files', new File([combinedHTML], 'index.html', { type: 'text/html' }));
         form.append('paperWidth', paperWidth);
-        form.append('paperHeight', paperHeight);
+        form.append('paperHeight', combinedPaperHeight);
         form.append('marginTop', '0');
         form.append('marginBottom', '0');
         form.append('marginLeft', '0');
