@@ -7,25 +7,35 @@ import { generateUnifiedCardHTML } from "../_shared/unified-layouts.ts";
 import { downloadAndEncodeImageForGotenberg } from "../_shared/image-utils.ts";
 import { PDFDocument, degrees } from "https://esm.sh/pdf-lib@^1.17.1";
 
-async function rotatePDFClockwise90(pdfBytes: Uint8Array): Promise<Uint8Array> {
+async function rotatePDFForPCM(pdfBytes: Uint8Array): Promise<Uint8Array> {
   try {
-    console.log('🔄 Rotating all pages 90° clockwise…');
+    console.log('🔄 Rotating PDF for PCM DirectMail specifications…');
     
     // Load the PDF
     const pdfDoc = await PDFDocument.load(pdfBytes);
     const pages = pdfDoc.getPages();
 
-    // Rotate every page 90° clockwise to convert landscape spreads to portrait view
+    // PCM DirectMail requires specific orientations:
+    // - Front (page 1): Top faces LEFT = 270° clockwise (or 90° counterclockwise)
+    // - Back (page 2): Top faces RIGHT = 90° clockwise
     pages.forEach((page, idx) => {
       const width = page.getWidth();
       const height = page.getHeight();
-      console.log(`📄 Rotating page ${idx + 1} (${width}×${height})`);
-      page.setRotation(degrees(90));
+      
+      if (idx === 0) {
+        // Page 1 (front): rotate 270° clockwise so top faces left
+        console.log(`📄 Rotating page ${idx + 1} (front) 270° clockwise (${width}×${height})`);
+        page.setRotation(degrees(270));
+      } else {
+        // Page 2+ (back/inside): rotate 90° clockwise so top faces right
+        console.log(`📄 Rotating page ${idx + 1} (back) 90° clockwise (${width}×${height})`);
+        page.setRotation(degrees(90));
+      }
     });
 
     // Save the rotated PDF
     const rotatedPdfBytes = await pdfDoc.save();
-    console.log('✅ PDF rotation completed successfully');
+    console.log('✅ PDF rotation completed successfully for PCM specifications');
     
     return new Uint8Array(rotatedPdfBytes);
   } catch (error) {
@@ -587,10 +597,11 @@ serve(async (req) => {
     const pdfArrayBuffer = await gotenbergResp.arrayBuffer();
     let pdfBytes = new Uint8Array(pdfArrayBuffer);
 
-    // Rotate PDF 90 degrees clockwise if requested (default for production combined)
+    // Rotate PDF for PCM DirectMail if this is a production combined PDF
+    // Front: 270° clockwise (top faces left), Back: 90° clockwise (top faces right)
     if (finalShouldRotate) {
-      console.log('🔄 Applying 90° clockwise rotation to PDF...');
-      pdfBytes = new Uint8Array(await rotatePDFClockwise90(pdfBytes));
+      console.log('🔄 Applying PCM DirectMail rotation specifications...');
+      pdfBytes = new Uint8Array(await rotatePDFForPCM(pdfBytes));
     }
     // Use a different folder for preview-only runs
     const folder = (format === 'production' && includeFront && includeInside && (previewOnly || false)) ? 'cards/previews' : 'cards';
@@ -641,10 +652,10 @@ serve(async (req) => {
       publicUrl: publicData?.publicUrl || null,
       debug: debugInfo,
       message: (includeFront && includeInside)
-        ? `Gotenberg PDF generated successfully (2 pages: front + inside)${finalShouldRotate ? ' - rotated 90° clockwise' : ''}`
+        ? `Gotenberg PDF generated successfully (2 pages: front + inside)${finalShouldRotate ? ' - rotated for PCM (front: 270°, back: 90°)' : ''}`
         : includeFront
-          ? `Gotenberg PDF generated successfully (front only)${finalShouldRotate ? ' - rotated 90° clockwise' : ''}`
-          : `Gotenberg PDF generated successfully (inside only)${finalShouldRotate ? ' - rotated 90° clockwise' : ''}`
+          ? `Gotenberg PDF generated successfully (front only)${finalShouldRotate ? ' - rotated for PCM (front: 270°)' : ''}`
+          : `Gotenberg PDF generated successfully (inside only)${finalShouldRotate ? ' - rotated for PCM (back: 90°)' : ''}`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
