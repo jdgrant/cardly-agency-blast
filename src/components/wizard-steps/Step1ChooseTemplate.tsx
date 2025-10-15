@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { fetchTemplates, Template } from '@/services/templatesService';
+import { trackFBPixelEvent, FB_EVENTS } from '@/utils/facebookPixel';
 
 // Define occasions
 const occasions = [
@@ -49,6 +50,14 @@ const Step1ChooseTemplate = () => {
 
   const handleTemplateSelect = (templateId: string) => {
     updateState({ selectedTemplate: templateId });
+    
+    // Track Facebook Pixel AddToCart event
+    trackFBPixelEvent(FB_EVENTS.ADD_TO_CART, {
+      content_ids: [templateId],
+      content_type: 'product',
+      content_name: 'greeting_card_template',
+      content_category: 'greeting_cards',
+    });
     
     // Fire AudioGO tracking pixel for shopping cart event
     const pixel = document.createElement('img');

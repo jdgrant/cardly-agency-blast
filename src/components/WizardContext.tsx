@@ -1,5 +1,6 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { trackFBPixelEvent, FB_EVENTS } from '@/utils/facebookPixel';
 
 export interface ClientRecord {
   firstName: string;
@@ -164,6 +165,44 @@ const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<WizardState>(initialState);
+  const [sessionId] = useState(() => {
+    const stored = localStorage.getItem('wizard_session_id');
+    if (stored) return stored;
+    const newId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    localStorage.setItem('wizard_session_id', newId);
+    return newId;
+  });
+
+  // Track wizard session in database
+  useEffect(() => {
+    const trackSession = async () => {
+      try {
+        const { data: existingSession } = await supabase
+          .from('wizard_sessions')
+          .select('id')
+          .eq('session_id', sessionId)
+          .maybeSingle();
+
+        if (!existingSession && state.step === 1) {
+          // Create new session
+          await supabase.from('wizard_sessions').insert({
+            session_id: sessionId,
+            current_step: 1,
+          });
+          
+          // Track InitiateCheckout when wizard starts
+          trackFBPixelEvent(FB_EVENTS.INITIATE_CHECKOUT, {
+            content_category: 'greeting_cards',
+            content_name: 'wizard_started',
+          });
+        }
+      } catch (error) {
+        console.error('Error tracking wizard session:', error);
+      }
+    };
+
+    trackSession();
+  }, [sessionId, state.step]);
 
   // Load saved session on mount and parse URL parameters
   useEffect(() => {
@@ -187,7 +226,32 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   // Save session whenever state changes
   useEffect(() => {
     saveSessionToStorage(state);
-  }, [state]);
+    
+    // Update database session
+    if (state.step > 1) {
+      (async () => {
+        try {
+          await supabase
+            .from('wizard_sessions')
+            .update({
+              current_step: state.step,
+              template_selected: state.selectedTemplate || null,
+              user_email: state.contactEmail || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('session_id', sessionId);
+          
+          // Track ViewContent for step progression
+          trackFBPixelEvent(FB_EVENTS.VIEW_CONTENT, {
+            content_name: `wizard_step_${state.step}`,
+            content_category: 'greeting_cards',
+          });
+        } catch (error) {
+          console.error('Error updating wizard session:', error);
+        }
+      })();
+    }
+  }, [state, sessionId]);
 
   const updateState = (updates: Partial<WizardState>) => {
     setState(prev => ({ ...prev, ...updates }));
@@ -204,6 +268,19 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const resetWizard = () => {
     setState(initialState);
     clearSessionFromStorage();
+    
+    // Mark session as abandoned in database
+    (async () => {
+      try {
+        await supabase
+          .from('wizard_sessions')
+          .update({ abandoned_at: new Date().toISOString() })
+          .eq('session_id', sessionId);
+        console.log('Session marked as abandoned');
+      } catch (error) {
+        console.error('Error marking session as abandoned:', error);
+      }
+    })();
   };
 
   const clearSession = () => {

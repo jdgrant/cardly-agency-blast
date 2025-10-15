@@ -490,6 +490,53 @@ export type Database = {
         }
         Relationships: []
       }
+      wizard_sessions: {
+        Row: {
+          abandoned_at: string | null
+          completed: boolean | null
+          created_at: string
+          current_step: number | null
+          id: string
+          order_id: string | null
+          session_id: string
+          template_selected: string | null
+          updated_at: string
+          user_email: string | null
+        }
+        Insert: {
+          abandoned_at?: string | null
+          completed?: boolean | null
+          created_at?: string
+          current_step?: number | null
+          id?: string
+          order_id?: string | null
+          session_id: string
+          template_selected?: string | null
+          updated_at?: string
+          user_email?: string | null
+        }
+        Update: {
+          abandoned_at?: string | null
+          completed?: boolean | null
+          created_at?: string
+          current_step?: number | null
+          id?: string
+          order_id?: string | null
+          session_id?: string
+          template_selected?: string | null
+          updated_at?: string
+          user_email?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wizard_sessions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

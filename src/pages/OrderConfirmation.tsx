@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Check, Calendar, CreditCard, Mail } from 'lucide-react';
+import { trackFBPixelEvent, FB_EVENTS } from '@/utils/facebookPixel';
+import { supabase } from '@/integrations/supabase/client';
 
 interface OrderData {
   id: string;
@@ -21,6 +23,42 @@ const OrderConfirmation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const orderData = location.state?.orderData as OrderData;
+
+  // Track Facebook Pixel Purchase event
+  useEffect(() => {
+    if (orderData) {
+      trackFBPixelEvent(FB_EVENTS.PURCHASE, {
+        value: orderData.final_price,
+        currency: 'USD',
+        content_ids: [orderData.template_id],
+        content_type: 'product',
+        num_items: orderData.card_quantity,
+      });
+
+      // Mark wizard session as completed
+      const sessionId = localStorage.getItem('wizard_session_id');
+      if (sessionId) {
+        (async () => {
+          try {
+            await supabase
+              .from('wizard_sessions')
+              .update({
+                completed: true,
+                order_id: orderData.id,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('session_id', sessionId);
+            
+            // Clear session after successful order
+            localStorage.removeItem('wizard_session_id');
+            localStorage.removeItem('sendyourcards-wizard-session');
+          } catch (error) {
+            console.error('Error updating wizard session:', error);
+          }
+        })();
+      }
+    }
+  }, [orderData]);
 
   if (!orderData) {
     return (
