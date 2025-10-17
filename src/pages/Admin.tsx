@@ -44,6 +44,7 @@ import { PromoCodeForm } from '@/components/admin/PromoCodeForm';
 import BatchManager from '@/components/admin/BatchManager';
 import { ChatLogs } from '@/components/admin/ChatLogs';
 import { SupportTickets } from '@/components/admin/SupportTickets';
+import { SessionAnalytics } from '@/components/admin/SessionAnalytics';
 
 interface Order {
   id: string;
@@ -100,7 +101,7 @@ const Admin = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [promocodes, setPromocodes] = useState<PromoCode[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'orders' | 'templates' | 'promocodes' | 'batches' | 'chats' | 'tickets'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'templates' | 'promocodes' | 'batches' | 'chats' | 'tickets' | 'analytics'>('orders');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [originalNames, setOriginalNames] = useState<Record<string, string>>({});
   const { toast } = useToast();
@@ -990,6 +991,14 @@ const Admin = () => {
                 <AlertTriangle className="w-4 h-4" />
                 <span>Tickets</span>
               </Button>
+              <Button 
+                variant={activeTab === 'analytics' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('analytics')}
+                className="flex items-center space-x-2"
+              >
+                <Users className="w-4 h-4" />
+                <span>Analytics</span>
+              </Button>
             </div>
           </div>
           <div className="flex space-x-2">
@@ -1642,6 +1651,12 @@ const Admin = () => {
           {activeTab === 'tickets' && (
             <div className="space-y-6">
               <SupportTickets sessionId={sessionStorage.getItem('adminSessionId') || ''} />
+            </div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <div className="space-y-6">
+              <SessionAnalytics />
             </div>
           )}
 
