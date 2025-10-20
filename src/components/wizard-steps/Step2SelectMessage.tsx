@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare, Edit3, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getTemplateById } from '@/services/templatesService';
@@ -103,6 +104,10 @@ const Step2SelectMessage = () => {
   const handleMessageSelect = (message: string) => {
     updateState({ selectedMessage: message });
     setIsCustom(false);
+    // Auto-advance to next step after selecting a message
+    setTimeout(() => {
+      nextStep();
+    }, 300);
   };
 
   const handleCustomMessageChange = (message: string) => {
@@ -208,8 +213,9 @@ const Step2SelectMessage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4 max-h-64 overflow-y-auto">
-                {availableOccasions.map(occasion => {
+              <ScrollArea className="h-64 pr-4">
+                <div className="space-y-4">
+                  {availableOccasions.map(occasion => {
                   const messages = messagesByOccasion[occasion as keyof typeof messagesByOccasion] || [];
                   const info = occasionLabels[occasion as keyof typeof occasionLabels];
                   
@@ -239,7 +245,8 @@ const Step2SelectMessage = () => {
                     </div>
                   );
                 })}
-              </div>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
 
