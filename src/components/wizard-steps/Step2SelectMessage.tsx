@@ -213,7 +213,7 @@ const Step2SelectMessage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-64 pr-4">
+              <ScrollArea type="always" scrollHideDelay={0} className="h-64 pr-4">
                 <div className="space-y-4">
                   {availableOccasions.map(occasion => {
                   const messages = messagesByOccasion[occasion as keyof typeof messagesByOccasion] || [];
