@@ -490,6 +490,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       wizard_sessions: {
         Row: {
           abandoned_at: string | null
@@ -1027,6 +1048,13 @@ export type Database = {
           max_uses: number
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       insert_client_records: {
         Args: { client_data: Json[]; order_id: string }
         Returns: undefined
@@ -1048,7 +1076,9 @@ export type Database = {
         Returns: boolean
       }
       reset_order_completely: {
-        Args: { order_readable_id: string }
+        Args:
+          | { order_readable_id: string }
+          | { order_readable_id: string; user_email: string }
         Returns: boolean
       }
       set_admin_session: {
@@ -1098,7 +1128,9 @@ export type Database = {
         Returns: undefined
       }
       update_order_client_count_for_customer: {
-        Args: { new_client_count: number; short_id: string }
+        Args:
+          | { new_client_count: number; short_id: string }
+          | { new_client_count: number; short_id: string; user_email: string }
         Returns: boolean
       }
       update_order_drop_date_admin: {
@@ -1131,15 +1163,26 @@ export type Database = {
         Returns: undefined
       }
       update_return_address: {
-        Args: {
-          city_param?: string
-          line1_param?: string
-          line2_param?: string
-          name_param?: string
-          order_id_param: string
-          state_param?: string
-          zip_param?: string
-        }
+        Args:
+          | {
+              city_param?: string
+              line1_param?: string
+              line2_param?: string
+              name_param?: string
+              order_id_param: string
+              state_param?: string
+              user_email?: string
+              zip_param?: string
+            }
+          | {
+              city_param?: string
+              line1_param?: string
+              line2_param?: string
+              name_param?: string
+              order_id_param: string
+              state_param?: string
+              zip_param?: string
+            }
         Returns: undefined
       }
       update_template_preview_url: {
@@ -1154,8 +1197,13 @@ export type Database = {
         Args: { code_param: string }
         Returns: boolean
       }
+      verify_order_ownership: {
+        Args: { order_uuid: string; user_email: string }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "admin" | "user"
       order_status:
         | "pending"
         | "blocked"
@@ -1290,6 +1338,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       order_status: [
         "pending",
         "blocked",

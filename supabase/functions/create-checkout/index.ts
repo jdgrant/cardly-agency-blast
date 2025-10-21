@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,43 @@ serve(async (req) => {
 
   try {
     const { amount, description, metadata, returnUrl, orderId, promoCode, originalAmount } = await req.json();
+
+    // Input validation
+    if (!orderId || typeof orderId !== 'string' || orderId.length > 100) {
+      throw new Error('Invalid orderId');
+    }
+    
+    if (!amount || typeof amount !== 'number' || amount < 100 || amount > 10000000) {
+      throw new Error('Invalid amount');
+    }
+
+    if (description && (typeof description !== 'string' || description.length > 500)) {
+      throw new Error('Invalid description');
+    }
+
+    // Initialize Supabase to verify order amount
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Verify the amount matches the order's final_price
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('final_price, id')
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
+      throw new Error('Order not found');
+    }
+
+    // Verify amount matches (convert to cents for comparison)
+    const expectedAmount = Math.round(order.final_price * 100);
+    if (amount !== expectedAmount) {
+      console.error(`Price mismatch: expected ${expectedAmount}, got ${amount}`);
+      throw new Error('Invalid payment amount');
+    }
 
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {

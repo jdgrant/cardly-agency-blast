@@ -31,25 +31,25 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-card-gotenberg]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-card-pdfs]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-card-previews]
 verify_jwt = false
 
 [functions.generate-template-pdf]
-verify_jwt = false
+verify_jwt = true
 
 [functions.serve-pdf]
 verify_jwt = false
 
 [functions.send-physical-greeting-cards]
-verify_jwt = false
+verify_jwt = true
 
 [functions.test-mailgun]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-receipt-email]
 verify_jwt = false

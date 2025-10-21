@@ -29,6 +29,34 @@ const handler = async (req: Request): Promise<Response> => {
     // Parse request body
     const { orderId, recipientAddresses, isProduction = false }: PhysicalMailingRequest = await req.json();
     
+    // Input validation
+    if (!orderId || typeof orderId !== 'string' || orderId.length > 100) {
+      throw new Error('Invalid orderId');
+    }
+
+    if (!recipientAddresses || !Array.isArray(recipientAddresses) || recipientAddresses.length === 0 || recipientAddresses.length > 10000) {
+      throw new Error('Invalid recipients array');
+    }
+
+    // Validate each recipient
+    for (const recipient of recipientAddresses) {
+      if (!recipient.name || typeof recipient.name !== 'string' || recipient.name.length > 200) {
+        throw new Error('Invalid recipient name');
+      }
+      if (!recipient.address1 || typeof recipient.address1 !== 'string' || recipient.address1.length > 200) {
+        throw new Error('Invalid recipient address');
+      }
+      if (!recipient.city || typeof recipient.city !== 'string' || recipient.city.length > 100) {
+        throw new Error('Invalid recipient city');
+      }
+      if (!recipient.state || typeof recipient.state !== 'string' || recipient.state.length > 2) {
+        throw new Error('Invalid recipient state');
+      }
+      if (!recipient.zip || typeof recipient.zip !== 'string' || recipient.zip.length > 10) {
+        throw new Error('Invalid recipient zip');
+      }
+    }
+    
     console.log(`Sending physical greeting cards for order: ${orderId} in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
 
     // Initialize Supabase client

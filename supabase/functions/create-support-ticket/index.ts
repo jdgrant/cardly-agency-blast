@@ -13,6 +13,28 @@ serve(async (req) => {
 
   try {
     const { sessionId, customerName, customerEmail, customerPhone, issueSummary } = await req.json();
+    
+    // Input validation
+    if (!customerName || typeof customerName !== 'string' || customerName.length > 200) {
+      throw new Error('Invalid customer name');
+    }
+
+    if (!customerEmail || typeof customerEmail !== 'string' || customerEmail.length > 255 || !customerEmail.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      throw new Error('Invalid email format');
+    }
+
+    if (customerPhone && (typeof customerPhone !== 'string' || customerPhone.length > 50)) {
+      throw new Error('Invalid phone number');
+    }
+
+    if (!issueSummary || typeof issueSummary !== 'string' || issueSummary.length > 1000) {
+      throw new Error('Invalid issue summary');
+    }
+
+    if (sessionId && (typeof sessionId !== 'string' || sessionId.length > 100)) {
+      throw new Error('Invalid session ID');
+    }
+    
     console.log('Creating support ticket:', { sessionId, customerName, customerEmail });
 
     const supabaseUrl = "https://wsibvneidsmtsazfbmgc.supabase.co";
