@@ -37,7 +37,8 @@ import {
   Upload,
   Image as ImageIcon,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  LogOut
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PromoCodeForm } from '@/components/admin/PromoCodeForm';
@@ -45,6 +46,8 @@ import BatchManager from '@/components/admin/BatchManager';
 import { ChatLogs } from '@/components/admin/ChatLogs';
 import { SupportTickets } from '@/components/admin/SupportTickets';
 import { SessionAnalytics } from '@/components/admin/SessionAnalytics';
+import { AdminAuth } from '@/components/admin/AdminAuth';
+import type { User } from '@supabase/supabase-js';
 
 interface Order {
   id: string;
@@ -95,12 +98,13 @@ interface PromoCode {
 }
 
 const Admin = () => {
-  const [password, setPassword] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<Order[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [promocodes, setPromocodes] = useState<PromoCode[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'orders' | 'templates' | 'promocodes' | 'batches' | 'chats' | 'tickets' | 'analytics'>('orders');
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [originalNames, setOriginalNames] = useState<Record<string, string>>({});
@@ -113,81 +117,91 @@ const Admin = () => {
   const [showChatTab, setShowChatTab] = useState<'orders' | 'templates' | 'promocodes' | 'batches' | 'chats'>('orders');
   const navigate = useNavigate();
 
-  // Persist admin access for the current browser session
+  // Check authentication and admin role
   useEffect(() => {
-    const authed = sessionStorage.getItem('adminAuth') === 'true';
-    if (authed) {
-      setIsAuthenticated(true);
-      fetchData();
-    }
+    const checkAuth = async () => {
+      try {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+        if (!currentUser) {
+          setLoading(false);
+          return;
+        }
+
+        setUser(currentUser);
+
+        // Check admin role
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', currentUser.id)
+          .eq('role', 'admin')
+          .single();
+
+        if (roleData) {
+          setIsAdmin(true);
+          fetchData();
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setIsAdmin(false);
+          setOrders([]);
+          setTemplates([]);
+          setPromocodes([]);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = async () => {
-    // Clear admin session from database if we have a session ID
-    const sessionId = sessionStorage.getItem('adminSessionId');
-    if (sessionId) {
-      try {
-        await supabase.rpc('clear_admin_session', { session_id: sessionId });
-      } catch (error) {
-        console.error('Error clearing admin session:', error);
-      }
-    }
-    
-    sessionStorage.removeItem('adminAuth');
-    sessionStorage.removeItem('adminSessionId');
-    setIsAuthenticated(false);
-    setPassword('');
-    setOrders([]);
-    setTemplates([]);
-    toast({ title: 'Logged out', description: 'Admin session cleared securely.' });
+    await supabase.auth.signOut();
+    toast({ 
+      title: 'Logged out', 
+      description: 'You have been logged out successfully.' 
+    });
   };
 
-  const handleLogin = async () => {
-    if (password === 'admin123') {
-      const sessionId = 'admin_' + Date.now();
-      
-      // Set admin session in database
-      await supabase.rpc('set_admin_session', { 
-        session_id: sessionId 
-      });
-      
-      sessionStorage.setItem('adminAuth', 'true');
-      sessionStorage.setItem('adminSessionId', sessionId);
-      setIsAuthenticated(true);
-      fetchData();
-    } else {
-      toast({
-        title: "Access Denied",
-        description: "Invalid password",
-        variant: "destructive"
-      });
-    }
+  const handleAuthenticated = () => {
+    setLoading(true);
+    window.location.reload();
   };
   const fetchData = async () => {
-    setLoading(true);
+    setDataLoading(true);
     try {
-      const sessionId = sessionStorage.getItem('adminSessionId');
-      if (!sessionId) {
-        throw new Error('No admin session found');
-      }
-
-      // Fetch orders using admin-specific function
+      // Fetch orders directly (RLS will handle admin access)
       const { data: ordersData, error: ordersError } = await supabase
-        .rpc('get_admin_orders', { session_id_param: sessionId });
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (ordersError) throw ordersError;
 
-      // Fetch templates (already publicly accessible)
+      // Fetch templates
       const { data: templatesData, error: templatesError } = await supabase
         .from('templates')
         .select('*');
 
       if (templatesError) throw templatesError;
 
-      // Fetch promocodes using admin function
+      // Fetch promocodes
       const { data: promocodesData, error: promocodesError } = await supabase
-        .rpc('get_admin_promocodes', { session_id_param: sessionId });
+        .from('promocodes')
+        .select('*');
 
       if (promocodesError) throw promocodesError;
 
@@ -198,13 +212,11 @@ const Admin = () => {
       console.error('Fetch data error:', error);
       toast({
         title: "Error", 
-        description: "Failed to fetch orders. Please re-login to admin panel.",
+        description: "Failed to fetch data. Please check your admin permissions.",
         variant: "destructive"
       });
-      // Force logout on auth errors
-      handleLogout();
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
 
@@ -900,28 +912,19 @@ const Admin = () => {
     }
   };
 
-  if (!isAuthenticated) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Admin Access</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              type="password"
-              placeholder="Enter admin password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-            />
-            <Button onClick={handleLogin} className="w-full">
-              Login
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading...</p>
+        </div>
       </div>
     );
+  }
+
+  if (!user || !isAdmin) {
+    return <AdminAuth onAuthenticated={handleAuthenticated} />;
   }
 
   const activeOrders = orders.filter(o => o.status !== 'cancelled');
@@ -1004,10 +1007,10 @@ const Admin = () => {
           <div className="flex space-x-2">
             <Button 
               onClick={fetchData}
-              disabled={loading}
+              disabled={dataLoading}
               className="flex items-center space-x-2"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 ${dataLoading ? 'animate-spin' : ''}`} />
               <span>Refresh</span>
             </Button>
             <Button 
@@ -1015,7 +1018,7 @@ const Admin = () => {
               onClick={handleLogout}
               className="flex items-center space-x-2"
             >
-              <X className="w-4 h-4" />
+              <LogOut className="w-4 h-4" />
               <span>Logout</span>
             </Button>
           </div>
