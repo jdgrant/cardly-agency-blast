@@ -878,7 +878,6 @@ const OrderManagement = () => {
                       />
                       <div>
                         <p className="font-medium">{template.name}</p>
-                        <p className="text-sm text-gray-600">{template.description}</p>
                       </div>
                     </div>
                   </div>
