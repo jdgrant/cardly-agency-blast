@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SupportChatWidget } from './SupportChatWidget';
+import { PromoCodeBanner } from './PromoCodeBanner';
 
 // Import all step components
 import Step1ChooseTemplate from './wizard-steps/Step1ChooseTemplate';
@@ -69,6 +70,9 @@ const WizardContent = () => {
           </Badge>
         </div>
       </header>
+
+      {/* Promo Code Banner */}
+      <PromoCodeBanner />
 
       <div className="max-w-4xl mx-auto px-4 py-8 bg-white">
         {/* Navigation */}
