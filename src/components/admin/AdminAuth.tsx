@@ -56,6 +56,20 @@ export const AdminAuth = ({ onAuthenticated }: AdminAuthProps) => {
         description: 'Admin login successful',
       });
       
+      // Create an admin session in the database and store the session ID locally
+      const sessionId = crypto.randomUUID();
+      const { error: sessionError } = await supabase.rpc('set_admin_session', { session_id: sessionId });
+      if (sessionError) {
+        await supabase.auth.signOut();
+        toast({
+          title: 'Session Error',
+          description: 'Failed to create admin session. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      sessionStorage.setItem('adminSessionId', sessionId);
+      
       onAuthenticated();
     } catch (error: any) {
       console.error('Login error:', error);

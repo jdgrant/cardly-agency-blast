@@ -169,11 +169,25 @@ const Admin = () => {
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast({ 
-      title: 'Logged out', 
-      description: 'You have been logged out successfully.' 
-    });
+    try {
+      const sessionId = sessionStorage.getItem('adminSessionId');
+      if (sessionId) {
+        try {
+          await supabase.rpc('clear_admin_session', { session_id: sessionId });
+        } catch (e) {
+          console.error('Failed to clear admin session in DB', e);
+        }
+        sessionStorage.removeItem('adminSessionId');
+      }
+      await supabase.auth.signOut();
+      toast({ 
+        title: 'Logged out', 
+        description: 'You have been logged out successfully.' 
+      });
+    } catch (err) {
+      console.error('Logout error', err);
+      toast({ title: 'Logout error', description: 'Please try again.', variant: 'destructive' });
+    }
   };
 
   const handleAuthenticated = () => {
