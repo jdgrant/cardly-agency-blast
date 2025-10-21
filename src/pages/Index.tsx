@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -8,12 +8,22 @@ import { Check, Upload, Calendar, File, ImageIcon, CheckCircle, ArrowRight, Star
 import { useToast } from "@/hooks/use-toast";
 import { CartIcon } from "@/components/CartIcon";
 import { SupportChatWidget } from "@/components/SupportChatWidget";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const { toast } = useToast();
+  const [promoCode, setPromoCode] = useState<string>("");
+  const [promoDiscount, setPromoDiscount] = useState<number>(0);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
+    const urlPromoCode = urlParams.get('promo') || urlParams.get('promocode');
+    
+    if (urlPromoCode) {
+      validatePromoCode(urlPromoCode);
+    }
+    
     if (urlParams.get('success') === 'true') {
       toast({
         title: "Thank you for your order!",
@@ -23,6 +33,39 @@ const Index = () => {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, [toast]);
+
+  const validatePromoCode = async (code: string) => {
+    setIsValidatingPromo(true);
+    try {
+      const { data, error } = await supabase.rpc('get_promocode', { 
+        code_param: code.toUpperCase() 
+      });
+
+      if (error) throw error;
+
+      if (data && Array.isArray(data) && data.length > 0) {
+        const promoData = data[0];
+        setPromoCode(code.toUpperCase());
+        setPromoDiscount(promoData.discount_percentage);
+        // Store in localStorage for wizard to pick up
+        localStorage.setItem('homepage_promo_code', code.toUpperCase());
+        toast({
+          title: "Promo code applied!",
+          description: `You'll get ${promoData.discount_percentage}% off your order.`,
+        });
+      } else {
+        toast({
+          title: "Invalid promo code",
+          description: "The promo code you entered is not valid or has expired.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error validating promo code:', error);
+    } finally {
+      setIsValidatingPromo(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -168,6 +211,8 @@ const Index = () => {
             ].map((tier) => {
               const regularPiecePrice = tier.regular / tier.quantity;
               const earlyBirdPiecePrice = tier.earlyBird / tier.quantity;
+              const promoPrice = promoDiscount > 0 ? tier.earlyBird * (1 - promoDiscount / 100) : tier.earlyBird;
+              const promoPiecePrice = promoPrice / tier.quantity;
               
               return (
                 <Card key={tier.name} className={`relative border-0 shadow-lg hover:shadow-xl transition-shadow duration-200 ${tier.popular ? 'ring-2 ring-emerald-500 scale-105' : ''}`}>
@@ -181,15 +226,28 @@ const Index = () => {
                   <CardHeader className="text-center pb-4">
                     <CardTitle className="text-xl font-bold">{tier.name}</CardTitle>
                     <div className="text-4xl font-bold text-gray-900 mb-2">
-                      ${earlyBirdPiecePrice.toFixed(2)}
+                      ${promoDiscount > 0 ? promoPiecePrice.toFixed(2) : earlyBirdPiecePrice.toFixed(2)}
                     </div>
                     <div className="text-sm text-gray-600">per card</div>
-                    <div className="text-sm text-gray-500 line-through mb-1">
-                      ${regularPiecePrice.toFixed(2)} each
-                    </div>
-                    <div className="text-sm text-emerald-600 font-medium mb-4">
-                      Save ${(regularPiecePrice - earlyBirdPiecePrice).toFixed(2)} per card
-                    </div>
+                    {promoDiscount > 0 ? (
+                      <>
+                        <div className="text-sm text-gray-500 line-through mb-1">
+                          ${earlyBirdPiecePrice.toFixed(2)} each
+                        </div>
+                        <div className="text-sm text-emerald-600 font-medium mb-4">
+                          Save ${(earlyBirdPiecePrice - promoPiecePrice).toFixed(2)} per card with promo!
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-sm text-gray-500 line-through mb-1">
+                          ${regularPiecePrice.toFixed(2)} each
+                        </div>
+                        <div className="text-sm text-emerald-600 font-medium mb-4">
+                          Save ${(regularPiecePrice - earlyBirdPiecePrice).toFixed(2)} per card
+                        </div>
+                      </>
+                    )}
                     <div className="text-lg font-semibold text-blue-600">
                       {tier.quantity} cards total
                     </div>

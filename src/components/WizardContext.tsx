@@ -208,18 +208,30 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const urlPromoCode = urlParams.get('promo') || urlParams.get('promocode');
+    // Also check if promo code was set from homepage
+    const homepagePromoCode = localStorage.getItem('homepage_promo_code');
     
     const savedSession = loadSessionFromStorage();
+    const promoCodeToUse = urlPromoCode || homepagePromoCode || '';
+    
     if (savedSession) {
-      // If there's a URL promo code, prioritize it over saved session
-      if (urlPromoCode) {
-        setState({ ...savedSession, promoCode: urlPromoCode });
+      // If there's a promo code from URL or homepage, prioritize it over saved session
+      if (promoCodeToUse) {
+        setState({ ...savedSession, promoCode: promoCodeToUse });
+        // Clear homepage promo code after using it
+        if (homepagePromoCode) {
+          localStorage.removeItem('homepage_promo_code');
+        }
       } else {
         setState(savedSession);
       }
-    } else if (urlPromoCode) {
-      // No saved session but URL has promo code
-      setState({ ...initialState, promoCode: urlPromoCode });
+    } else if (promoCodeToUse) {
+      // No saved session but has promo code
+      setState({ ...initialState, promoCode: promoCodeToUse });
+      // Clear homepage promo code after using it
+      if (homepagePromoCode) {
+        localStorage.removeItem('homepage_promo_code');
+      }
     }
   }, []);
 
