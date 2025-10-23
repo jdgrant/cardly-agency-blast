@@ -50,11 +50,6 @@ export const SessionAnalytics = () => {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const sessionId = sessionStorage.getItem('adminSessionId');
-      if (!sessionId) {
-        throw new Error('No admin session found');
-      }
-
       // Fetch all wizard sessions
       const { data: sessions, error } = await supabase
         .from('wizard_sessions')
