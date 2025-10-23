@@ -834,18 +834,13 @@ const Admin = () => {
 
   const createPromoCode = async (formData: { code: string; discount_percentage: number; expires_at?: string; max_uses?: number }) => {
     try {
-      const sessionId = sessionStorage.getItem('adminSessionId');
-      if (!sessionId) {
-        throw new Error('No admin session found');
-      }
-
       const { error } = await supabase
-        .rpc('create_admin_promocode', {
-          session_id_param: sessionId,
-          code_param: formData.code,
-          discount_percentage_param: formData.discount_percentage,
-          expires_at_param: formData.expires_at || null,
-          max_uses_param: formData.max_uses || null,
+        .from('promocodes')
+        .insert({
+          code: formData.code.toUpperCase(),
+          discount_percentage: formData.discount_percentage,
+          expires_at: formData.expires_at || null,
+          max_uses: formData.max_uses || null,
         });
 
       if (error) throw error;
