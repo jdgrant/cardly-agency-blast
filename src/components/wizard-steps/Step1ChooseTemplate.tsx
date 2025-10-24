@@ -187,7 +187,6 @@ const Step1ChooseTemplate = () => {
               </div>
               <div className="p-4 bg-white border-t border-gray-100">
                 <h3 className="font-semibold text-gray-900">{template.name}</h3>
-                <p className="text-sm text-gray-600 mt-1">{template.description}</p>
                 <div className="flex flex-wrap gap-1 mt-2">
                   {template.occasions.map(occasionId => {
                     const occasion = occasions.find(o => o.id === occasionId);
