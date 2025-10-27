@@ -544,10 +544,10 @@ serve(async (req) => {
           return m?.[0] || body;
         };
         const frontHalf = grabSection(frontSections.body, 'front-half');
-        const insideHalf = grabSection(insideSections.body, 'inside-half');
+        const blankHalf = grabSection(frontSections.body, 'blank-half');
         
-        // Build a single-page landscape layout: Left = Back/Inside, Right = Front (pre-rotation)
-        // After 270° clockwise rotation: Top = Front, Bottom = Back/Inside
+        // Build a single-page landscape layout: Left = Back/Branding, Right = Front (pre-rotation)
+        // After 270° clockwise rotation: Top = Front, Bottom = Back/Branding
         const combinedHTML = `
 <!DOCTYPE html>
 <html>
@@ -570,7 +570,7 @@ serve(async (req) => {
 <body>
   <div class="row">
     <section class="half left">
-      ${insideHalf}
+      ${blankHalf}
     </section>
     <section class="half right">
       ${frontHalf}
