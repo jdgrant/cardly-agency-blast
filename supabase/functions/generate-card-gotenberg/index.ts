@@ -550,7 +550,15 @@ serve(async (req) => {
         // Keep inline data URL for front image - asset approach was causing issues
         console.log('ℹ️ Using inline data URL for front image in combined PDF');
 
-        // Combine using full Production Front body to exactly match orientation and branding
+        // Build page 1 using halves: left=branding(blank), right=front so that after 270° rotation top=front, bottom=branding
+        const grabSection = (body: string, className: string) => {
+          const re = new RegExp(`<div[^>]*class=["'][^"']*${className}[^"']*["'][^>]*>[\\s\\S]*?<\\/div>`, 'i');
+          const m = body.match(re);
+          return m?.[0] || body;
+        };
+        const frontHalf = grabSection(frontSections.body, 'front-half');
+        const blankHalf = grabSection(frontSections.body, 'blank-half');
+
         const combinedHTML = `
 <!DOCTYPE html>
 <html>
@@ -560,11 +568,18 @@ serve(async (req) => {
   ${frontSections.head}
   ${insideSections.head}
   <style>
+    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+    html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+    .row { display: flex; flex-direction: row; width: 100%; height: 100%; }
+    .half { width: 50%; height: 100%; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
     .page-break { page-break-after: always; }
   </style>
 </head>
 <body>
-  ${frontSections.body}
+  <div class="row">
+    <section class="half left">${blankHalf}</section>
+    <section class="half right">${frontHalf}</section>
+  </div>
   <div class="page-break"></div>
   ${insideSections.body}
 </body>
