@@ -196,7 +196,11 @@ serve(async (req) => {
     // Download and encode branding logo from SendYourCards.io
     let brandingLogoDataUrl = '';
     try {
-      const brandingLogoUrl = 'https://sendyourcards.io/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png';
+      const base = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
+      const brandingLogoPath = '/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png';
+      const brandingLogoUrl = base 
+        ? `${base}${brandingLogoPath}` 
+        : `https://e84fd20e-7cca-4259-84ad-12452c25e301.lovableproject.com${brandingLogoPath}`;
       
       console.log('Fetching SendYourCards.io logo from:', brandingLogoUrl);
       const brandingLogoResponse = await fetch(brandingLogoUrl);
