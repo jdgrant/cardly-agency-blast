@@ -532,7 +532,7 @@ const JobDetail = () => {
     try {
       const { error } = await supabase.rpc('update_return_address', {
         order_id_param: order!.id,
-        name_param: editingReturnAddress.name || null,
+        name_param: (editingReturnAddress.name || '').trim(),
         line1_param: editingReturnAddress.line1 || null,
         line2_param: editingReturnAddress.line2 || null,
         city_param: editingReturnAddress.city || null,
@@ -567,7 +567,7 @@ const JobDetail = () => {
       console.error('Error updating return address:', error);
       toast({
         title: "Update Failed",
-        description: "Failed to update return address",
+        description: error?.message ? `Failed to update return address: ${error.message}` : "Failed to update return address",
         variant: "destructive"
       });
     }
