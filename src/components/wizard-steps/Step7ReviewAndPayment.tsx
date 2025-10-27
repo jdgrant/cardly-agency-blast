@@ -281,7 +281,7 @@ const Step7ReviewAndSubmit = () => {
     }
   };
 
-  const isFormValid = state.contactFirstName && state.contactLastName && state.contactEmail && state.contactPhone && state.billingAddress && state.returnAddressName && state.returnAddressLine1 && state.returnAddressCity && state.returnAddressState && state.returnAddressZip;
+  const isFormValid = state.contactFirstName && state.contactLastName && state.contactEmail && state.contactPhone && state.billingAddress && state.returnAddressLine1 && state.returnAddressCity && state.returnAddressState && state.returnAddressZip;
 
   return (
     <div className="space-y-8">
@@ -359,12 +359,12 @@ const Step7ReviewAndSubmit = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="returnAddressName">Name/Company *</Label>
+                <Label htmlFor="returnAddressName">Name/Company</Label>
                 <Input
                   id="returnAddressName"
                   value={state.returnAddressName}
                   onChange={(e) => updateState({ returnAddressName: e.target.value })}
-                  placeholder="Your Name or Company"
+                  placeholder="Your Name or Company (optional)"
                 />
               </div>
               <div>

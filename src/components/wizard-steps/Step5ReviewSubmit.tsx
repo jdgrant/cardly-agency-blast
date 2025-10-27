@@ -405,15 +405,15 @@ const Step5ReviewSubmit = () => {
         </Button>
         <Button 
           onClick={handleSubmit}
-          disabled={isSubmitting || !state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress || !state.returnAddressName || !state.returnAddressLine1 || !state.returnAddressCity || !state.returnAddressState || !state.returnAddressZip}
+          disabled={isSubmitting || !state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress || !state.returnAddressLine1 || !state.returnAddressCity || !state.returnAddressState || !state.returnAddressZip}
           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
         >
           {isSubmitting ? 'Submitting Order...' : clientCount > 0 ? `Submit Order - $${total.toFixed(2)}` : 'Submit Order for Quote'}
         </Button>
         {/* Debug info */}
-        {(!state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress || !state.returnAddressName || !state.returnAddressLine1 || !state.returnAddressCity || !state.returnAddressState || !state.returnAddressZip) && (
+        {(!state.contactFirstName || !state.contactLastName || !state.contactEmail || !state.billingAddress || !state.returnAddressLine1 || !state.returnAddressCity || !state.returnAddressState || !state.returnAddressZip) && (
           <div className="text-xs text-red-600 mt-2">
-            Missing required fields: {!state.contactFirstName && 'First Name '}{!state.contactLastName && 'Last Name '}{!state.contactEmail && 'Email '}{!state.billingAddress && 'Billing Address '}{!state.returnAddressName && 'Return Name '}{!state.returnAddressLine1 && 'Return Address '}{!state.returnAddressCity && 'Return City '}{!state.returnAddressState && 'Return State '}{!state.returnAddressZip && 'Return ZIP'}
+            Missing required fields: {!state.contactFirstName && 'First Name '}{!state.contactLastName && 'Last Name '}{!state.contactEmail && 'Email '}{!state.billingAddress && 'Billing Address '}{!state.returnAddressLine1 && 'Return Address '}{!state.returnAddressCity && 'Return City '}{!state.returnAddressState && 'Return State '}{!state.returnAddressZip && 'Return ZIP'}
           </div>
         )}
       </div>

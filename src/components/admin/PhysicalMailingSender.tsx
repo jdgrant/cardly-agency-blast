@@ -247,11 +247,14 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         throw new Error(`Database error: ${orderError.message}`);
       }
 
-      const order = Array.isArray(orderData) ? orderData[0] : orderData;
+      const orderResult = Array.isArray(orderData) ? orderData[0] : orderData;
       
-      if (!order) {
+      if (!orderResult) {
         throw new Error(`Order not found with ID: ${orderId}`);
       }
+
+      // Cast to any to access all fields including return address
+      const order = orderResult as any;
 
       // Format client data for the API
       const recipientAddresses = safeClients.map((client: any) => ({
