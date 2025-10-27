@@ -530,14 +530,26 @@ const JobDetail = () => {
 
   const saveReturnAddress = async () => {
     try {
-      const { error } = await supabase.rpc('update_return_address', {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        toast({
+          title: "Authentication Required",
+          description: "Please login as admin to update return address.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const trimmedName = (editingReturnAddress.name || '').trim();
+      const { error } = await supabase.rpc('update_admin_return_address', {
+        session_id_param: adminSessionId,
         order_id_param: order!.id,
-        name_param: (editingReturnAddress.name || '').trim(),
-        line1_param: editingReturnAddress.line1 || null,
-        line2_param: editingReturnAddress.line2 || null,
-        city_param: editingReturnAddress.city || null,
-        state_param: editingReturnAddress.state || null,
-        zip_param: editingReturnAddress.zip || null
+        return_name: trimmedName || null,
+        return_line1: editingReturnAddress.line1 || null,
+        return_line2: editingReturnAddress.line2 || null,
+        return_city: editingReturnAddress.city || null,
+        return_state: editingReturnAddress.state || null,
+        return_zip: editingReturnAddress.zip || null,
       });
 
       if (error) throw error;
@@ -551,7 +563,7 @@ const JobDetail = () => {
           return_address_line2: editingReturnAddress.line2,
           return_address_city: editingReturnAddress.city,
           return_address_state: editingReturnAddress.state,
-          return_address_zip: editingReturnAddress.zip
+          return_address_zip: editingReturnAddress.zip,
         });
       }
 
@@ -568,7 +580,7 @@ const JobDetail = () => {
       toast({
         title: "Update Failed",
         description: error?.message ? `Failed to update return address: ${error.message}` : "Failed to update return address",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
