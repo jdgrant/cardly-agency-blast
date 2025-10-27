@@ -543,9 +543,32 @@ serve(async (req) => {
 
         // Extract only the needed halves for a single-page landscape layout
         const grabSection = (body: string, className: string) => {
-          const re = new RegExp(`<div[^>]*class=["'][^"']*${className}[^"']*["'][^>]*>[\\s\\S]*?<\\/div>`, 'i');
-          const m = body.match(re);
-          return m?.[0] || body;
+          // Match opening div tag with the class
+          const startRe = new RegExp(`<div[^>]*class=["'][^"']*${className}[^"']*["'][^>]*>`, 'i');
+          const startMatch = body.match(startRe);
+          if (!startMatch) return body;
+          
+          const startPos = startMatch.index!;
+          const afterStart = startPos + startMatch[0].length;
+          
+          // Count nested divs to find the matching closing tag
+          let depth = 1;
+          let pos = afterStart;
+          while (depth > 0 && pos < body.length) {
+            const nextOpen = body.indexOf('<div', pos);
+            const nextClose = body.indexOf('</div>', pos);
+            
+            if (nextClose === -1) break;
+            if (nextOpen !== -1 && nextOpen < nextClose) {
+              depth++;
+              pos = nextOpen + 4;
+            } else {
+              depth--;
+              pos = nextClose + 6;
+            }
+          }
+          
+          return body.substring(startPos, pos);
         };
         const frontHalf = grabSection(frontSections.body, 'front-half');
         const blankHalf = grabSection(frontSections.body, 'blank-half');
