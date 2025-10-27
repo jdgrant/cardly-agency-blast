@@ -118,11 +118,14 @@ const JobDetail = () => {
   const { toast } = useToast();
   const [order, setOrder] = useState<Order | null>(null);
   const [template, setTemplate] = useState<Template | null>(null);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [logoBlob, setLogoBlob] = useState<string | null>(null);
   const [signatureBlob, setSignatureBlob] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSignatureUpload, setShowSignatureUpload] = useState(false);
+  const [isEditingTemplate, setIsEditingTemplate] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [isEmailSending, setIsEmailSending] = useState(false);
   const [generatingPDFs, setGeneratingPDFs] = useState(false);
   const [generatingFront, setGeneratingFront] = useState(false);
@@ -157,6 +160,7 @@ const JobDetail = () => {
     if (orderId) {
       fetchOrderDetails();
     }
+    fetchAllTemplates();
   }, [orderId]);
 
   useEffect(() => {
@@ -306,6 +310,87 @@ const JobDetail = () => {
     } finally {
       console.log('Setting loading to false');
       setLoading(false);
+    }
+  };
+
+  const fetchAllTemplates = async () => {
+    try {
+      const { data: templatesData, error: templatesError } = await supabase
+        .from('templates')
+        .select('*')
+        .order('name');
+
+      if (templatesError) {
+        console.error('Error fetching templates:', templatesError);
+      } else {
+        setTemplates(templatesData || []);
+      }
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  };
+
+  const startEditingTemplate = () => {
+    if (order) {
+      setSelectedTemplateId(order.template_id);
+      setIsEditingTemplate(true);
+    }
+  };
+
+  const cancelEditingTemplate = () => {
+    setIsEditingTemplate(false);
+    setSelectedTemplateId('');
+  };
+
+  const saveTemplate = async () => {
+    if (!order || !selectedTemplateId) return;
+
+    try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        throw new Error('No admin session found');
+      }
+
+      // Update the order's template_id
+      const { error } = await supabase
+        .from('orders')
+        .update({ template_id: selectedTemplateId })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrder(prev => prev ? { ...prev, template_id: selectedTemplateId } : null);
+
+      // Fetch the new template
+      const { data: newTemplate } = await supabase
+        .from('templates')
+        .select('*')
+        .eq('id', selectedTemplateId)
+        .maybeSingle();
+
+      if (newTemplate) {
+        setTemplate(newTemplate);
+      }
+
+      setIsEditingTemplate(false);
+      setSelectedTemplateId('');
+
+      toast({
+        title: "Template Updated",
+        description: "Card template has been changed successfully",
+      });
+
+      // Regenerate previews with new template
+      await handleGeneratePreviews();
+
+    } catch (error) {
+      console.error('Error updating template:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update template",
+        variant: "destructive"
+      });
     }
   };
 
@@ -1932,8 +2017,48 @@ const JobDetail = () => {
                 {template ? (
                   <>
                     <div className="text-center">
-                      <h3 className="font-semibold text-lg">{template.name}</h3>
-                      <p className="text-sm text-gray-600 mb-4">{template.description}</p>
+                      {isEditingTemplate ? (
+                        <div className="flex flex-col gap-3 items-center">
+                          <Label htmlFor="template-select" className="text-sm font-medium">
+                            Select Template
+                          </Label>
+                          <div className="flex items-center gap-2 w-full max-w-md">
+                            <Select
+                              value={selectedTemplateId}
+                              onValueChange={setSelectedTemplateId}
+                            >
+                              <SelectTrigger className="flex-1">
+                                <SelectValue placeholder="Choose a template" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {templates.map((t) => (
+                                  <SelectItem key={t.id} value={t.id}>
+                                    {t.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Button size="sm" onClick={saveTemplate} disabled={!selectedTemplateId}>
+                              <Save className="w-4 h-4 mr-1" />
+                              Save
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={cancelEditingTemplate}>
+                              <X className="w-4 h-4 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2">
+                          <div>
+                            <h3 className="font-semibold text-lg">{template.name}</h3>
+                            <p className="text-sm text-gray-600">{template.description}</p>
+                          </div>
+                          <Button size="sm" variant="ghost" onClick={startEditingTemplate} className="ml-2">
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                     
                      {/* Card Preview - Front and Back Side by Side */}
