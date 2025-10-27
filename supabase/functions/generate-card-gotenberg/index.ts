@@ -564,7 +564,7 @@ serve(async (req) => {
           .replace(blankHalf, frontHalf)
           .replace('%%FRONT%%', blankHalf);
 
-        const combinedHTML = `
+const combinedHTML = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -573,11 +573,18 @@ serve(async (req) => {
   ${frontSections.head}
   ${insideSections.head}
   <style>
+    @page { size: ${paperWidth}in ${paperHeight}in; margin: 0; }
+    html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+    .row { display: flex; flex-direction: row; width: 100%; height: 100%; }
+    .half { width: 50%; height: 100%; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
     .page-break { page-break-after: always; }
   </style>
 </head>
 <body>
-  ${swappedFrontBody}
+  <div class="row">
+    <section class="half left">${blankHalf}</section>
+    <section class="half right">${frontHalf}</section>
+  </div>
   <div class="page-break"></div>
   ${insideSections.body}
 </body>
