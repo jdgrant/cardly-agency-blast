@@ -1664,12 +1664,12 @@ const JobDetail = () => {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="return-name">Return Name/Company *</Label>
+                      <Label htmlFor="return-name">Return Name/Company</Label>
                       <Input
                         id="return-name"
                         value={editingReturnAddress.name}
                         onChange={(e) => setEditingReturnAddress({ ...editingReturnAddress, name: e.target.value })}
-                        placeholder="Your Name or Company"
+                        placeholder="Your Name or Company (optional)"
                       />
                     </div>
                     <div>
