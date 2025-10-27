@@ -193,33 +193,20 @@ serve(async (req) => {
 
     console.log('Final encoded data - Logo length:', logoDataUrl?.length || 0, 'Signature length:', signatureDataUrl?.length || 0);
 
-    // Download and encode branding logo (try multiple public URLs, fallback-safe)
+    // Download and encode branding logo from SendYourCards.io
     let brandingLogoDataUrl = '';
     try {
-      const logoPath = '/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png';
-      const baseOrigin = (origin || req.headers.get('origin') || '').replace(/\/$/, '');
-      const candidates = [
-        ...(baseOrigin ? [`${baseOrigin}${logoPath}`] : []),
-        `https://e84fd20e-7cca-4259-84ad-12452c25e301.lovableproject.com${logoPath}`,
-        `https://sendyourcards.io${logoPath}`,
-      ];
-
-      for (const brandingLogoUrl of candidates) {
-        try {
-          console.log('Fetching SendYourCards.io logo from candidate:', brandingLogoUrl);
-          const res = await fetch(brandingLogoUrl);
-          if (res.ok) {
-            const buf = await res.arrayBuffer();
-            const base64 = encodeBase64(new Uint8Array(buf));
-            brandingLogoDataUrl = `data:image/png;base64,${base64}`;
-            console.log('✅ Branding logo loaded - length:', brandingLogoDataUrl?.length || 0);
-            break;
-          } else {
-            console.log('Candidate failed with status:', res.status);
-          }
-        } catch (e) {
-          console.log('Candidate fetch error:', (e as any)?.message);
-        }
+      const brandingLogoUrl = 'https://sendyourcards.io/lovable-uploads/adb3c39b-2bc1-4fb1-b219-92f9510584c9.png';
+      
+      console.log('Fetching SendYourCards.io logo from:', brandingLogoUrl);
+      const brandingLogoResponse = await fetch(brandingLogoUrl);
+      if (brandingLogoResponse.ok) {
+        const brandingLogoBuffer = await brandingLogoResponse.arrayBuffer();
+        const brandingLogoBase64 = encodeBase64(new Uint8Array(brandingLogoBuffer));
+        brandingLogoDataUrl = `data:image/png;base64,${brandingLogoBase64}`;
+        console.log('✅ SendYourCards.io logo SUCCESS - length:', brandingLogoDataUrl?.length || 0);
+      } else {
+        console.log('❌ Failed to fetch SendYourCards.io logo, status:', brandingLogoResponse.status);
       }
     } catch (error) {
       console.error('❌ Error downloading SendYourCards.io logo:', error);
@@ -550,34 +537,45 @@ serve(async (req) => {
         // Keep inline data URL for front image - asset approach was causing issues
         console.log('ℹ️ Using inline data URL for front image in combined PDF');
 
-        // Build page 1 using halves: left=branding(blank), right=front so that after 270° rotation top=front, bottom=branding
+        // Extract only the needed halves for a single-page landscape layout
         const grabSection = (body: string, className: string) => {
           const re = new RegExp(`<div[^>]*class=["'][^"']*${className}[^"']*["'][^>]*>[\\s\\S]*?<\\/div>`, 'i');
           const m = body.match(re);
           return m?.[0] || body;
         };
         const frontHalf = grabSection(frontSections.body, 'front-half');
-        const blankHalf = grabSection(frontSections.body, 'blank-half');
-
-        const swappedFrontBody = frontSections.body
-          .replace(frontHalf, '%%FRONT%%')
-          .replace(blankHalf, frontHalf)
-          .replace('%%FRONT%%', blankHalf);
-
-const combinedHTML = `
+        const insideHalf = grabSection(insideSections.body, 'inside-half');
+        
+        // Build a single-page landscape layout: Left = Back/Inside, Right = Front (pre-rotation)
+        // After 270° clockwise rotation: Top = Front, Bottom = Back/Inside
+        const combinedHTML = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  ${frontSections.head}
-  ${insideSections.head}
   <style>
+    @page { 
+      size: ${paperWidth}in ${paperHeight}in; 
+      margin: 0;
+    }
+    html, body { margin: 0; padding: 0; width: ${paperWidth}in; height: ${paperHeight}in; }
+    .row { display: flex; flex-direction: row; width: 100%; height: 100%; }
+    .half { width: 50%; height: 100%; position: relative; overflow: hidden; }
     .page-break { page-break-after: always; }
   </style>
+  ${frontSections.head}
+  ${insideSections.head}
 </head>
 <body>
-  ${swappedFrontBody}
+  <div class="row">
+    <section class="half left">
+      ${insideHalf}
+    </section>
+    <section class="half right">
+      ${frontHalf}
+    </section>
+  </div>
   <div class="page-break"></div>
   ${insideSections.body}
 </body>
