@@ -96,7 +96,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         name: `${client.first_name} ${client.last_name}`.trim(),
         address1: client.address,
         city: client.city,
-        state: client.state,
+        state: (client.state || '').trim(),
         zip: client.zip
       }));
 

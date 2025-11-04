@@ -39,21 +39,24 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Validate each recipient
-    for (const recipient of recipientAddresses) {
+    for (let i = 0; i < recipientAddresses.length; i++) {
+      const recipient = recipientAddresses[i];
+      const recipientNum = i + 1;
+      
       if (!recipient.name || typeof recipient.name !== 'string' || recipient.name.length > 200) {
-        throw new Error('Invalid recipient name');
+        throw new Error(`Recipient #${recipientNum}: Invalid name "${recipient.name?.substring(0, 50) || 'empty'}"`);
       }
       if (!recipient.address1 || typeof recipient.address1 !== 'string' || recipient.address1.length > 200) {
-        throw new Error('Invalid recipient address');
+        throw new Error(`Recipient #${recipientNum} (${recipient.name}): Invalid address "${recipient.address1?.substring(0, 50) || 'empty'}"`);
       }
       if (!recipient.city || typeof recipient.city !== 'string' || recipient.city.length > 100) {
-        throw new Error('Invalid recipient city');
+        throw new Error(`Recipient #${recipientNum} (${recipient.name}): Invalid city "${recipient.city?.substring(0, 50) || 'empty'}"`);
       }
       if (!recipient.state || typeof recipient.state !== 'string' || recipient.state.length > 2) {
-        throw new Error('Invalid recipient state');
+        throw new Error(`Recipient #${recipientNum} (${recipient.name}): Invalid state "${recipient.state}" - must be 2-letter abbreviation (e.g., CA, NY)`);
       }
       if (!recipient.zip || typeof recipient.zip !== 'string' || recipient.zip.length > 10) {
-        throw new Error('Invalid recipient zip');
+        throw new Error(`Recipient #${recipientNum} (${recipient.name}): Invalid zip "${recipient.zip?.substring(0, 10) || 'empty'}"`);
       }
     }
     
