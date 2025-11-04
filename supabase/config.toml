@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.reparse-client-records]
 verify_jwt = false
+
+[functions.replace-client-list]
+verify_jwt = false

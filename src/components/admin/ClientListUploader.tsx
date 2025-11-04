@@ -188,29 +188,31 @@ export const ClientListUploader: React.FC<ClientListUploaderProps> = ({
         zip: record.zip
       }));
 
-      const { error: insertError } = await supabase.rpc('insert_client_records', {
-        order_id: orderId,
-        client_data: clientData
+      console.log('Replacing client list with', clientData.length, 'records');
+      
+      // Use edge function to replace client list (handles deletion + insertion with service role)
+      const { data: replaceData, error: replaceError } = await supabase.functions.invoke('replace-client-list', {
+        body: {
+          orderId,
+          clientRecords: clientData,
+          csvFileUrl: urlData.publicUrl,
+          adminSessionId: sessionStorage.getItem('adminSessionId')
+        }
       });
 
-      if (insertError) {
-        throw new Error(`Failed to save client records: ${insertError.message}`);
+      if (replaceError) {
+        console.error('Replace error:', replaceError);
+        throw new Error(`Failed to replace client list: ${replaceError.message}`);
       }
 
-      // Update order with CSV file URL and client count
+      if (!replaceData || !replaceData.success) {
+        throw new Error(replaceData?.error || 'Failed to replace client list');
+      }
+
+      console.log('Successfully replaced client list');
+
+      // For customer management, also update via RPC
       if (hashedOrderId) {
-        // Customer management - use secure functions
-        const { error: updateFileError } = await supabase
-          .rpc('update_order_file_for_customer', {
-            short_id: hashedOrderId,
-            file_type: 'csv',
-            file_url: urlData.publicUrl
-          });
-
-        if (updateFileError) {
-          throw new Error(`Failed to update order: ${updateFileError.message}`);
-        }
-
         const { error: updateCountError } = await supabase
           .rpc('update_order_client_count_for_customer', {
             short_id: hashedOrderId,
@@ -218,21 +220,8 @@ export const ClientListUploader: React.FC<ClientListUploaderProps> = ({
           });
 
         if (updateCountError) {
-          throw new Error(`Failed to update client count: ${updateCountError.message}`);
-        }
-      } else {
-      // Update the order with the CSV file URL and client count and mark as uploaded
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          csv_file_url: urlData.publicUrl,
-          client_count: allRecords.length,
-          
-        })
-        .eq('id', orderId);
-
-        if (updateError) {
-          throw new Error(`Failed to update order: ${updateError.message}`);
+          console.error('Count update error:', updateCountError);
+          // Don't fail - the edge function already updated the count
         }
       }
 
