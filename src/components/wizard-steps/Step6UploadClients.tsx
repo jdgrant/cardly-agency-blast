@@ -3,6 +3,7 @@ import { useWizard, ClientRecord } from '../WizardContext';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Upload, FileText, X, AlertCircle, Download } from 'lucide-react';
+import Papa from 'papaparse';
 
 const Step6UploadClients = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
@@ -12,70 +13,61 @@ const Step6UploadClients = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const parseCSV = (csvText: string): ClientRecord[] => {
-    const lines = csvText.trim().split('\n');
-    if (lines.length < 2) {
-      throw new Error('CSV must contain at least a header row and one data row');
-    }
+    const normalize = (h: string) => h
+      .toLowerCase()
+      .replace(/["']/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
-    
-    // Look for various header variations
-    const findHeader = (possibleNames: string[]) => {
-      return headers.findIndex(h => 
-        possibleNames.some(name => h.includes(name.toLowerCase()))
-      );
-    };
+    const { data } = Papa.parse<Record<string, string>>(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => {
+        const h = normalize(header);
+        if (['first name', 'firstname', 'first_name'].includes(h)) return 'first_name';
+        if (['last name', 'lastname', 'last_name'].includes(h)) return 'last_name';
+        if (['full name/business name', 'full name', 'fullname', 'name', 'company', 'business name'].includes(h)) return 'full_name';
+        if (['address', 'address1', 'street', 'street address'].includes(h)) return 'address';
+        if (['city'].includes(h)) return 'city';
+        if (['state', 'province'].includes(h)) return 'state';
+        if (['zip', 'zipcode', 'postal', 'postal code', 'postal_code'].includes(h)) return 'zip';
+        return h;
+      },
+      transform: (val) => (typeof val === 'string' ? val.trim() : val),
+    });
 
-    const fullNameIndex = findHeader(['full name', 'fullname', 'full_name', 'name']);
-    const businessNameIndex = findHeader(['business name', 'business_name', 'businessname', 'business', 'company', 'company_name']);
-    const lastNameIndex = findHeader(['lastname', 'last_name', 'last name', 'lname']);
-    const addressIndex = findHeader(['address', 'street', 'address1', 'street_address']);
-    const cityIndex = findHeader(['city']);
-    const stateIndex = findHeader(['state', 'province']);
-    const zipIndex = findHeader(['zip', 'zipcode', 'postal', 'postal_code']);
-
-    // Check for required fields
-    if (addressIndex === -1 || cityIndex === -1 || stateIndex === -1 || zipIndex === -1) {
+    // Validate headers
+    const firstRow = (data && data[0]) || {} as Record<string, string>;
+    const required = ['address', 'city', 'state', 'zip'];
+    const missing = required.filter((k) => !(k in firstRow));
+    if (missing.length) {
       throw new Error('CSV must contain Address, City, State, and Zip columns');
     }
 
-    if (fullNameIndex === -1 && businessNameIndex === -1 && lastNameIndex === -1) {
-      throw new Error('CSV must contain either Full Name/Business Name column or Last Name column');
-    }
-
     const records: ClientRecord[] = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-      
-      if (values.length < headers.length) continue; // Skip incomplete rows
+    for (const row of data as any[]) {
+      if (!row) continue;
 
-      let firstName = '';
-      let lastName = '';
-      
-      if (businessNameIndex !== -1 && values[businessNameIndex]) {
-        // If business name exists, use it as first name
-        firstName = values[businessNameIndex];
-        lastName = '';
-      } else if (fullNameIndex !== -1 && values[fullNameIndex]) {
-        // If full name exists, use it as first name
-        firstName = values[fullNameIndex];
-        lastName = lastNameIndex !== -1 ? values[lastNameIndex] || '' : '';
-      } else {
-        // Use last name only
-        firstName = '';
-        lastName = lastNameIndex !== -1 ? values[lastNameIndex] || '' : '';
+      let firstName = row.first_name || '';
+      let lastName = row.last_name || '';
+      if ((!firstName && !lastName) && row.full_name) {
+        const full = String(row.full_name).trim();
+        if (full) {
+          const parts = full.split(/\s+/);
+          firstName = parts[0] || '';
+          lastName = parts.slice(1).join(' ');
+        }
       }
 
-      if (!firstName && !lastName) continue; // Skip rows without names
+      if (!firstName && !lastName) continue;
 
       records.push({
         firstName,
         lastName,
-        address: values[addressIndex] || '',
-        city: values[cityIndex] || '',
-        state: values[stateIndex] || '',
-        zip: values[zipIndex] || ''
+        address: row.address || '',
+        city: row.city || '',
+        state: (row.state || '').toString().trim(),
+        zip: (row.zip || '').toString().trim(),
       });
     }
 

@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import Papa from 'papaparse';
 
 interface ClientRecord {
   first_name: string;
@@ -36,69 +37,68 @@ export const ClientListUploader: React.FC<ClientListUploaderProps> = ({
   const { toast } = useToast();
 
   const parseCSV = (csvText: string): ClientRecord[] => {
-    const lines = csvText.trim().split('\n');
-    if (lines.length < 2) {
-      throw new Error('CSV must contain at least a header row and one data row');
+    // Robust CSV parsing using headers to avoid positional errors
+    const normalize = (h: string) => h
+      .toLowerCase()
+      .replace(/["']/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const { data, errors } = Papa.parse<Record<string, string>>(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => {
+        const h = normalize(header);
+        if (['first name', 'firstname', 'first_name'].includes(h)) return 'first_name';
+        if (['last name', 'lastname', 'last_name'].includes(h)) return 'last_name';
+        if (['full name/business name', 'full name', 'fullname', 'name', 'company', 'business name'].includes(h)) return 'full_name';
+        if (['address', 'address1', 'street', 'street address'].includes(h)) return 'address';
+        if (['city'].includes(h)) return 'city';
+        if (['state', 'province'].includes(h)) return 'state';
+        if (['zip', 'zipcode', 'postal', 'postal code', 'postal_code'].includes(h)) return 'zip';
+        return h; // keep other columns (like service_type) but ignore them later
+      },
+      transform: (val) => (typeof val === 'string' ? val.trim() : val)
+    });
+
+    if (errors && errors.length) {
+      // Keep it generic in UI; details are in console
+      console.warn('CSV parse errors:', errors);
     }
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/["']/g, ''));
-    
-    // Check for required columns
-    const requiredColumns = ['address', 'city', 'state', 'zip'];
-    const missingColumns = requiredColumns.filter(col => !headers.includes(col));
-    
-    // Check for name columns (must have at least one)
-    const hasFirstName = headers.includes('firstname') || headers.includes('first name');
-    const hasLastName = headers.includes('lastname') || headers.includes('last name');
-    const hasFullName = headers.includes('full name/business name') || headers.includes('full name');
-    
-    if (!hasFirstName && !hasLastName && !hasFullName) {
-      throw new Error('CSV must contain either "FirstName" and "LastName" columns, or a "Full Name/Business Name" column');
-    }
-    
-    if (missingColumns.length > 0) {
-      throw new Error(`Missing required columns: ${missingColumns.join(', ')}`);
+    // Validate presence of required columns in the parsed header set
+    const firstRow = (data && data[0]) || {} as Record<string, string>;
+    const required = ['address', 'city', 'state', 'zip'];
+    const missing = required.filter((k) => !(k in firstRow));
+    if (missing.length) {
+      throw new Error(`Missing required columns: ${missing.join(', ')}`);
     }
 
     const records: ClientRecord[] = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/["']/g, ''));
-      const record: any = {};
-      
-      headers.forEach((header, index) => {
-        record[header] = values[index] || '';
-      });
-
-      // Handle name parsing
-      let firstName = '';
-      let lastName = '';
-      
-      if (hasFirstName && hasLastName) {
-        firstName = record['firstname'] || record['first name'] || '';
-        lastName = record['lastname'] || record['last name'] || '';
-      } else if (hasFullName) {
-        const fullName = record['full name/business name'] || record['full name'] || '';
-        const nameParts = fullName.trim().split(' ');
-        if (nameParts.length === 1) {
-          firstName = nameParts[0];
-          lastName = '';
-        } else {
-          firstName = nameParts[0];
-          lastName = nameParts.slice(1).join(' ');
+    for (const row of data as any[]) {
+      if (!row) continue;
+      // Derive names
+      let firstName = row.first_name || '';
+      let lastName = row.last_name || '';
+      if ((!firstName && !lastName) && row.full_name) {
+        const full = String(row.full_name).trim();
+        if (full) {
+          const parts = full.split(/\s+/);
+          firstName = parts[0] || '';
+          lastName = parts.slice(1).join(' ');
         }
       }
 
       records.push({
         first_name: firstName,
         last_name: lastName,
-        address: record.address || '',
-        city: record.city || '',
-        state: record.state || '',
-        zip: record.zip || ''
+        address: row.address || '',
+        city: row.city || '',
+        state: (row.state || '').toString().trim(),
+        zip: (row.zip || '').toString().trim()
       });
     }
-    
+
     return records;
   };
 

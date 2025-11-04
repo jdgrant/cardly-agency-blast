@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload } from 'lucide-react';
+import Papa from 'papaparse';
 
 const Step2UploadClients = () => {
   const { state, updateState, nextStep, prevStep } = useWizard();
@@ -13,44 +14,60 @@ const Step2UploadClients = () => {
   const [preview, setPreview] = useState<ClientRecord[]>([]);
 
   const parseCSV = useCallback((csvText: string): ClientRecord[] => {
-    const lines = csvText.split('\n').filter(line => line.trim());
-    if (lines.length < 2) {
-      throw new Error('CSV must contain at least a header row and one data row');
+    const normalize = (h: string) => h
+      .toLowerCase()
+      .replace(/["']/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const { data } = Papa.parse<Record<string, string>>(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (header) => {
+        const h = normalize(header);
+        if (['first name', 'firstname', 'first_name'].includes(h)) return 'first_name';
+        if (['last name', 'lastname', 'last_name'].includes(h)) return 'last_name';
+        if (['full name/business name', 'full name', 'fullname', 'name', 'company', 'business name'].includes(h)) return 'full_name';
+        if (['address', 'address1', 'street', 'street address'].includes(h)) return 'address';
+        if (['city'].includes(h)) return 'city';
+        if (['state', 'province'].includes(h)) return 'state';
+        if (['zip', 'zipcode', 'postal', 'postal code', 'postal_code'].includes(h)) return 'zip';
+        return h;
+      },
+      transform: (val) => (typeof val === 'string' ? val.trim() : val),
+    });
+
+    // Validate headers
+    const firstRow = (data && data[0]) || {} as Record<string, string>;
+    const required = ['address', 'city', 'state', 'zip'];
+    const missing = required.filter((k) => !(k in firstRow));
+    if (missing.length) {
+      throw new Error(`Missing required columns: ${missing.join(', ')}`);
     }
-
-    const headers = lines[0].toLowerCase().split(',').map(h => h.trim());
-    const requiredFields = ['firstname', 'lastname', 'address', 'city', 'state', 'zip'];
-    
-    const missingFields = requiredFields.filter(field => 
-      !headers.some(header => header.includes(field.toLowerCase()))
-    );
-
-    if (missingFields.length > 0) {
-      throw new Error(`Missing required columns: ${missingFields.join(', ')}`);
-    }
-
-    const firstNameIndex = headers.findIndex(h => h.includes('firstname'));
-    const lastNameIndex = headers.findIndex(h => h.includes('lastname'));
-    const addressIndex = headers.findIndex(h => h.includes('address'));
-    const cityIndex = headers.findIndex(h => h.includes('city'));
-    const stateIndex = headers.findIndex(h => h.includes('state'));
-    const zipIndex = headers.findIndex(h => h.includes('zip'));
 
     const records: ClientRecord[] = [];
-    
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-      
-      if (values.length >= Math.max(firstNameIndex, lastNameIndex, addressIndex, cityIndex, stateIndex, zipIndex) + 1) {
-        records.push({
-          firstName: values[firstNameIndex] || '',
-          lastName: values[lastNameIndex] || '',
-          address: values[addressIndex] || '',
-          city: values[cityIndex] || '',
-          state: values[stateIndex] || '',
-          zip: values[zipIndex] || '',
-        });
+    for (const row of data as any[]) {
+      if (!row) continue;
+
+      let firstName = row.first_name || '';
+      let lastName = row.last_name || '';
+      if ((!firstName && !lastName) && row.full_name) {
+        const full = String(row.full_name).trim();
+        if (full) {
+          const parts = full.split(/\s+/);
+          firstName = parts[0] || '';
+          lastName = parts.slice(1).join(' ');
+        }
       }
+
+      records.push({
+        firstName,
+        lastName,
+        address: row.address || '',
+        city: row.city || '',
+        state: (row.state || '').toString().trim(),
+        zip: (row.zip || '').toString().trim(),
+      });
     }
 
     return records;
