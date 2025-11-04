@@ -53,3 +53,6 @@ verify_jwt = true
 
 [functions.send-receipt-email]
 verify_jwt = false
+
+[functions.reparse-client-records]
+verify_jwt = false

@@ -244,10 +244,15 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         .from('order-files')
         .download(csvPath);
 
-      if (downloadError) throw downloadError;
+      if (downloadError) {
+        console.error('Storage download error:', downloadError);
+        throw new Error(`Failed to download CSV: ${downloadError.message}`);
+      }
 
       // Parse CSV with PapaParse using headers
       const csvText = await csvData.text();
+      console.log('CSV Text Sample:', csvText.substring(0, 500));
+      
       const parseResult = Papa.parse(csvText, {
         header: true,
         skipEmptyLines: true,
@@ -255,6 +260,9 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
           return header.toLowerCase().trim().replace(/[^\w]/g, '_');
         }
       });
+
+      console.log('Parse result headers:', Object.keys(parseResult.data[0] || {}));
+      console.log('First parsed row:', parseResult.data[0]);
 
       if (parseResult.errors.length > 0) {
         console.error('CSV parse errors:', parseResult.errors);
@@ -275,29 +283,25 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         };
       });
 
-      // Delete existing client records for this order
-      const { error: deleteError } = await supabase
-        .from('client_records')
-        .delete()
-        .eq('order_id', orderId);
+      console.log('Parsed records sample:', records[0]);
 
-      if (deleteError) throw deleteError;
-
-      // Insert new parsed records
-      const { error: insertError } = await supabase.rpc('insert_client_records', {
-        order_id: orderId,
-        client_data: records
+      // Call edge function to reparse (bypasses RLS)
+      const { data: reparseData, error: reparseError } = await supabase.functions.invoke('reparse-client-records', {
+        body: {
+          orderId,
+          clientRecords: records,
+          adminSessionId
+        }
       });
 
-      if (insertError) throw insertError;
+      if (reparseError) {
+        console.error('Reparse function error:', reparseError);
+        throw new Error(`Failed to reparse: ${reparseError.message}`);
+      }
 
-      // Update client count
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({ client_count: records.length })
-        .eq('id', orderId);
-
-      if (updateError) throw updateError;
+      if (!reparseData.success) {
+        throw new Error(reparseData.error || 'Failed to reparse records');
+      }
 
       toast({
         title: "CSV Re-parsed",
@@ -367,12 +371,12 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
       }));
 
       // Format recipients for PCM API (exact format used in edge function)
-      const recipients = recipientAddresses.map(addr => {
+      const recipients = recipientAddresses.map((addr, idx) => {
         const nameParts = addr.name.trim().split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || 'Customer';
         
-        return {
+        const recipient = {
           firstName: firstName,
           lastName: lastName,
           address: addr.address1,
@@ -381,6 +385,12 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
           state: addr.state,
           zipCode: addr.zip
         };
+        
+        if (idx < 3) {
+          console.log(`Recipient #${idx + 1} mapped:`, recipient);
+        }
+        
+        return recipient;
       });
 
       // Determine mail date (exact logic from edge function)
