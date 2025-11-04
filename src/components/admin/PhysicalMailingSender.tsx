@@ -425,7 +425,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         greetingCard: order.production_combined_pdf_public_url || '',
         returnAddress: returnAddress,
         batchName: uniqueBatchId,
-        addOns: [
+        addons: [
           {
             "addon": "Livestamping"
           }

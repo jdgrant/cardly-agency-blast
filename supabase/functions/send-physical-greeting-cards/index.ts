@@ -214,7 +214,7 @@ const handler = async (req: Request): Promise<Response> => {
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
           batchName: uniqueBatchId, // Unique batch naming by drop date + timestamp
-          addOns: [
+          addons: [
             {
               "addon": "Livestamping"
             }
@@ -231,7 +231,7 @@ const handler = async (req: Request): Promise<Response> => {
           greetingCard: order.production_combined_pdf_public_url,
           returnAddress: returnAddress,
           batchName: uniqueBatchId, // Unique batch naming by drop date + timestamp
-          addOns: [
+          addons: [
             {
               "addon": "Livestamping"
             }
@@ -249,7 +249,7 @@ const handler = async (req: Request): Promise<Response> => {
           returnAddress: returnAddress,
           listCountID: 0, // Try with 0 as dummy value
           batchName: uniqueBatchId, // Unique batch naming by drop date + timestamp
-          addOns: [
+          addons: [
             {
               "addon": "Livestamping"
             }
