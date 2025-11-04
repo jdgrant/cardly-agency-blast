@@ -8,14 +8,6 @@ const corsHeaders = {
 // Request interface for the physical mailing endpoint
 interface PhysicalMailingRequest {
   orderId: string;
-  recipientAddresses: Array<{
-    name: string;
-    address1: string;
-    address2?: string;
-    city: string;
-    state: string;
-    zip: string;
-  }>;
   isProduction?: boolean;
 }
 
@@ -27,7 +19,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     // Parse request body
-    const { orderId, recipientAddresses, isProduction = false }: PhysicalMailingRequest = await req.json();
+    const { orderId, isProduction = false }: PhysicalMailingRequest = await req.json();
     
     // Input validation
     if (!orderId || typeof orderId !== 'string' || orderId.length > 100) {
