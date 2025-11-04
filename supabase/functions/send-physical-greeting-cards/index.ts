@@ -47,21 +47,27 @@ const handler = async (req: Request): Promise<Response> => {
       const nameOk = r.name && typeof r.name === 'string' && r.name.length <= 200;
       const addrOk = r.address1 && typeof r.address1 === 'string' && r.address1.length <= 200;
       const cityOk = r.city && typeof r.city === 'string' && r.city.length <= 100;
-      const stateOk = r.state && typeof r.state === 'string' && r.state.length === 2;
-      const zipOk = r.zip && typeof r.zip === 'string' && r.zip.length <= 10;
+      const stateOk = r.state && typeof r.state === 'string' && r.state.trim().length === 2;
+      const zipOk = r.zip && typeof r.zip === 'string' && r.zip.trim().length > 0 && r.zip.length <= 10;
 
       if (nameOk && addrOk && cityOk && stateOk && zipOk) {
         validRecipients.push(r);
       } else {
-        const reason = `Missing/invalid fields: ${[
-          nameOk ? null : 'name',
-          addrOk ? null : 'address',
-          cityOk ? null : 'city',
-          stateOk ? null : 'state',
-          zipOk ? null : 'zip'
-        ].filter(Boolean).join(', ')}`;
+        const issues = [];
+        if (!nameOk) issues.push('name');
+        if (!addrOk) issues.push('address');
+        if (!cityOk) issues.push('city');
+        if (!stateOk) issues.push(`state="${r.state}"`);
+        if (!zipOk) issues.push(`zip="${r.zip}"`);
+        const reason = `Invalid: ${issues.join(', ')}`;
         skippedRecipients.push({ index: idx, reason, name: r.name });
       }
+    }
+
+    console.log(`✅ Valid recipients: ${validRecipients.length}`);
+    console.log(`❌ Skipped recipients: ${skippedRecipients.length}`);
+    if (skippedRecipients.length > 0) {
+      console.log('First 10 skipped:', JSON.stringify(skippedRecipients.slice(0, 10), null, 2));
     }
 
     if (validRecipients.length === 0) {
@@ -69,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (skippedRecipients.length > 0) {
-      console.warn(`Skipping ${skippedRecipients.length} invalid recipients`, skippedRecipients.slice(0, 5));
+      console.warn(`⚠️ Skipping ${skippedRecipients.length} of ${recipientAddresses.length} recipients due to validation errors`);
     }
     
     console.log(`Sending physical greeting cards for order: ${orderId} in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
