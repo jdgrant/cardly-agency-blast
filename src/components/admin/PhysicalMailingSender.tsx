@@ -81,11 +81,11 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         throw new Error('Admin session not found. Please login as admin.');
       }
 
-      // Fetch real client records for this order
+      // Fetch real client records for this order (no row limit)
       const { data: clientsData, error: clientsError } = await supabase.rpc('get_clients_for_order', {
         order_id_param: orderId,
         session_id_param: adminSessionId
-      });
+      }).limit(20000); // Remove Supabase's default 1000 row limit
 
       if (clientsError) throw clientsError;
 
@@ -330,11 +330,11 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
         throw new Error('Admin session not found. Please login as admin.');
       }
 
-      // Fetch real client records for this order
+      // Fetch real client records for this order (no row limit)
       const { data: clientsData, error: clientsError } = await supabase.rpc('get_clients_for_order', {
         order_id_param: orderId,
         session_id_param: adminSessionId
-      });
+      }).limit(20000); // Remove Supabase's default 1000 row limit
 
       if (clientsError) throw clientsError;
 
