@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Trash2 } from "lucide-react";
+import { Trash2, RefreshCw } from "lucide-react";
+import Papa from 'papaparse';
 import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
@@ -27,6 +28,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
   // State management
   const [isLoading, setIsLoading] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isReparsing, setIsReparsing] = useState(false);
   const [apiResponse, setApiResponse] = useState<string>("");
   const [pcmOrderId, setPcmOrderId] = useState<string>("");
   const [pcmBatchId, setPcmBatchId] = useState<string>("");
@@ -214,6 +216,105 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
     }
   };
 
+  const handleReparseCSV = async () => {
+    setIsReparsing(true);
+    
+    try {
+      const adminSessionId = sessionStorage.getItem('adminSessionId');
+      if (!adminSessionId) {
+        throw new Error('Admin session not found. Please login as admin.');
+      }
+
+      // Fetch order details to get CSV file URL
+      const { data: orderData, error: orderError } = await supabase.rpc('get_order_by_id', {
+        order_id: orderId,
+        session_id_param: adminSessionId
+      });
+
+      if (orderError) throw orderError;
+      const order = Array.isArray(orderData) ? orderData[0] : orderData;
+      
+      if (!order || !order.csv_file_url) {
+        throw new Error('No CSV file found for this order');
+      }
+
+      // Download CSV from storage
+      const csvPath = order.csv_file_url.replace(/^.*\/storage\/v1\/object\/public\/[^/]+\//, '');
+      const { data: csvData, error: downloadError } = await supabase.storage
+        .from('order-files')
+        .download(csvPath);
+
+      if (downloadError) throw downloadError;
+
+      // Parse CSV with PapaParse using headers
+      const csvText = await csvData.text();
+      const parseResult = Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        transformHeader: (header: string) => {
+          return header.toLowerCase().trim().replace(/[^\w]/g, '_');
+        }
+      });
+
+      if (parseResult.errors.length > 0) {
+        console.error('CSV parse errors:', parseResult.errors);
+        throw new Error('Failed to parse CSV file');
+      }
+
+      const records = parseResult.data.map((row: any) => {
+        const fullName = row.name || row.full_name || '';
+        const nameParts = fullName.trim().split(/\s+/);
+        
+        return {
+          first_name: row.first_name || row.firstname || nameParts[0] || '',
+          last_name: row.last_name || row.lastname || nameParts.slice(1).join(' ') || '',
+          address: row.address || row.address1 || row.street || '',
+          city: row.city || '',
+          state: (row.state || '').trim(),
+          zip: row.zip || row.zipcode || row.zip_code || ''
+        };
+      });
+
+      // Delete existing client records for this order
+      const { error: deleteError } = await supabase
+        .from('client_records')
+        .delete()
+        .eq('order_id', orderId);
+
+      if (deleteError) throw deleteError;
+
+      // Insert new parsed records
+      const { error: insertError } = await supabase.rpc('insert_client_records', {
+        order_id: orderId,
+        client_data: records
+      });
+
+      if (insertError) throw insertError;
+
+      // Update client count
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({ client_count: records.length })
+        .eq('id', orderId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "CSV Re-parsed",
+        description: `Successfully updated ${records.length} client records`,
+      });
+    } catch (error) {
+      console.error('Error reparsing CSV:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to reparse CSV",
+        variant: "destructive",
+      });
+    } finally {
+      setIsReparsing(false);
+    }
+  };
+
   const handlePreviewJSON = async () => {
     setIsLoadingPreview(true);
     setJsonPreview("");
@@ -390,14 +491,23 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
             >
               {isLoading ? "Sending..." : "Send Physical Greeting Cards"}
             </Button>
-            <Button 
-              onClick={handlePreviewJSON}
-              disabled={isLoadingPreview}
-              variant="outline"
-              className="w-full"
-            >
-              {isLoadingPreview ? "Generating Preview..." : "Preview PCM JSON"}
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                onClick={handlePreviewJSON}
+                disabled={isLoadingPreview}
+                variant="outline"
+              >
+                {isLoadingPreview ? "Generating..." : "Preview PCM JSON"}
+              </Button>
+              <Button 
+                onClick={handleReparseCSV}
+                disabled={isReparsing}
+                variant="outline"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isReparsing ? 'animate-spin' : ''}`} />
+                {isReparsing ? "Re-parsing..." : "Re-parse CSV"}
+              </Button>
+            </div>
           </div>
         )}
         
