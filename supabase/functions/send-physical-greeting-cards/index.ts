@@ -34,51 +34,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Invalid orderId');
     }
 
-    if (!recipientAddresses || !Array.isArray(recipientAddresses) || recipientAddresses.length === 0 || recipientAddresses.length > 10000) {
-      throw new Error('Invalid recipients array');
-    }
+// Recipients will be loaded from the database to avoid the 1000-row default limit
 
-    // Validate and filter recipients (skip invalid rows instead of failing)
-    const validRecipients = [] as typeof recipientAddresses;
-    const skippedRecipients: Array<{ index: number; reason: string; name?: string }> = [];
-    for (let i = 0; i < recipientAddresses.length; i++) {
-      const r = recipientAddresses[i];
-      const idx = i + 1;
-      const nameOk = r.name && typeof r.name === 'string' && r.name.length <= 200;
-      const addrOk = r.address1 && typeof r.address1 === 'string' && r.address1.length <= 200;
-      const cityOk = r.city && typeof r.city === 'string' && r.city.length <= 100;
-      const stateOk = r.state && typeof r.state === 'string' && r.state.trim().length === 2;
-      const zipOk = r.zip && typeof r.zip === 'string' && r.zip.trim().length > 0 && r.zip.length <= 10;
-
-      if (nameOk && addrOk && cityOk && stateOk && zipOk) {
-        validRecipients.push(r);
-      } else {
-        const issues = [];
-        if (!nameOk) issues.push('name');
-        if (!addrOk) issues.push('address');
-        if (!cityOk) issues.push('city');
-        if (!stateOk) issues.push(`state="${r.state}"`);
-        if (!zipOk) issues.push(`zip="${r.zip}"`);
-        const reason = `Invalid: ${issues.join(', ')}`;
-        skippedRecipients.push({ index: idx, reason, name: r.name });
-      }
-    }
-
-    console.log(`✅ Valid recipients: ${validRecipients.length}`);
-    console.log(`❌ Skipped recipients: ${skippedRecipients.length}`);
-    if (skippedRecipients.length > 0) {
-      console.log('First 10 skipped:', JSON.stringify(skippedRecipients.slice(0, 10), null, 2));
-    }
-
-    if (validRecipients.length === 0) {
-      throw new Error('No valid recipients after validation. Please fix your list.');
-    }
-
-    if (skippedRecipients.length > 0) {
-      console.warn(`⚠️ Skipping ${skippedRecipients.length} of ${recipientAddresses.length} recipients due to validation errors`);
-    }
-    
-    console.log(`Sending physical greeting cards for order: ${orderId} in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
+// Validation of recipients will be performed after fetching from DB
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -181,6 +139,89 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Step 2: Group recipients by drop date and send separate batches
+    // === FETCH ALL RECIPIENTS FROM DATABASE WITH PAGINATION ===
+    console.log('=== FETCHING ALL RECIPIENTS FROM DATABASE ===');
+    const pageSize = 1000;
+    let offset = 0;
+    const allClients: Array<{ first_name: string | null; last_name: string | null; address: string | null; city: string | null; state: string | null; zip: string | null }> = [];
+
+    while (true) {
+      const { data: page, error: pageError } = await supabase
+        .from('client_records')
+        .select('first_name, last_name, address, city, state, zip')
+        .eq('order_id', orderId)
+        .order('created_at', { ascending: true })
+        .range(offset, offset + pageSize - 1);
+
+      if (pageError) {
+        throw new Error(`Failed to fetch client records: ${pageError.message}`);
+      }
+
+      if (page && page.length > 0) {
+        allClients.push(...page);
+      }
+
+      if (!page || page.length < pageSize) {
+        break;
+      }
+
+      offset += pageSize;
+    }
+
+    console.log(`Fetched ${allClients.length} client records from DB`);
+
+    // Normalize to recipientAddresses-like structure
+    const recipientAddresses = allClients.map((c) => ({
+      name: `${(c.first_name || '').trim()} ${(c.last_name || '').trim()}`.trim(),
+      address1: (c.address || ''),
+      address2: '',
+      city: (c.city || ''),
+      state: (c.state || '').trim(),
+      zip: (c.zip || '')
+    }));
+
+    // Validate and filter recipients (skip invalid rows instead of failing)
+    const validRecipients = [] as typeof recipientAddresses;
+    const skippedRecipients: Array<{ index: number; reason: string; name?: string }> = [];
+    for (let i = 0; i < recipientAddresses.length; i++) {
+      const r = recipientAddresses[i];
+      const idx = i + 1;
+      const nameOk = r.name && typeof r.name === 'string' && r.name.length <= 200;
+      const addrOk = r.address1 && typeof r.address1 === 'string' && r.address1.length <= 200;
+      const cityOk = r.city && typeof r.city === 'string' && r.city.length <= 100;
+      const stateOk = r.state && typeof r.state === 'string' && r.state.trim().length === 2;
+      const zipOk = r.zip && typeof r.zip === 'string' && r.zip.trim().length > 0 && r.zip.length <= 10;
+
+      if (nameOk && addrOk && cityOk && stateOk && zipOk) {
+        validRecipients.push(r);
+      } else {
+        const issues = [] as string[];
+        if (!nameOk) issues.push('name');
+        if (!addrOk) issues.push('address');
+        if (!cityOk) issues.push('city');
+        if (!stateOk) issues.push(`state="${r.state}"`);
+        if (!zipOk) issues.push(`zip="${r.zip}"`);
+        const reason = `Invalid: ${issues.join(', ')}`;
+        skippedRecipients.push({ index: idx, reason, name: r.name });
+      }
+    }
+
+    console.log(`✅ Valid recipients: ${validRecipients.length}`);
+    console.log(`❌ Skipped recipients: ${skippedRecipients.length}`);
+    if (skippedRecipients.length > 0) {
+      console.log('First 10 skipped:', JSON.stringify(skippedRecipients.slice(0, 10), null, 2));
+    }
+
+    if (validRecipients.length === 0) {
+      throw new Error('No valid recipients after validation. Please fix your list.');
+    }
+
+    if (skippedRecipients.length > 0) {
+      console.warn(`⚠️ Skipping ${skippedRecipients.length} of ${recipientAddresses.length} recipients due to validation errors`);
+    }
+    
+    console.log(`Sending physical greeting cards for order: ${orderId} in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
+
     console.log('=== GROUPING RECIPIENTS BY DROP DATE FOR SEPARATE BATCHES ===');
     
     // Group recipients by their drop dates (assuming all recipients for this order have same drop date)
