@@ -2589,14 +2589,24 @@ const JobDetail = () => {
                 )}
                 
                 {order.csv_file_url && (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={() => downloadFile(order.csv_file_url!, 'clients.csv')}
-                  >
-                    <Users className="w-4 h-4 mr-2" />
-                    Download Client List
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => downloadFile(order.csv_file_url!, 'clients.csv')}
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      Download Client List
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => setShowClientListUpload(true)}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Replace Client List
+                    </Button>
+                  </>
                 )}
 
                 {!order.csv_file_url && (
