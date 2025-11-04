@@ -66,10 +66,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Deleted old client records');
 
+    // Filter valid records (require address, city, 2-letter state, and zip)
+    const isValid = (r: ClientRecord) =>
+      !!r.address && !!r.city && !!r.state && r.state.trim().length === 2 && !!r.zip;
+
+    const validRecords = (clientRecords || []).filter(isValid);
+    const skipped = (clientRecords || []).length - validRecords.length;
+    console.log(`Valid records: ${validRecords.length}, Skipped invalid: ${skipped}`);
+
+    if (validRecords.length === 0) {
+      throw new Error('All rows are invalid. Please provide records with address, city, 2-letter state, and zip.');
+    }
+
     // Insert new client records
     const { error: insertError } = await supabase.rpc('insert_client_records', {
       order_id: orderId,
-      client_data: clientRecords
+      client_data: validRecords
     });
 
     if (insertError) {
@@ -84,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('orders')
       .update({
         csv_file_url: csvFileUrl,
-        client_count: clientRecords.length
+        client_count: validRecords.length
       })
       .eq('id', orderId);
 
@@ -98,7 +110,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        count: clientRecords.length
+        count: validRecords.length,
+        skipped
       }),
       {
         status: 200,

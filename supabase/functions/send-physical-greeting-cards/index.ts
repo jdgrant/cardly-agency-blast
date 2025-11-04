@@ -38,26 +38,38 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Invalid recipients array');
     }
 
-    // Validate each recipient
+    // Validate and filter recipients (skip invalid rows instead of failing)
+    const validRecipients = [] as typeof recipientAddresses;
+    const skippedRecipients: Array<{ index: number; reason: string; name?: string }> = [];
     for (let i = 0; i < recipientAddresses.length; i++) {
-      const recipient = recipientAddresses[i];
-      const recipientNum = i + 1;
-      
-      if (!recipient.name || typeof recipient.name !== 'string' || recipient.name.length > 200) {
-        throw new Error(`Recipient #${recipientNum}: Invalid name "${recipient.name?.substring(0, 50) || 'empty'}"`);
+      const r = recipientAddresses[i];
+      const idx = i + 1;
+      const nameOk = r.name && typeof r.name === 'string' && r.name.length <= 200;
+      const addrOk = r.address1 && typeof r.address1 === 'string' && r.address1.length <= 200;
+      const cityOk = r.city && typeof r.city === 'string' && r.city.length <= 100;
+      const stateOk = r.state && typeof r.state === 'string' && r.state.length === 2;
+      const zipOk = r.zip && typeof r.zip === 'string' && r.zip.length <= 10;
+
+      if (nameOk && addrOk && cityOk && stateOk && zipOk) {
+        validRecipients.push(r);
+      } else {
+        const reason = `Missing/invalid fields: ${[
+          nameOk ? null : 'name',
+          addrOk ? null : 'address',
+          cityOk ? null : 'city',
+          stateOk ? null : 'state',
+          zipOk ? null : 'zip'
+        ].filter(Boolean).join(', ')}`;
+        skippedRecipients.push({ index: idx, reason, name: r.name });
       }
-      if (!recipient.address1 || typeof recipient.address1 !== 'string' || recipient.address1.length > 200) {
-        throw new Error(`Recipient #${recipientNum} (${recipient.name}): Invalid address "${recipient.address1?.substring(0, 50) || 'empty'}"`);
-      }
-      if (!recipient.city || typeof recipient.city !== 'string' || recipient.city.length > 100) {
-        throw new Error(`Recipient #${recipientNum} (${recipient.name}): Invalid city "${recipient.city?.substring(0, 50) || 'empty'}"`);
-      }
-      if (!recipient.state || typeof recipient.state !== 'string' || recipient.state.length > 2) {
-        throw new Error(`Recipient #${recipientNum} (${recipient.name}): Invalid state "${recipient.state}" - must be 2-letter abbreviation (e.g., CA, NY)`);
-      }
-      if (!recipient.zip || typeof recipient.zip !== 'string' || recipient.zip.length > 10) {
-        throw new Error(`Recipient #${recipientNum} (${recipient.name}): Invalid zip "${recipient.zip?.substring(0, 10) || 'empty'}"`);
-      }
+    }
+
+    if (validRecipients.length === 0) {
+      throw new Error('No valid recipients after validation. Please fix your list.');
+    }
+
+    if (skippedRecipients.length > 0) {
+      console.warn(`Skipping ${skippedRecipients.length} invalid recipients`, skippedRecipients.slice(0, 5));
     }
     
     console.log(`Sending physical greeting cards for order: ${orderId} in ${isProduction ? 'PRODUCTION' : 'SANDBOX'} mode`);
@@ -166,7 +178,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log('=== GROUPING RECIPIENTS BY DROP DATE FOR SEPARATE BATCHES ===');
     
     // Group recipients by their drop dates (assuming all recipients for this order have same drop date)
-    const recipients = recipientAddresses.map(addr => {
+    const recipients = validRecipients.map(addr => {
       const nameParts = addr.name.trim().split(' ');
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || 'Customer';
@@ -208,7 +220,7 @@ const handler = async (req: Request): Promise<Response> => {
         url: 'https://v3.pcmintegrations.com/order/greeting-card',
         payload: {
           recipients: recipients,
-          recordCount: recipientAddresses.length,
+          recordCount: validRecipients.length,
           mailClass: mailClass,
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
@@ -225,7 +237,7 @@ const handler = async (req: Request): Promise<Response> => {
         url: 'https://v3.pcmintegrations.com/order/greeting-card/with-recipients',
         payload: {
           recipients: recipients,
-          recordCount: recipientAddresses.length,
+          recordCount: validRecipients.length,
           mailClass: mailClass, 
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
@@ -242,7 +254,7 @@ const handler = async (req: Request): Promise<Response> => {
         url: 'https://v3.pcmintegrations.com/order/greeting-card/with-list-count',
         payload: {
           recipients: recipients,
-          recordCount: recipientAddresses.length,
+          recordCount: validRecipients.length,
           mailClass: mailClass,
           mailDate: mailDate,
           greetingCard: order.production_combined_pdf_public_url,
@@ -323,10 +335,11 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Physical greeting cards submitted to PCM DirectMail for ${recipientAddresses.length} recipients`,
+        message: `Physical greeting cards submitted to PCM DirectMail for ${validRecipients.length} recipients`,
         pcmOrderId: pcmResponseData.orderID,
         pcmBatchId: pcmResponseData.batchID,
         pcmOrderResponse: pcmResponseData,
+        skipped: skippedRecipients.length,
         apiInteractions: {
           authentication: {
             request: {

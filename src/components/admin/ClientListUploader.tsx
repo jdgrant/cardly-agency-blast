@@ -227,7 +227,7 @@ export const ClientListUploader: React.FC<ClientListUploaderProps> = ({
 
       toast({
         title: "Client list uploaded successfully",
-        description: `${allRecords.length} client records have been processed.`
+        description: `${replaceData.count} records saved${replaceData.skipped ? ` • ${replaceData.skipped} skipped (incomplete)` : ''}.`
       });
 
       onUploadComplete();

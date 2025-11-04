@@ -341,6 +341,18 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
       // Allow preview even if there are no clients
       const safeClients = clientsData || [];
 
+      // Filter to only valid recipients (address, city, 2-letter state, zip)
+      const isValid = (c: any) =>
+        !!c.address && !!c.city && !!c.state && String(c.state).trim().length === 2 && !!c.zip;
+      const validClients = (safeClients as any[]).filter(isValid);
+      const skippedPreview = safeClients.length - validClients.length;
+      if (skippedPreview > 0) {
+        console.warn(`Skipping ${skippedPreview} invalid recipients in preview`);
+        toast({
+          title: "Preview filtered",
+          description: `${skippedPreview} recipients skipped (incomplete addresses)`
+        });
+      }
 
       // Fetch order details
       const { data: orderData, error: orderError } = await supabase.rpc('get_order_by_id', {
@@ -362,7 +374,7 @@ export function PhysicalMailingSender({ orderId }: PhysicalMailingSenderProps) {
       const order = orderResult as any;
 
       // Format client data for the API
-      const recipientAddresses = safeClients.map((client: any) => ({
+      const recipientAddresses = validClients.map((client: any) => ({
         name: `${client.first_name} ${client.last_name}`.trim(),
         address1: client.address,
         city: client.city,
