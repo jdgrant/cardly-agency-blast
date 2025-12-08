@@ -42,6 +42,14 @@ const mailingWindows = [
     approvalDate: new Date('2025-12-02'),
     rushFee: 0.25
   },
+  { 
+    value: 'dec-21-24', 
+    label: 'December 21-24', 
+    description: 'Final mailing window - arrives around Christmas',
+    approvalDeadline: 'December 7th',
+    approvalDate: new Date('2025-12-07'),
+    rushFee: 0.50
+  },
 ];
 
 const Step3MailingWindow = () => {
@@ -177,11 +185,11 @@ const Step3MailingWindow = () => {
         <ul className="text-sm text-amber-800 space-y-1">
           <li>• Cards are printed and mailed within your selected window</li>
           <li>• Standard USPS delivery takes 3-5 business days</li>
-          <li>• December 16-20 is the last window for pre-Christmas delivery</li>
+          <li>• December 21-24 is the last window for Christmas delivery</li>
           <li>• Final approval must be received 2 weeks prior to mailing date</li>
           <li>• Selection deadline is 1 week before final approval date</li>
           <li>• You'll receive tracking information once cards are shipped</li>
-          <li>• Rush fees apply to December 11-15 and December 16-20 windows</li>
+          <li>• Rush fees apply to December 11-15, December 16-20, and December 21-24 windows</li>
           {state.postageOption === 'first-class' && (
             <li>• First Class mail service provides faster delivery (1-3 business days)</li>
           )}
