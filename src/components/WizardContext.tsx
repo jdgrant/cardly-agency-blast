@@ -85,7 +85,7 @@ const initialState: WizardState = {
   signatureUrl: null, // Add this field
   signatureSelected: false,
   signaturePurchased: false, // Add this field
-  mailingWindow: null,
+  mailingWindow: 'dec-21-24', // Default to latest mailing window
   shippingWindow: null,
   postageOption: 'standard',
   selectedTier: null,
@@ -270,7 +270,7 @@ export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const nextStep = () => {
-    setState(prev => ({ ...prev, step: Math.min(prev.step + 1, 7) }));
+    setState(prev => ({ ...prev, step: Math.min(prev.step + 1, 6) }));
   };
 
   const prevStep = () => {
