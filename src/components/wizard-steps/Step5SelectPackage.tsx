@@ -12,6 +12,7 @@ const mailingWindows = [
   { value: 'dec-6-10', rushFee: 0 },
   { value: 'dec-11-15', rushFee: 0.25 },
   { value: 'dec-16-20', rushFee: 0.25 },
+  { value: 'dec-21-24', rushFee: 0.50 },
 ];
 
 const Step5SelectPackage = () => {
