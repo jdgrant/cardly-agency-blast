@@ -609,6 +609,24 @@ export type Database = {
       create_order:
         | {
             Args: {
+              p_card_quantity: number
+              p_csv_file_url?: string
+              p_custom_message?: string
+              p_final_price: number
+              p_logo_url?: string
+              p_mailing_window: string
+              p_postage_cost?: number
+              p_postage_option?: string
+              p_regular_price: number
+              p_selected_message?: string
+              p_signature_url?: string
+              p_template_id: string
+              p_tier_name: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
               p_billing_address?: string
               p_card_quantity: number
               p_contact_email?: string
@@ -652,46 +670,6 @@ export type Database = {
               p_return_address_name?: string
               p_return_address_state?: string
               p_return_address_zip?: string
-              p_selected_message?: string
-              p_signature_url?: string
-              p_template_id: string
-              p_tier_name: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_card_quantity: number
-              p_csv_file_url?: string
-              p_custom_message?: string
-              p_final_price: number
-              p_logo_url?: string
-              p_mailing_window: string
-              p_postage_cost?: number
-              p_postage_option?: string
-              p_regular_price: number
-              p_selected_message?: string
-              p_signature_url?: string
-              p_template_id: string
-              p_tier_name: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_billing_address?: string
-              p_card_quantity: number
-              p_contact_email?: string
-              p_contact_name?: string
-              p_contact_phone?: string
-              p_csv_file_url?: string
-              p_custom_message?: string
-              p_final_price: number
-              p_logo_url?: string
-              p_mailing_window: string
-              p_postage_cost?: number
-              p_postage_option?: string
-              p_regular_price: number
               p_selected_message?: string
               p_signature_url?: string
               p_template_id: string
@@ -723,6 +701,28 @@ export type Database = {
               p_return_address_zip?: string
               p_selected_message?: string
               p_signature_purchased?: boolean
+              p_signature_url?: string
+              p_template_id: string
+              p_tier_name: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_billing_address?: string
+              p_card_quantity: number
+              p_contact_email?: string
+              p_contact_name?: string
+              p_contact_phone?: string
+              p_csv_file_url?: string
+              p_custom_message?: string
+              p_final_price: number
+              p_logo_url?: string
+              p_mailing_window: string
+              p_postage_cost?: number
+              p_postage_option?: string
+              p_regular_price: number
+              p_selected_message?: string
               p_signature_url?: string
               p_template_id: string
               p_tier_name: string
@@ -967,6 +967,41 @@ export type Database = {
       }
       get_order_by_id:
         | {
+            Args: { order_id: string }
+            Returns: {
+              billing_address: string
+              card_quantity: number
+              client_count: number
+              contact_email: string
+              contact_firstname: string
+              contact_lastname: string
+              contact_phone: string
+              created_at: string
+              csv_file_url: string
+              custom_message: string
+              early_bird_discount: boolean
+              final_price: number
+              front_preview_base64: string
+              id: string
+              inside_preview_base64: string
+              logo_url: string
+              mailing_window: string
+              postage_cost: number
+              postage_option: string
+              production_combined_pdf_generated_at: string
+              production_combined_pdf_path: string
+              production_combined_pdf_public_url: string
+              readable_order_id: string
+              regular_price: number
+              selected_message: string
+              signature_url: string
+              status: string
+              template_id: string
+              tier_name: string
+              updated_at: string
+            }[]
+          }
+        | {
             Args: { order_id: string; session_id_param?: string }
             Returns: {
               billing_address: string
@@ -1008,41 +1043,6 @@ export type Database = {
               selected_message: string
               signature_needs_review: boolean
               signature_purchased: boolean
-              signature_url: string
-              status: string
-              template_id: string
-              tier_name: string
-              updated_at: string
-            }[]
-          }
-        | {
-            Args: { order_id: string }
-            Returns: {
-              billing_address: string
-              card_quantity: number
-              client_count: number
-              contact_email: string
-              contact_firstname: string
-              contact_lastname: string
-              contact_phone: string
-              created_at: string
-              csv_file_url: string
-              custom_message: string
-              early_bird_discount: boolean
-              final_price: number
-              front_preview_base64: string
-              id: string
-              inside_preview_base64: string
-              logo_url: string
-              mailing_window: string
-              postage_cost: number
-              postage_option: string
-              production_combined_pdf_generated_at: string
-              production_combined_pdf_path: string
-              production_combined_pdf_public_url: string
-              readable_order_id: string
-              regular_price: number
-              selected_message: string
               signature_url: string
               status: string
               template_id: string
@@ -1236,7 +1236,6 @@ export type Database = {
               name_param?: string
               order_id_param: string
               state_param?: string
-              user_email?: string
               zip_param?: string
             }
             Returns: undefined
@@ -1249,6 +1248,7 @@ export type Database = {
               name_param?: string
               order_id_param: string
               state_param?: string
+              user_email?: string
               zip_param?: string
             }
             Returns: undefined
